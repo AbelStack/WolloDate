@@ -1,0 +1,414 @@
+================================================================================
+SOFTWARE REQUIREMENTS SPECIFICATION (SRS)
+WolloDate - Private Campus Social Chat Application
+================================================================================
+
+VERSION: 2.0
+DATE: February 20, 2026
+
+================================================================================
+1. OVERVIEW
+================================================================================
+
+A private campus social networking and real-time chat application designed 
+exclusively for verified university students. The platform combines real-time 
+messaging capabilities with social networking features similar to Instagram 
+(excluding reels and dating/matching features).
+
+Tech Stack:
+   Frontend:  React 19+, Socket.IO Client, Tailwind CSS, React Context API
+   Backend:   Laravel 11, Laravel Sanctum (JWT), MySQL
+   Real-time: Node.js + Socket.IO
+   Storage:   Local file system (Laravel Storage) for media
+
+Key Features:
+   1. Student verification & admin approval system
+   2. Real-time 1-to-1 and group messaging
+   3. Follow system with private accounts by default
+   4. Post system (image + caption, likes, comments, shares)
+   5. User feed (posts from followed accounts only)
+   6. Profile pages with posts, followers, following counts
+   7. Admin dashboard for user approval and moderation
+   8. Privacy-first design (private accounts by default)
+
+================================================================================
+2. ACCESS CONTROL & VERIFICATION
+================================================================================
+
+2.1 USER REGISTRATION (SIGNUP)
+
+FR-1: Student Registration
+   - Required fields:
+     * Full name
+     * Email (university email preferred)
+     * Password (min 8 characters, bcrypt hashed)
+     * Student ID card image (JPEG/PNG, max 5MB)
+   - On signup:
+     * Account created with is_approved = false
+     * User cannot log in until approved by admin
+   - Validation:
+     * Email must be unique
+     * Student ID image is mandatory
+
+FR-2: Account Approval Process
+   - New registrations enter "pending" status
+   - Admin reviews student ID image
+   - Admin can approve or reject registration
+   - Approved users can log in and access the platform
+   - Rejected users are deleted from the system
+
+FR-3: User Login
+   - Email + password authentication
+   - Check if account is approved before allowing login
+   - Returns JWT token (expires in 7 days)
+   - Error messages:
+     * "Invalid credentials" for wrong email/password
+     * "Pending approval" for unapproved accounts
+
+FR-4: User Logout
+   - Clears token, sets user offline
+
+================================================================================
+3. FOLLOW SYSTEM
+================================================================================
+
+FR-5: Follow Requests
+   - Users can send follow requests to other users
+   - Private accounts (default): request must be accepted
+   - Public accounts: follow is immediate (auto-accept)
+   - Users can cancel pending follow requests
+
+FR-6: Follow Request Management
+   - View pending follow requests
+   - Accept or reject incoming requests
+   - Remove existing followers
+
+FR-7: Following/Followers Lists
+   - View users you follow
+   - View users who follow you
+   - Only visible to:
+     * The profile owner
+     * Accepted followers (for private accounts)
+     * Anyone (for public accounts)
+
+FR-8: Privacy Settings
+   - Accounts are PRIVATE by default
+   - Users can toggle privacy (private/public)
+   - Private account restrictions:
+     * Posts only visible to followers
+     * Follower/following lists only visible to followers
+     * Follow requests require acceptance
+
+================================================================================
+4. POST SYSTEM
+================================================================================
+
+FR-9: Create Post
+   - Post content:
+     * Caption (optional, max 2200 characters)
+     * Image (optional, JPEG/PNG/GIF, max 10MB)
+   - Must have at least caption OR image
+   - Posts appear in followers' feeds
+
+FR-10: View Posts
+   - View own posts on profile page
+   - View followed users' posts in feed
+   - Single post view with comments
+
+FR-11: Delete Post
+   - Post owner can delete their posts
+   - Admins can delete any post
+
+FR-12: Like Posts
+   - Like/unlike posts from followed accounts
+   - View like count
+   - Cannot like posts from private accounts you don't follow
+
+FR-13: Share/Repost
+   - Share posts to your profile
+   - Add optional caption to share
+   - Share count tracked on original post
+   - Cannot repost a repost (links to original)
+
+================================================================================
+5. COMMENT SYSTEM
+================================================================================
+
+FR-14: Add Comments
+   - Comment on posts (max 1000 characters)
+   - Reply to existing comments (nested replies)
+   - View comment count
+
+FR-15: Delete Comments
+   - Comment owner can delete their comment
+   - Post owner can delete any comment on their post
+   - Admins can delete any comment
+
+FR-16: Like Comments
+   - Like/unlike comments
+   - View comment like count
+
+================================================================================
+6. FEED SYSTEM
+================================================================================
+
+FR-17: User Feed
+   - Shows posts from:
+     * Users you follow (accepted follows only)
+     * Your own posts
+   - Sorted by newest first
+   - Paginated (20 posts per page)
+   - Includes reposts with original post data
+
+FR-18: Feed Privacy
+   - Only shows posts from:
+     * Public accounts you follow
+     * Private accounts that accepted your follow
+   - No "explore" or "discover" public posts
+
+================================================================================
+7. PROFILE SYSTEM
+================================================================================
+
+FR-19: User Profile Display
+   - Profile header:
+     * Avatar photo
+     * Full name
+     * Bio
+     * Posts count
+     * Followers count
+     * Following count
+   - Follow button states:
+     * "Follow" - not following
+     * "Requested" - pending follow request
+     * "Following" - currently following
+     * "Edit Profile" - own profile
+
+FR-20: Profile Photo Upload
+   - Upload profile picture (JPG, PNG, WebP)
+   - Max file size: 5 MB
+   - Replace existing photo or use default
+
+FR-21: Edit Profile
+   - Update name, bio, status message
+   - Toggle account privacy (private/public)
+
+FR-22: Profile Privacy
+   - Private accounts:
+     * Posts hidden from non-followers
+     * "This account is private" message shown
+   - Public accounts:
+     * Posts visible to all logged-in users
+
+================================================================================
+8. REAL-TIME MESSAGING (Existing Features)
+================================================================================
+
+FR-23: 1-to-1 Private Chat
+   - Create private conversation with another user
+   - View conversation history (paginated)
+   - Real-time message delivery
+
+FR-24: Group Channels
+   - Create/manage group conversations
+   - Add/remove members from channel
+   - Channel name, description, icon
+   - Channel creator is admin
+
+FR-25: Send Message
+   - Text message with emoji support
+   - Max message length: 5000 characters
+   - Real-time broadcast to all participants
+
+FR-26: Message Status Tracking
+   - Status values: sent, delivered, seen
+   - Track delivery and read receipts
+
+FR-27: Typing Indicators
+   - Show "typing..." when user is composing
+   - Broadcast to conversation participants
+
+FR-28: Media Sharing
+   - Share images and files in chat
+   - Supported: JPEG, PNG, GIF, PDF, DOC
+   - Max file size: 10MB
+
+================================================================================
+9. ADMIN DASHBOARD
+================================================================================
+
+FR-29: Admin Authentication
+   - Admins have role = 'admin'
+   - All admin routes require admin role
+   - Cannot remove own admin role
+
+FR-30: User Approval Management
+   - View pending registrations list
+   - View uploaded student ID image
+   - Approve user (sets is_approved = true)
+   - Reject user (deletes user and student ID)
+
+FR-31: User Management
+   - View all approved users
+   - Search users by name/email
+   - Ban users (revokes access, logs out)
+   - Unban users (restore access)
+   - Promote/demote admin roles
+
+FR-32: Content Moderation
+   - Delete inappropriate posts
+   - Delete inappropriate comments
+   - View reports (future feature)
+
+FR-33: Dashboard Statistics
+   - Total registered users
+   - Pending approval count
+   - Total posts
+   - Online users count
+
+================================================================================
+10. API ENDPOINTS
+================================================================================
+
+PUBLIC ROUTES (No Auth):
+   POST   /api/auth/signup          - Register with student ID
+   POST   /api/auth/login           - Login (if approved)
+
+AUTHENTICATED ROUTES:
+
+Auth:
+   POST   /api/auth/logout          - Logout
+   GET    /api/auth/me              - Get current user
+
+Users:
+   GET    /api/users/search         - Search users
+   GET    /api/users/{id}           - Get user profile
+   PUT    /api/users/{id}           - Update profile
+   POST   /api/users/{id}/avatar    - Upload avatar
+   DELETE /api/users/{id}/avatar    - Delete avatar
+   POST   /api/users/{id}/block     - Block user
+   DELETE /api/users/{id}/block     - Unblock user
+
+Follows:
+   POST   /api/follows/{userId}              - Send follow request
+   DELETE /api/follows/{userId}              - Unfollow
+   GET    /api/follows/requests              - Get pending requests
+   PUT    /api/follows/requests/{followId}   - Accept/reject request
+   DELETE /api/follows/followers/{userId}    - Remove follower
+   GET    /api/users/{userId}/followers      - Get followers list
+   GET    /api/users/{userId}/following      - Get following list
+
+Posts:
+   GET    /api/feed                     - Get feed posts
+   GET    /api/users/{userId}/posts     - Get user's posts
+   POST   /api/posts                    - Create post
+   GET    /api/posts/{postId}           - Get single post
+   DELETE /api/posts/{postId}           - Delete post
+   POST   /api/posts/{postId}/like      - Like post
+   DELETE /api/posts/{postId}/like      - Unlike post
+   POST   /api/posts/{postId}/share     - Share/repost
+
+Comments:
+   GET    /api/posts/{postId}/comments      - Get comments
+   POST   /api/posts/{postId}/comments      - Add comment
+   DELETE /api/comments/{commentId}         - Delete comment
+   POST   /api/comments/{commentId}/like    - Like comment
+   DELETE /api/comments/{commentId}/like    - Unlike comment
+   GET    /api/comments/{commentId}/replies - Get replies
+
+Conversations (Chat):
+   GET    /api/conversations                - List conversations
+   POST   /api/conversations                - Create conversation
+   GET    /api/conversations/{id}           - Get conversation
+   PUT    /api/conversations/{id}           - Update conversation
+   DELETE /api/conversations/{id}           - Delete conversation
+   POST   /api/conversations/{id}/members   - Add member
+   DELETE /api/conversations/{id}/members/{userId} - Remove member
+
+Messages:
+   GET    /api/conversations/{id}/messages  - Get messages
+   POST   /api/conversations/{id}/messages  - Send message
+   PUT    /api/messages/{id}                - Edit message
+   DELETE /api/messages/{id}                - Delete message
+   POST   /api/messages/{id}/reactions      - Add reaction
+   DELETE /api/messages/{id}/reactions/{emoji} - Remove reaction
+
+ADMIN ROUTES:
+   GET    /api/admin/stats                  - Dashboard stats
+   GET    /api/admin/users/pending          - Pending registrations
+   GET    /api/admin/users                  - All users
+   PUT    /api/admin/users/{userId}/approve - Approve user
+   DELETE /api/admin/users/{userId}/reject  - Reject user
+   PUT    /api/admin/users/{userId}/ban     - Ban user
+   PUT    /api/admin/users/{userId}/make-admin    - Promote to admin
+   PUT    /api/admin/users/{userId}/remove-admin  - Demote from admin
+   DELETE /api/admin/posts/{postId}         - Delete post (admin)
+
+================================================================================
+11. DATABASE SCHEMA
+================================================================================
+
+USERS TABLE:
+   id, name, email, password, avatar_url, bio, status_message,
+   student_id_image, is_approved, is_private, role,
+   approved_at, approved_by, is_online, last_seen, timestamps
+
+FOLLOWS TABLE:
+   id, follower_id, following_id, status (pending/accepted/rejected), timestamps
+   UNIQUE: [follower_id, following_id]
+
+POSTS TABLE:
+   id, user_id, caption, image_url, original_post_id (for reposts),
+   likes_count, comments_count, shares_count, timestamps
+
+POST_LIKES TABLE:
+   id, user_id, post_id, timestamps
+   UNIQUE: [user_id, post_id]
+
+COMMENTS TABLE:
+   id, user_id, post_id, parent_id (for replies), content,
+   likes_count, timestamps
+
+COMMENT_LIKES TABLE:
+   id, user_id, comment_id, timestamps
+   UNIQUE: [user_id, comment_id]
+
+CONVERSATIONS TABLE:
+   id, name, type (private/group), created_by, timestamps
+
+MESSAGES TABLE:
+   id, conversation_id, user_id, content, type, parent_id, timestamps
+
+(Additional chat-related tables remain unchanged)
+
+================================================================================
+12. EXCLUDED FEATURES
+================================================================================
+
+The following features are explicitly NOT included:
+
+   - Reels or video content
+   - Stories (ephemeral posts)
+   - Public/open registration
+   - Dating or matchmaking functionality
+   - Explore/discover pages
+   - Hashtags or trending topics
+   - Direct messaging to non-followers (for private accounts)
+   - Third-party login (Google, Facebook, etc.)
+
+================================================================================
+13. SECURITY CONSIDERATIONS
+================================================================================
+
+   - All passwords hashed with bcrypt
+   - JWT tokens expire after 7 days
+   - Student ID images stored securely, admin-only access
+   - Private accounts enforce follower-only access
+   - Admin actions logged (future enhancement)
+   - Rate limiting on API endpoints (recommended)
+   - Input validation on all endpoints
+   - XSS and CSRF protection via Laravel
+
+================================================================================
+END OF SRS v2.0
+================================================================================

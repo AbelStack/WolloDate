@@ -1,0 +1,504 @@
+================================================================================
+SOFTWARE REQUIREMENTS SPECIFICATION (SRS)
+Web Chat Application
+================================================================================
+
+VERSION: 1.0
+DATE: February 19, 2026
+
+================================================================================
+1. OVERVIEW
+================================================================================
+
+A real-time web chat application where users can communicate via 1-to-1 private
+chats, group channels, and share media. Built with React + Laravel + WebSockets.
+
+Tech Stack:
+   Frontend:  React 18+, Socket.IO Client, Tailwind CSS, React Context API
+   Backend:   Laravel 11, Laravel Sanctum (JWT), MySQL
+   Real-time: Node.js + Socket.IO
+   Storage:   Local file system (Laravel Storage) for media
+
+Key Features:
+   1. User authentication (signup/login)
+   2. 1-to-1 private messaging
+   3. Group channels and conversations
+   4. Real-time message delivery (WebSocket)
+   5. Message status tracking (sent, delivered, seen)
+   6. Typing indicators & presence awareness
+   7. Message reactions and emojis
+   8. Media sharing (images, files, voice notes)
+   9. User profiles and friend lists
+   10. Message search and filtering
+
+================================================================================
+2. FUNCTIONAL REQUIREMENTS
+================================================================================
+
+2.1 USER AUTHENTICATION & MANAGEMENT
+
+FR-1: User Signup
+   - Email, password, full name
+   - Password: min 8 characters, bcrypt hashed
+   - Email must be unique
+   - Optional: avatar upload, bio, status
+
+FR-2: User Login
+   - Email + password
+   - Returns JWT token (expires in 7 days)
+
+FR-3: User Logout
+   - Clears token, sets user offline
+
+FR-4: User Profile
+   - View/edit avatar, bio, status message
+   - Default avatar option (gravatar or initials)
+
+FR-4a: Profile Photo Upload
+   - Upload profile picture (JPG, PNG, WebP)
+   - Max file size: 5 MB
+   - Auto-crop/resize to 512x512px
+   - Supported formats: image/jpeg, image/png, image/webp
+   - Replace existing photo or use default
+   - Photo visible in profile & all conversations
+   - Real-time update across app
+
+FR-5: Online/Offline Presence
+   - Show user online/offline status
+   - Last seen timestamp
+   - "typing..." indicator in conversations
+
+FR-6: Block/Report User
+   - Block user to prevent messages
+   - Report user for moderation
+
+2.2 MESSAGING
+
+FR-7: 1-to-1 Private Chat
+   - Create private conversation with another user
+   - View conversation history (paginated)
+   - Real-time message delivery
+
+FR-8: Group Channels
+   - Create/manage group conversations
+   - Add/remove members from channel
+   - Channel name, description, icon
+   - Channel creator is admin
+
+FR-9: Send Message
+   - Text message with emoji support
+   - Message contains: id, sender_id, content, timestamp
+   - Real-time broadcast to all participants
+   - Max message length: 5000 characters
+
+FR-10: Message Status Tracking
+   - Status values: sent, delivered, seen
+   - Track delivery and read receipts
+   - Show "seen" indicator for group chats
+   - Timestamps for each status change
+
+FR-11: Typing Indicators
+   - Show "X is typing..." when user is composing
+   - Indicator shows for 5 seconds or until message sent
+   - Real-time broadcast to all conversation members
+
+FR-12: Message Reactions
+   - Add emoji reactions to messages (👍 ❤️ 😂 😮 😢 😠)
+   - Allow multiple reactions per user per message
+   - Display reaction count
+   - Real-time updates
+
+FR-13: Edit Messages
+   - User can edit own messages (within 15 minutes)
+   - Show "(edited)" indicator
+   - Preserve edit timestamp
+
+FR-14: Delete Messages
+   - User can delete own messages
+   - Delete option available for 1 hour after sending
+   - Show "[Message deleted]" for others
+   - Preserve audit trail
+
+FR-15: Message Timestamps
+   - Display send time (HH:MM) and relative time (2 mins ago)
+   - Show full timestamp on hover
+   - Group messages by date
+
+2.3 MEDIA SHARING
+
+FR-16: Profile Photo Upload (Avatar)
+   - Upload JPG, PNG, WebP images
+   - Max file size: 5 MB
+   - Auto-resize to 512x512px (square)
+   - Store with timestamp to avoid cache issues
+   - Compress image (80% quality JPEG)
+   - Display in profile and all conversations
+   - Real-time update, no page refresh needed
+   - Option to remove photo and revert to default (initials)
+
+FR-17: Image Uploads in Chat
+   - Upload images in chat (JPEG, PNG, WebP)
+   - Max file size: 10 MB
+   - Display thumbnails in chat
+   - Click to view full image
+   - Auto-generate thumbnail (max 300x300px)
+
+FR-18: File Attachments
+   - Upload documents (PDF, Word, Excel, TXT)
+   - Max file size: 25 MB
+   - Show file icon and download option
+   - Filename and file size displayed
+
+FR-19: Voice Notes
+   - Record audio message (up to 2 minutes)
+   - Display duration
+   - Play/pause controls in chat
+   - Real-time transcription (optional enhancement)
+
+FR-20: Link Previews
+   - Auto-detect URLs in messages
+   - Display preview with title, description, thumbnail
+   - Clickable preview card
+
+2.4 MESSAGE ORGANIZATION
+
+FR-21: Starred/Saved Messages
+   - Star messages for later reference
+   - View all starred messages in collection
+   - Star messages from any conversation
+
+FR-22: Pin Messages
+   - Admin/channel members can pin important messages
+   - Show pinned messages section in channel
+   - Max 5 pinned messages per channel
+
+FR-23: Message Threads
+   - Reply to specific message to start thread
+   - View thread in side panel
+   - Reply count displayed on original message
+   - Notifications for thread replies
+
+FR-24: Search Messages
+   - Search by keyword across all conversations
+   - Filter by: user, date range, conversation
+   - Display matching messages with context
+
+2.5 NOTIFICATIONS
+
+FR-25: In-App Notifications
+   - Show notification badge for new messages
+   - Sound alert (can be disabled)
+   - Notification setting per conversation
+
+FR-26: Message Mentions
+   - @mention users in messages
+   - Notify mentioned users
+   - Show mention in notification
+
+FR-27: Push Notifications (Enhancement)
+   - Browser push notifications for new messages
+   - Configurable notification preferences
+
+2.6 CONTACTS & FRIEND LIST
+
+FR-28: Friend List
+   - View list of contacts
+   - Add/remove friends
+   - Send friend requests (approval based)
+   - Approve/deny friend requests
+
+FR-29: User Discovery
+   - Search for users by name or email
+   - View user profiles
+   - Add user as friend
+
+2.7 REAL-TIME UPDATES
+
+FR-30: Real-Time Message Delivery
+   - Messages delivered within 200ms
+   - No page refresh required
+   - Auto-reconnect on connection loss
+
+FR-31: Real-Time Presence
+   - Online/offline status updates instantly
+   - Typing indicators update in real-time
+   - Message delivery status updates
+
+================================================================================
+3. NON-FUNCTIONAL REQUIREMENTS
+================================================================================
+
+NFR-1: Performance
+   - API responses < 150ms
+   - Real-time message delivery < 200ms
+   - Page load < 2.5 seconds
+   - Conversation load < 100ms
+   - Search results < 300ms
+
+NFR-2: Security
+   - HTTPS only
+   - Passwords bcrypt hashed (cost 10+)
+   - JWT tokens for auth, no localStorage for tokens (use HttpOnly cookies)
+   - Message encryption in transit (TLS)
+   - XSS protection via sanitization
+   - CSRF protection
+   - Rate limiting (messages, API calls)
+   - No sensitive data in logs
+
+NFR-3: Availability
+   - Target uptime 99.5%
+   - Auto-reconnect on connection loss (exponential backoff)
+   - Graceful error messages
+   - Offline queue for messages (send when reconnected)
+   - Message delivery retry mechanism
+
+NFR-4: Scalability
+   - Support 1000+ concurrent users
+   - Handle 100+ messages/second per channel
+   - Database indexes for fast queries
+   - Redis for caching (optional)
+
+NFR-5: Browser Support
+   - Chrome 90+, Firefox 88+, Safari 14+, Edge 90+ (latest versions)
+   - Mobile friendly (responsive design)
+
+NFR-6: Data Persistence
+   - Message history stored for 90 days minimum
+   - User data stored indefinitely (unless deleted)
+   - Soft deletes (with ability to recover)
+   - Backup strategy (daily backups)
+
+================================================================================
+4. DATABASE SCHEMA
+================================================================================
+
+users
+   - id, name, email (UNIQUE), password, avatar_url, bio, status_message
+   - is_online (boolean), last_seen (timestamp)
+   - created_at, updated_at
+   - Avatar stored in: storage/app/avatars/ with naming: {user_id}_{timestamp}.{ext}
+
+conversations (for 1-to-1 or group chats)
+   - id, type (private, group), name (optional for private), icon_url
+   - created_by_id (FK to users), created_at, updated_at
+
+conversation_members
+   - id, conversation_id (FK), user_id (FK), joined_at, last_read_message_id
+
+messages
+   - id, conversation_id (FK), user_id (FK), content, edited_at
+   - created_at, updated_at
+
+message_status
+   - id, message_id (FK), user_id (FK), status (sent, delivered, seen)
+   - updated_at
+
+message_reactions
+   - id, message_id (FK), user_id (FK), emoji, created_at
+
+starred_messages
+   - id, message_id (FK), user_id (FK), created_at
+
+pinned_messages
+   - id, message_id (FK), conversation_id (FK), pinned_by_id, created_at
+
+message_threads
+   - id, parent_message_id (FK), message_id (FK)
+   - Links messages that are replies to another message
+
+media_attachments
+   - id, message_id (FK), type (image, file, voice), file_path, file_size
+   - original_filename, mime_type, created_at
+
+user_blocks
+   - id, user_id (FK), blocked_user_id (FK), created_at
+
+friends
+   - id, user_id (FK), friend_id (FK), status (pending, accepted), created_at
+
+Indexes:
+   - users(email)
+   - conversations(created_by_id)
+   - conversation_members(conversation_id, user_id)
+   - messages(conversation_id, created_at)
+   - message_status(message_id, user_id)
+   - starred_messages(user_id)
+
+================================================================================
+5. API ENDPOINTS
+================================================================================
+
+Auth:
+   POST   /api/auth/signup              - Register user
+   POST   /api/auth/login               - Login (returns JWT token)
+   POST   /api/auth/logout              - Logout
+   GET    /api/auth/me                  - Get current user
+
+Users:
+   GET    /api/users/:id                - Get user profile
+   PUT    /api/users/:id                - Update user profile
+   POST   /api/users/:id/avatar         - Upload profile photo
+   DELETE /api/users/:id/avatar         - Remove/reset profile photo to default
+   GET    /api/users/search             - Search users by name/email
+   POST   /api/users/:id/block          - Block user
+   DELETE /api/users/:id/block          - Unblock user
+   GET    /api/users/:id/blocked        - Get blocked users list
+
+Conversations:
+   GET    /api/conversations            - Get all conversations for user
+   POST   /api/conversations            - Create new conversation (1-to-1 or group)
+   GET    /api/conversations/:id        - Get conversation details
+   PUT    /api/conversations/:id        - Update conversation (name, icon)
+   DELETE /api/conversations/:id        - Delete/leave conversation
+   POST   /api/conversations/:id/members - Add member to group chat
+   DELETE /api/conversations/:id/members/:userId - Remove member
+
+Messages:
+   GET    /api/conversations/:id/messages        - Get conversation messages (paginated)
+   POST   /api/conversations/:id/messages        - Send message
+   PUT    /api/messages/:id                      - Edit message
+   DELETE /api/messages/:id                      - Delete message
+   POST   /api/messages/:id/reactions            - Add reaction to message
+   DELETE /api/messages/:id/reactions/:emoji    - Remove reaction
+   POST   /api/messages/:id/star                 - Star message
+   DELETE /api/messages/:id/star                - Unstar message
+
+Message Status:
+   PUT    /api/messages/:id/status/-delivered   - Mark as delivered
+   PUT    /api/messages/:id/status/seen         - Mark as seen
+   GET    /api/messages/:id/status              - Get message read receipts
+
+Pinned Messages:
+   POST   /api/conversations/:id/pinned/:msgId  - Pin message
+   DELETE /api/conversations/:id/pinned/:msgId  - Unpin message
+   GET    /api/conversations/:id/pinned         - Get pinned messages
+
+Search:
+   GET    /api/search                   - Search messages (query params: q, user, from, to)
+
+Friends:
+   GET    /api/friends                  - Get friend list
+   POST   /api/friends/request          - Send friend request
+   GET    /api/friends/requests         - Get pending friend requests
+   PUT    /api/friends/requests/:id     - Accept/deny friend request
+   DELETE /api/friends/:id              - Remove friend
+
+Media:
+   POST   /api/upload                   - Upload file/image (returns URL)
+   GET    /api/media/:id                - Get media file
+
+WebSocket Events:
+   EMIT: message:new              - New message in conversation
+   EMIT: message:edited           - Message edited
+   EMIT: message:deleted          - Message deleted
+   EMIT: message:reaction         - Reaction added/removed
+   EMIT: message:status           - Message status changed (delivered, seen)
+   EMIT: user:typing              - User is typing
+   EMIT: user:online              - User came online
+   EMIT: user:offline             - User went offline
+   EMIT: conversation:member_added - Member added to group
+   EMIT: conversation:member_removed - Member left group
+
+================================================================================
+6. DEVELOPMENT PLAN (MVP FIRST)
+================================================================================
+
+PHASE 1: Setup & Core Auth (Days 1-2)
+   - Database setup
+   - Laravel API scaffold
+   - React frontend scaffold
+   - User authentication (signup/login/logout)
+   - User profile setup
+
+PHASE 2: Messaging Foundation (Days 3-5)
+   - 1-to-1 private conversations
+   - Send/receive messages (HTTP first)
+   - Conversation list UI
+   - Message history (pagination)
+
+PHASE 3: Real-Time & WebSocket (Days 6-8)
+   - WebSocket connection setup
+   - Real-time message delivery
+   - Typing indicators
+   - Online/offline presence
+   - Message status tracking (sent/delivered/seen)
+
+PHASE 4: Group Chats & Organization (Days 9-11)
+   - Group channel creation
+   - Add/remove members
+   - Message reactions
+   - Star/pin messages
+   - Basic search
+
+PHASE 5: Media & Enhancements (Days 12-14)
+   - Image/file upload
+   - Message edit/delete
+   - Friend list & requests
+   - Block users
+   - UI refinements
+
+PHASE 6: Polish & Testing (Days 15-16)
+   - Bug fixes
+   - Performance optimization
+   - Error handling
+   - Cross-browser testing
+   - Security audit
+
+================================================================================
+7. SUCCESS CRITERIA (MVP)
+================================================================================
+
+Core MVP Success:
+1. User can signup, login, and manage profile
+2. User can create 1-to-1 private conversations
+3. User can send and receive messages in real-time (< 200ms)
+4. Messages show delivery and read status
+5. Typing indicators work in real-time
+6. Online/offline presence updates in real-time
+7. User can see conversation history (paginated, scrollable)
+8. User can add emoji reactions to messages
+9. User can edit/delete own messages
+10. User can upload and share images
+11. All features work without page refresh
+12. Auto-reconnect on connection loss
+13. All permissions work correctly (can't access other users' chats)
+14. No major crashes or data loss bugs
+
+Post-MVP Enhancements:
+- Group channels with member management
+- Message search and filtering
+- Message threads (start discussion on specific message)
+- Voice notes and file attachments
+- Push notifications
+- Message archiving/pinning
+
+================================================================================
+8. OUT OF SCOPE (Initial Release)
+================================================================================
+
+NOT INCLUDED IN MVP:
+- End-to-end encryption (E2E)
+- Video/voice calls
+- Screen sharing
+- Message translation
+- Custom themes/dark mode
+- Animated stickers
+- Advanced spam filtering
+- Message scheduling
+- Admin analytics dashboard
+- iOS/Android native apps
+- Email notifications (basic notifications only)
+- Hashtag search (keyword search only)
+- Voice-to-text transcription
+- AI-powered responses/chatbots
+- Message disappearing after time
+- User status (away, busy, etc.) - only online/offline added later
+
+SECURITY NOTES:
+- No self-hosted option initially
+- Admin panel limited to basic user/content moderation
+- No role-based access control (basic user/admin only)
+
+================================================================================
+END OF SRS
+================================================================================
