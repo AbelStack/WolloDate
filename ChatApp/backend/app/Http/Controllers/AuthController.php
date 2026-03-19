@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Support\ActiveUserCapacity;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -15,6 +16,10 @@ use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
+    public function __construct(private readonly ActiveUserCapacity $activeUserCapacity)
+    {
+    }
+
     /**
      * User Signup
      * 
@@ -222,11 +227,21 @@ class AuthController extends Controller
                 ], 403);
             }
 
+            if ($this->activeUserCapacity->isAtCapacityForUser($user->id)) {
+                return response()->json([
+                    'message' => 'The system is busy, please try again later.',
+                    'code' => 'system_busy',
+                ], 429);
+            }
+
             // Update user as online
             $user->update([
                 'is_online' => true,
                 'last_seen' => now(),
             ]);
+
+            // Seed heartbeat so login and socket limits stay in sync.
+            $this->activeUserCapacity->markActive($user->id);
 
             // Create token
             $token = $user->createToken('auth_token')->plainTextToken;
@@ -277,6 +292,8 @@ class AuthController extends Controller
                 'is_online' => false,
                 'last_seen' => now(),
             ]);
+
+            $this->activeUserCapacity->markInactive($user->id);
 
             // Revoke current token
             $request->user()->currentAccessToken()->delete();
