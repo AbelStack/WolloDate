@@ -13,7 +13,7 @@ class DepartmentSeeder extends Seeder
         // Main Campus
         $main = Campus::where('name', 'Main')->first();
         if ($main) {
-            foreach (['Law', 'Accounting', 'Economics', 'Management', 'Psychology', 'Business Administration', 'Journalism',  'Other (specify)'] as $dept) {
+            foreach (['Freshman', 'Remedial', 'Law', 'Accounting', 'Economics', 'Management', 'Psychology', 'Business Administration', 'Journalism',  'Other (specify)'] as $dept) {
                 Department::create(['campus_id' => $main->id, 'name' => $dept]);
             }
         }
@@ -21,7 +21,7 @@ class DepartmentSeeder extends Seeder
         // Kombolcha Campus
         $kombolcha = Campus::where('name', 'Kombolcha')->first();
         if ($kombolcha) {
-            foreach ([ 'Software Engineering', 'Computer Science', 'Information Technology', 'Information System', 'Civil Engineering', 'Mechanical Engineering', 'Electrical Engineering', 'Architecture', 'Construction Management', 'Biomedical Engineering', 'Water Resources Engineering', 'Other (specify)'] as $dept) {
+            foreach ([ 'Software Engineering', 'Computer Science', 'Information Technology', 'Information System', 'Civil Engineering', 'Mechanical Engineering', 'Electrical Engineering', 'Architecture', 'Construction Management', 'Biomedical Engineering', 'Water Resources Engineering', 'Freshman', 'Remedial', 'Other (specify)'] as $dept) {
                 Department::create(['campus_id' => $kombolcha->id, 'name' => $dept]);
             }
         }
