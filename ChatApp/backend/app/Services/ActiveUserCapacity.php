@@ -40,4 +40,10 @@ class ActiveUserCapacity
     {
         return Redis::scard($this->key);
     }
+
+    public function refreshHeartbeat($userId)
+    {
+        // For Redis, just mark as active again to refresh TTL
+        $this->markActive($userId);
+    }
 }
