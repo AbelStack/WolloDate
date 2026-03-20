@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
-use App\Support\ActiveUserCapacity;
+use App\Services\ActiveUserCapacity;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -15,6 +15,18 @@ use Illuminate\Support\Facades\URL;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
+
+    /**
+     * Heartbeat endpoint to refresh active user TTL in Redis
+     * POST /api/auth/heartbeat
+     * Requires: Authenticated user (Bearer token)
+     */
+    public function heartbeat(Request $request)
+    {
+        $user = $request->user();
+        $this->activeUserCapacity->markActive($user->id);
+        return response()->json(['message' => 'Heartbeat received'], 200);
+    }
 {
     public function __construct(private readonly ActiveUserCapacity $activeUserCapacity)
     {
@@ -305,7 +317,7 @@ class AuthController extends Controller
                 'last_seen' => now(),
             ]);
 
-            $this->activeUserCapacity->markInactive($user->id);
+            $this->activeUserCapacity->remove($user->id);
 
             // Revoke current token
             $request->user()->currentAccessToken()->delete();

@@ -23,6 +23,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Auth
     Route::post('/auth/logout', [\App\Http\Controllers\AuthController::class, 'logout']);
     Route::get('/auth/me', [\App\Http\Controllers\AuthController::class, 'me']);
+    Route::post('/auth/heartbeat', [\App\Http\Controllers\AuthController::class, 'heartbeat']);
     
     // Users
     Route::get('/users/search', [\App\Http\Controllers\UserController::class, 'search']);

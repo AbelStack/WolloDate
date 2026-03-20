@@ -4,6 +4,18 @@ import { auth } from '../api'
 const AuthContext = createContext(null)
 
 export function AuthProvider({ children }) {
+    // Heartbeat timer to keep user active in Redis
+    useEffect(() => {
+      let interval = null;
+      if (user && localStorage.getItem('token')) {
+        interval = setInterval(() => {
+          auth.heartbeat().catch(() => {});
+        }, 60000); // every 60 seconds
+      }
+      return () => {
+        if (interval) clearInterval(interval);
+      };
+    }, [user]);
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
 

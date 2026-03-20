@@ -78,7 +78,8 @@ export const auth = {
   resetPassword: data => api.post('/auth/password/reset', data),
   login: data => api.post('/auth/login', data),
   logout: () => api.post('/auth/logout'),
-  me: () => api.get('/auth/me')
+  me: () => api.get('/auth/me'),
+  heartbeat: () => api.post('/auth/heartbeat'),
 }
 
 // Campus endpoints
