@@ -15,6 +15,10 @@ use Illuminate\Support\Facades\URL;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
+{
+    public function __construct(private readonly ActiveUserCapacity $activeUserCapacity)
+    {
+    }
 
     /**
      * Heartbeat endpoint to refresh active user TTL in Redis
@@ -26,10 +30,6 @@ class AuthController extends Controller
         $user = $request->user();
         $this->activeUserCapacity->markActive($user->id);
         return response()->json(['message' => 'Heartbeat received'], 200);
-    }
-{
-    public function __construct(private readonly ActiveUserCapacity $activeUserCapacity)
-    {
     }
 
     /**
