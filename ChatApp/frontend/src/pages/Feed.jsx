@@ -903,7 +903,7 @@ export default function Feed() {
                 <div className="mt-2 rounded-lg border border-gray-700 bg-gray-800 px-2 sm:px-3 py-2 flex flex-wrap items-center justify-between gap-2 sm:gap-3">
                   <div className="min-w-0">
                     <p className="text-xs text-gray-300">Attached media</p>
-                    <p className="text-sm text-white truncate max-w-[120px] sm:max-w-none">{newPostMedia.length} selected</p>
+                    <p className="text-sm text-white truncate max-w-30 sm:max-w-none">{newPostMedia.length} selected</p>
                   </div>
                   <button
                     onClick={removeMedia}
