@@ -381,7 +381,8 @@ class AuthController extends Controller
         $frontendUrl = rtrim((string) env('FRONTEND_URL', 'http://localhost:5173'), '/');
         $redirectBase = $frontendUrl . '/login';
 
-        if (!$request->hasValidSignature(false)) {
+        // Validate the signature
+        if (!$request->hasValidSignature()) {
             return redirect()->away($redirectBase . '?verified=expired');
         }
 
@@ -578,24 +579,17 @@ class AuthController extends Controller
             [
                 'id' => $user->id,
                 'hash' => sha1($user->getEmailForVerification()),
-            ],
-            false
+            ]
         );
 
-        $verificationBaseUrl = rtrim((string) env(
-            'VERIFICATION_LINK_BASE_URL',
-            env('FRONTEND_URL', (string) config('app.url', 'http://localhost:8000'))
-        ), '/');
-        $verificationUrl = $verificationBaseUrl . '/' . ltrim($verificationPath, '/');
-
-        Mail::send([], [], function ($message) use ($user, $verificationUrl) {
+        Mail::send([], [], function ($message) use ($user, $verificationPath) {
             $message
                 ->to($user->email)
                 ->subject('Verify your email address')
                 ->html(
                     '<h2>Verify your email</h2>' .
                     '<p>Click the link below to verify your account.</p>' .
-                    '<p><a href="' . e($verificationUrl) . '">Verify Email</a></p>' .
+                    '<p><a href="' . e($verificationPath) . '">Verify Email</a></p>' .
                     '<p>This link expires in 60 minutes.</p>'
                 );
         });
