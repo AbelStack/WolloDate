@@ -447,10 +447,10 @@ export default function Profile() {
 
             {/* Stats */}
             <div className="flex-1">
-              <div className="flex items-center gap-1 mb-0.5">
-                <h1 className="text-lg sm:text-xl font-semibold text-white">{profile?.name}</h1>
+              <div className="flex items-center gap-1 mb-0.5 min-w-0">
+                <h1 className="text-lg sm:text-xl font-semibold text-white truncate">{profile?.name}</h1>
                 {profile?.is_approved ? <VerifiedBadge size="md" /> : <Lock size={16} className="text-yellow-500" title="Pending verification" />}
-                {isCreatorUser(profile) && <CreatorBadge size="xs" />}
+                {isCreatorUser(profile) && <CreatorBadge size="xxs" />}
               </div>
               {profile?.username && (
                 <p className="text-gray-400 text-sm mb-2">@{profile.username}</p>

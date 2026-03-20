@@ -48,8 +48,8 @@ export function SocketProvider({ children }) {
     const newSocket = io(socketUrl, {
       path: socketPath,
       auth: { token },
-      transports: ['websocket', 'polling'],
-      upgrade: true,
+      transports: ['websocket'],
+      upgrade: false,
       reconnection: true,
       reconnectionAttempts: 10,
       reconnectionDelay: 1000,
@@ -111,13 +111,14 @@ export function SocketProvider({ children }) {
       setTypingUsers(prev => {
         const next = new Map(prev)
         const current = next.get(convKey) || []
+        const normalizedUserId = String(userId)
         
         if (isTyping) {
-          if (!current.find(u => u.userId === userId)) {
-            next.set(convKey, [...current, { userId, userName }])
+          if (!current.find(u => String(u.userId) === normalizedUserId)) {
+            next.set(convKey, [...current, { userId: normalizedUserId, userName }])
           }
         } else {
-          next.set(convKey, current.filter(u => u.userId !== userId))
+          next.set(convKey, current.filter(u => String(u.userId) !== normalizedUserId))
         }
         return next
       })
@@ -132,7 +133,7 @@ export function SocketProvider({ children }) {
           setTypingUsers(prev => {
             const next = new Map(prev)
             const current = next.get(convKey) || []
-            next.set(convKey, current.filter(u => u.userId !== userId))
+            next.set(convKey, current.filter(u => String(u.userId) !== String(userId)))
             return next
           })
         }, 5000))

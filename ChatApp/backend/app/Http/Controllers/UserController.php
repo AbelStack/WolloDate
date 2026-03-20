@@ -102,12 +102,20 @@ class UserController extends Controller
             // Validate input
             $validated = $request->validate([
                 'name' => 'sometimes|string|max:255',
-                'username' => 'sometimes|string|min:3|max:30|regex:/^[a-zA-Z0-9_]+$/|unique:users,username,' . $id,
+                'username' => [
+                    'sometimes',
+                    'string',
+                    'min:3',
+                    'max:30',
+                    // Start with any Unicode letter, then allow Unicode letters, numbers, symbols
+                    'regex:/^\p{L}[\p{L}\p{N}\p{M}\p{Pd}\p{Pc}\p{S}\d_\-.@]*$/u',
+                    'unique:users,username,' . $id,
+                ],
                 'bio' => 'nullable|string|max:500',
                 'status_message' => 'nullable|string|max:100',
                 'is_private' => 'sometimes|boolean',
             ], [
-                'username.regex' => 'Username can only contain letters, numbers, and underscores.',
+                'username.regex' => 'Username must start with a letter and can contain letters, numbers, symbols, and Amharic characters.',
                 'username.unique' => 'This username is already taken.',
             ]);
 

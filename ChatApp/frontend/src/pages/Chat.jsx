@@ -4,8 +4,6 @@ import { useAuth } from '../context/AuthContext'
 import { useSocket } from '../context/useSocket'
 import { conversations, messages, users, media, stories } from '../api'
 import StoryViewer from '../components/StoryViewer'
-import CreatorBadge from '../components/CreatorBadge'
-import { isCreatorUser } from '../utils/creator'
 import { 
   Send, Info, Heart, Smile, PenSquare, 
   ChevronDown, X, Check, CheckCheck, Edit2, 
@@ -251,7 +249,7 @@ export default function Chat() {
     }
 
     const handleMessageEdited = ({ conversationId: convId, messageId, content }) => {
-      if (convId === conversationId) {
+      if (String(convId) === String(conversationId)) {
         setMsgList(prev => prev.map(m => 
           m.id === messageId ? { ...m, content, edited_at: new Date().toISOString() } : m
         ))
@@ -259,7 +257,7 @@ export default function Chat() {
     }
 
     const handleMessageDeleted = ({ conversationId: convId, messageId }) => {
-      if (convId === conversationId) {
+      if (String(convId) === String(conversationId)) {
         setMsgList(prev => prev.map(m => 
           m.id === messageId ? { ...m, content: '[Message deleted]', deleted: true } : m
         ))
@@ -267,7 +265,7 @@ export default function Chat() {
     }
 
     const handleReaction = ({ conversationId: convId, messageId, emoji, userId, action }) => {
-      if (convId === conversationId) {
+      if (String(convId) === String(conversationId)) {
         setMsgList(prev => prev.map(m => {
           if (m.id !== messageId) return m
           let reactions = [...(m.reactions || [])]
@@ -292,10 +290,10 @@ export default function Chat() {
     // When another user marks messages as seen, refresh conv list for read receipts
     const handleUnreadUpdated = ({ conversationId: convId, userId: seenByUserId }) => {
       // If messages in the currently-open conversation were seen by someone else
-      if (String(convId) === String(conversationId) && seenByUserId !== user.id) {
+      if (String(convId) === String(conversationId) && String(seenByUserId) !== String(user.id)) {
         // Refresh messages to show updated read receipts
         setMsgList(prev => prev.map(m =>
-          m.user_id === user.id ? { ...m, status: 'seen' } : m
+          String(m.user_id) === String(user.id) ? { ...m, status: 'seen' } : m
         ))
       }
       // Always refresh conversation list to update per-conv badges
@@ -324,7 +322,7 @@ export default function Chat() {
       socket.off('conversation:unread_updated', handleUnreadUpdated)
       socket.off('unread:refresh', handleUnreadRefresh)
     }
-  }, [socket, conversationId, appendMessageIfMissing, requestConversationsRefresh])
+  }, [socket, conversationId, user?.id, appendMessageIfMissing, requestConversationsRefresh])
 
   const loadConversations = async () => {
     try {
@@ -883,7 +881,8 @@ export default function Chat() {
     if (conv.type === 'group') {
       return { name: conv.name || 'Group', avatar_url: conv.icon_url, is_online: false }
     }
-    const otherMember = conv.members?.find(m => m.id !== user.id)
+    const currentUserId = String(user.id)
+    const otherMember = conv.members?.find(m => String(m.id) !== currentUserId)
     return otherMember || { name: conv.name || 'Chat', avatar_url: null }
   }
 
@@ -1487,7 +1486,6 @@ export default function Chat() {
         <div className="h-14 px-4 flex items-center justify-between border-b border-gray-800">
           <div className="flex items-center gap-1 cursor-pointer hover:opacity-70" onClick={() => navigate('/profile')}>
             <span className="font-semibold text-base truncate text-white">{user.name}</span>
-            {isCreatorUser(user) && <CreatorBadge size="xs" />}
             <ChevronDown size={16} className="text-gray-400" />
           </div>
           <div className="flex items-center gap-2">
@@ -1557,7 +1555,7 @@ export default function Chat() {
                     {online && <div className="online-dot"></div>}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-sm truncate text-white flex items-center gap-1">{other.name} {isCreatorUser(other) && <CreatorBadge size="xs" />}</p>
+                    <p className="font-semibold text-sm truncate text-white">{other.name}</p>
                     <p className={`text-xs truncate ${isTypingInConv ? 'text-green-400' : 'text-gray-500'}`}>
                       {isTypingInConv ? 'Typing...' : (conv.last_message?.content?.substring(0, 30) || 'Start chatting')}
                     </p>
@@ -1622,13 +1620,12 @@ export default function Chat() {
                     <button
                       type="button"
                       onClick={navigateToPrivateUserProfile}
-                      className="font-semibold text-sm text-white hover:underline inline-flex items-center gap-1"
+                      className="font-semibold text-sm text-white hover:underline"
                     >
                       {getOtherUser(activeConv).name}
-                      {isCreatorUser(getOtherUser(activeConv)) && <CreatorBadge size="xs" />}
                     </button>
                   ) : (
-                    <span className="font-semibold text-sm text-white inline-flex items-center gap-1">{getOtherUser(activeConv).name} {isCreatorUser(getOtherUser(activeConv)) && <CreatorBadge size="xs" />}</span>
+                    <span className="font-semibold text-sm text-white">{getOtherUser(activeConv).name}</span>
                   )}
                   <p className="text-xs text-gray-500">
                     {typingUsers.length > 0 
@@ -1772,7 +1769,7 @@ export default function Chat() {
                       
                       <div className={`flex flex-col max-w-[80%] sm:max-w-[65%] ${isMine ? 'items-end' : 'items-start'}`}>
                         {!isMine && activeConv.type === 'group' && (
-                          <span className="text-xs text-ig-gray-500 mb-1 inline-flex items-center gap-1">{msg.user?.name} {isCreatorUser(msg.user) && <CreatorBadge size="xs" />}</span>
+                          <span className="text-xs text-ig-gray-500 mb-1">{msg.user?.name}</span>
                         )}
                         
                         {editingMessage === msg.id ? (
@@ -2120,7 +2117,7 @@ export default function Chat() {
                     </div>
                   )}
                   <div className="flex-1">
-                    <p className="font-semibold text-sm text-white inline-flex items-center gap-1">{u.name} {isCreatorUser(u) && <CreatorBadge size="xs" />}</p>
+                    <p className="font-semibold text-sm text-white">{u.name}</p>
                     <p className="text-gray-500 text-xs">{u.email}</p>
                   </div>
                   {isUserOnline(u.id) && <div className="w-2 h-2 rounded-full bg-green-500"></div>}
@@ -2170,7 +2167,6 @@ export default function Chat() {
                 {selectedUsers.map(u => (
                   <div key={u.id} className="flex items-center gap-1 bg-blue-500/20 text-blue-400 px-2 py-1 rounded-full text-sm">
                     {u.name}
-                    {isCreatorUser(u) && <CreatorBadge size="xs" />}
                     <button onClick={() => toggleUserSelection(u)} className="hover:opacity-60">
                       <X size={14} />
                     </button>
@@ -2206,7 +2202,7 @@ export default function Chat() {
                       </div>
                     )}
                     <div className="flex-1">
-                      <p className="font-semibold text-sm text-white inline-flex items-center gap-1">{u.name} {isCreatorUser(u) && <CreatorBadge size="xs" />}</p>
+                      <p className="font-semibold text-sm text-white">{u.name}</p>
                       <p className="text-gray-500 text-xs">{u.email}</p>
                     </div>
                     <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${selected ? 'bg-blue-500 border-blue-500' : 'border-gray-600'}`}>
@@ -2265,7 +2261,7 @@ export default function Chat() {
                         </div>
                       )}
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-white truncate flex items-center gap-1">{other.name} {isCreatorUser(other) && <CreatorBadge size="xs" />}</p>
+                        <p className="text-sm font-semibold text-white truncate">{other.name}</p>
                         <p className="text-xs text-gray-500 truncate">{conv.last_message?.content || 'No messages yet'}</p>
                       </div>
                       {forwardingTo && String(forwardingTo) === String(conv.id) && (
@@ -2293,7 +2289,7 @@ export default function Chat() {
               <div className="w-20 h-20 rounded-full bg-linear-to-br from-blue-500 to-cyan-600 flex items-center justify-center text-white text-2xl font-semibold mx-auto mb-3">
                 {activeConv.type === 'group' ? <Users size={32} /> : getOtherUser(activeConv).name?.[0]?.toUpperCase()}
               </div>
-              <h3 className="font-semibold text-lg text-white inline-flex items-center gap-1">{getOtherUser(activeConv).name} {isCreatorUser(getOtherUser(activeConv)) && <CreatorBadge size="xs" />}</h3>
+              <h3 className="font-semibold text-lg text-white">{getOtherUser(activeConv).name}</h3>
               {activeConv.type === 'private' && (
                 <p className="text-gray-500 text-sm">
                   {isUserOnline(getOtherUser(activeConv).id) ? 'Active now' : 'Offline'}
@@ -2309,7 +2305,7 @@ export default function Chat() {
                       <div className="w-8 h-8 rounded-full bg-linear-to-br from-blue-500 to-cyan-600 flex items-center justify-center text-white text-xs font-semibold">
                         {m.name?.[0]?.toUpperCase()}
                       </div>
-                      <span className="text-sm text-white inline-flex items-center gap-1">{m.name} {isCreatorUser(m) && <CreatorBadge size="xs" />}</span>
+                      <span className="text-sm text-white">{m.name}</span>
                       {isUserOnline(m.id) && <div className="w-2 h-2 rounded-full bg-green-500 ml-auto"></div>}
                     </div>
                   ))}
@@ -2345,7 +2341,7 @@ export default function Chat() {
                   </div>
                 </div>
 
-                <h3 className="text-white text-2xl font-semibold text-center inline-flex items-center gap-2">{profilePreview.name} {isCreatorUser(profilePreview) && <CreatorBadge size="xs" />}</h3>
+                <h3 className="text-white text-2xl font-semibold text-center">{profilePreview.name}</h3>
                 <p className="text-gray-300 text-sm mt-1">@{profilePreview.username || 'unknown'}</p>
 
                 <div className="mt-8 grid grid-cols-4 gap-5 text-white/90">

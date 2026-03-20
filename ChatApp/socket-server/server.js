@@ -1,6 +1,5 @@
 const { Server } = require('socket.io')
 const http = require('http')
-const Redis = require('ioredis')
 const fs = require('fs')
 const path = require('path')
 
@@ -59,63 +58,6 @@ const API_URL = process.env.API_URL
   || readEnvValue(path.join(__dirname, '..', 'backend', '.env'), 'APP_URL')
   || 'http://localhost:8000'
 
-const ACTIVE_USER_LIMIT = Number(
-  process.env.ACTIVE_USER_LIMIT
-  || readEnvValue(path.join(__dirname, '.env'), 'ACTIVE_USER_LIMIT')
-  || readEnvValue(path.join(__dirname, '..', 'backend', '.env'), 'ACTIVE_USER_LIMIT')
-  || 60
-)
-
-const ACTIVE_USER_TTL_SECONDS = Number(
-  process.env.ACTIVE_USER_TTL_SECONDS
-  || readEnvValue(path.join(__dirname, '.env'), 'ACTIVE_USER_TTL_SECONDS')
-  || readEnvValue(path.join(__dirname, '..', 'backend', '.env'), 'ACTIVE_USER_TTL_SECONDS')
-  || 120
-)
-
-const ACTIVE_USER_REDIS_KEY = process.env.ACTIVE_USER_REDIS_KEY
-  || readEnvValue(path.join(__dirname, '.env'), 'ACTIVE_USER_REDIS_KEY')
-  || readEnvValue(path.join(__dirname, '..', 'backend', '.env'), 'ACTIVE_USER_REDIS_KEY')
-  || 'chat:presence:active_users'
-
-const REDIS_HOST = process.env.REDIS_HOST
-  || readEnvValue(path.join(__dirname, '.env'), 'REDIS_HOST')
-  || readEnvValue(path.join(__dirname, '..', 'backend', '.env'), 'REDIS_HOST')
-  || '127.0.0.1'
-
-const REDIS_PORT = Number(
-  process.env.REDIS_PORT
-  || readEnvValue(path.join(__dirname, '.env'), 'REDIS_PORT')
-  || readEnvValue(path.join(__dirname, '..', 'backend', '.env'), 'REDIS_PORT')
-  || 6379
-)
-
-const rawRedisPassword = process.env.REDIS_PASSWORD
-  || readEnvValue(path.join(__dirname, '.env'), 'REDIS_PASSWORD')
-  || readEnvValue(path.join(__dirname, '..', 'backend', '.env'), 'REDIS_PASSWORD')
-
-const REDIS_PASSWORD = (rawRedisPassword && rawRedisPassword !== 'null')
-  ? rawRedisPassword
-  : undefined
-
-const SYSTEM_BUSY_MESSAGE = 'The system is busy, please try again later.'
-
-const redis = new Redis({
-  host: REDIS_HOST,
-  port: REDIS_PORT,
-  password: REDIS_PASSWORD,
-  maxRetriesPerRequest: 3,
-  enableReadyCheck: true
-})
-
-redis.on('ready', () => {
-  console.log('[Socket Server] Redis connected for active-user capacity checks')
-})
-
-redis.on('error', (error) => {
-  console.error(`[Socket Server] Redis error: ${error.message}`)
-})
-
 // Authenticate socket connections by validating Sanctum token against the Laravel backend
 io.use(async (socket, next) => {
   const token = socket.handshake.auth?.token
@@ -137,10 +79,6 @@ io.use(async (socket, next) => {
       return next(new Error('Invalid token'))
     }
 
-    if (!(await canAcceptConnection(socket.userId))) {
-      return next(new Error(SYSTEM_BUSY_MESSAGE))
-    }
-
     next()
   } catch {
     return next(new Error('Authentication failed'))
@@ -155,61 +93,6 @@ function normalizeUserId(userId) {
   return String(userId)
 }
 
-function nowEpochSeconds() {
-  return Math.floor(Date.now() / 1000)
-}
-
-function capacityExpiryTimestamp() {
-  return nowEpochSeconds() + ACTIVE_USER_TTL_SECONDS
-}
-
-async function cleanupExpiredActiveUsers() {
-  await redis.zremrangebyscore(ACTIVE_USER_REDIS_KEY, '-inf', nowEpochSeconds())
-}
-
-async function isUserActiveInRedis(userId) {
-  const score = await redis.zscore(ACTIVE_USER_REDIS_KEY, normalizeUserId(userId))
-  return score !== null
-}
-
-async function getRedisActiveUsersCount() {
-  return Number(await redis.zcard(ACTIVE_USER_REDIS_KEY))
-}
-
-async function touchActiveUser(userId) {
-  try {
-    await redis.zadd(ACTIVE_USER_REDIS_KEY, capacityExpiryTimestamp(), normalizeUserId(userId))
-  } catch (error) {
-    console.error(`[Socket Server] Failed to update active user heartbeat: ${error.message}`)
-  }
-}
-
-async function removeActiveUser(userId) {
-  try {
-    await redis.zrem(ACTIVE_USER_REDIS_KEY, normalizeUserId(userId))
-  } catch (error) {
-    console.error(`[Socket Server] Failed to remove active user: ${error.message}`)
-  }
-}
-
-async function canAcceptConnection(userId) {
-  const normalizedUserId = normalizeUserId(userId)
-  try {
-    await cleanupExpiredActiveUsers()
-
-    const alreadyActive = onlineUsers.has(normalizedUserId) || await isUserActiveInRedis(normalizedUserId)
-    if (alreadyActive) {
-      return true
-    }
-
-    const activeUsersCount = await getRedisActiveUsersCount()
-    return activeUsersCount < ACTIVE_USER_LIMIT
-  } catch (error) {
-    console.error(`[Socket Server] Capacity check fallback to in-memory: ${error.message}`)
-    return onlineUsers.has(normalizedUserId) || onlineUsers.size < ACTIVE_USER_LIMIT
-  }
-}
-
 function getOnlineUsersList() {
   return Array.from(onlineUsers.entries()).map(([id, data]) => ({
     userId: id,
@@ -217,7 +100,7 @@ function getOnlineUsersList() {
   }))
 }
 
-async function registerPresence(socket) {
+function registerPresence(socket) {
   const userId = normalizeUserId(socket.userId)
   const name = socket.userName
   const now = Date.now()
@@ -232,7 +115,6 @@ async function registerPresence(socket) {
 
   onlineUsers.set(userId, entry)
   userSockets.set(socket.id, userId)
-  await touchActiveUser(userId)
 
   if (isFirstSocket) {
     io.emit('user:online', { userId, name })
@@ -240,7 +122,7 @@ async function registerPresence(socket) {
   }
 }
 
-async function unregisterPresence(socket, reason = 'disconnect') {
+function unregisterPresence(socket, reason = 'disconnect') {
   const userId = userSockets.get(socket.id)
   if (!userId) {
     return
@@ -257,14 +139,12 @@ async function unregisterPresence(socket, reason = 'disconnect') {
 
   if (userData.sockets.size === 0) {
     onlineUsers.delete(userId)
-    await removeActiveUser(userId)
     io.emit('user:offline', { userId, name: userData?.name })
     console.log(`[Socket] User offline (${reason}): ${userData?.name} (${userId})`)
     return
   }
 
   userData.lastHeartbeatAt = Date.now()
-  await touchActiveUser(userId)
 }
 
 io.on('connection', (socket) => {
@@ -292,7 +172,6 @@ io.on('connection', (socket) => {
     if (!userData) return
 
     userData.lastHeartbeatAt = Date.now()
-    void touchActiveUser(userId)
   })
 
   // Join conversation room
@@ -491,7 +370,6 @@ setInterval(() => {
 
     if (userData.sockets.size === 0) {
       onlineUsers.delete(userId)
-      void removeActiveUser(userId)
       io.emit('user:offline', { userId, name: userData?.name })
       console.log(`[Socket] User offline (stale prune): ${userData?.name} (${userId})`)
     }
@@ -502,5 +380,4 @@ const PORT = process.env.PORT || 3001
 server.listen(PORT, () => {
   console.log(`[Socket Server] Running on port ${PORT}`)
   console.log(`[Socket Server] CORS enabled for: ${allowedOrigins.join(', ')}`)
-  console.log(`[Socket Server] Active user limit: ${ACTIVE_USER_LIMIT}`)
 })

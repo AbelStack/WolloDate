@@ -29,12 +29,19 @@ class AuthController extends Controller
     public function signup(Request $request)
     {
         $studentIdPath = null;
-        $user = null;
 
         try {
             $validated = $request->validate([
                 'name' => 'required|string|max:255',
-                'username' => 'required|string|min:3|max:30|regex:/^[a-zA-Z0-9_]+$/|unique:users,username',
+                'username' => [
+                    'required',
+                    'string',
+                    'min:3',
+                    'max:30',
+                    // Start with any Unicode letter, then allow Unicode letters, numbers, symbols
+                    'regex:/^\p{L}[\p{L}\p{N}\p{M}\p{Pd}\p{Pc}\p{S}\d_\-.@]*$/u',
+                    'unique:users,username',
+                ],
                 'email' => 'required|email|unique:users,email|unique:admins,email',
                 'password' => ['required', 'string', 'min:8', 'regex:/^(?=.*[A-Za-z])(?=.*\d).+$/', 'confirmed'],
                 'student_id_image' => 'required|file|max:51200',
@@ -47,7 +54,7 @@ class AuthController extends Controller
                 'username.required' => 'Username is required.',
                 'username.min' => 'Username must be at least 3 characters.',
                 'username.max' => 'Username must be 30 characters or less.',
-                'username.regex' => 'Username can only contain letters, numbers, and underscores.',
+                'username.regex' => 'Username must start with a letter and can contain letters, numbers, symbols, and Amharic characters.',
                 'username.unique' => 'This username is already taken.',
                 'email.required' => 'Email is required.',
                 'email.email' => 'Enter a valid email address.',
@@ -98,12 +105,27 @@ class AuthController extends Controller
                 'is_private' => true,
             ]);
 
-            $this->sendVerificationEmail($user);
-
             DB::commit();
 
+            $verificationEmailSent = true;
+            $message = 'Registration successful. Please verify your email before logging in.';
+
+            try {
+                $this->sendVerificationEmail($user);
+            } catch (\Exception $mailException) {
+                $verificationEmailSent = false;
+                $message = 'Registration successful, but verification email could not be sent right now. Please use resend verification.';
+
+                Log::warning('Signup completed but verification email failed', [
+                    'user_id' => $user->id,
+                    'email' => $user->email,
+                    'error' => $mailException->getMessage(),
+                ]);
+            }
+
             return response()->json([
-                'message' => 'Registration successful. Please verify your email before logging in.',
+                'message' => $message,
+                'verification_email_sent' => $verificationEmailSent,
                 'user' => [
                     'id' => $user->id,
                     'name' => $user->name,
@@ -130,19 +152,15 @@ class AuthController extends Controller
                 DB::rollBack();
             }
 
-            if ($user && $user->exists) {
-                $user->delete();
-            }
-
             if ($studentIdPath && Storage::disk('public')->exists($studentIdPath)) {
                 Storage::disk('public')->delete($studentIdPath);
             }
 
-            Log::error('Signup failed during user creation or verification email send', [
+            Log::error('Signup failed during user creation', [
                 'error' => $e->getMessage(),
             ]);
 
-            $message = 'Signup failed. Unable to send verification email. Please check mail settings and try again.';
+            $message = 'Signup failed. Please try again.';
 
             if (app()->environment('local')) {
                 $message .= ' (' . $e->getMessage() . ')';
@@ -229,18 +247,12 @@ class AuthController extends Controller
 
             if ($this->activeUserCapacity->isAtCapacityForUser($user->id)) {
                 return response()->json([
-                    'message' => 'The system is busy, please try again later.',
+                    'message' => 'System is busy now, please come back later.',
                     'code' => 'system_busy',
                 ], 429);
             }
 
-            // Update user as online
-            $user->update([
-                'is_online' => true,
-                'last_seen' => now(),
-            ]);
-
-            // Seed heartbeat so login and socket limits stay in sync.
+            // Mark online heartbeat for active-user capacity tracking.
             $this->activeUserCapacity->markActive($user->id);
 
             // Create token
@@ -319,6 +331,8 @@ class AuthController extends Controller
     {
         try {
             $user = auth()->user();
+
+            $this->activeUserCapacity->refreshHeartbeat($user->id);
 
             return response()->json([
                 'user' => [

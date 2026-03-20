@@ -1048,7 +1048,6 @@ export default function Feed() {
                   <div className="px-4 pt-3 text-white text-sm whitespace-pre-wrap">
                     <span className="font-semibold mr-1">{post.user?.name}</span>
                     {post.user?.is_approved && <VerifiedBadge size="xs" className="inline mr-1" />}
-                    {isCreatorUser(post.user) && <CreatorBadge size="xs" className="mr-1" />}
                     <span>{renderTextWithMentions(post.caption, handleMentionClick)}</span>
                   </div>
                 )}
