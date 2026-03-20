@@ -16,7 +16,6 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->append(\Illuminate\Http\Middleware\HandleCors::class);
-        $middleware->statefulApi();
         
         // Register Sanctum ability middleware aliases
         $middleware->alias([
