@@ -93,57 +93,71 @@ class PostController extends Controller
     {
         $validated = $request->validate([
             'caption' => 'nullable|string|max:2200',
-            'image' => 'nullable|file|max:25600', // 25MB max
-            'images' => 'nullable|array|max:8',
-            'images.*' => 'file|max:25600',
+            'media' => 'nullable|file|max:51200', // 50MB max for video
+            'media_files' => 'nullable|array|max:8',
+            'media_files.*' => 'file|max:51200',
         ], [
-            'image.max' => 'Post image must be less than 25MB.',
-            'images.max' => 'You can upload up to 8 images per post.',
-            'images.*.max' => 'Each post image must be less than 25MB.',
+            'media.max' => 'Post media must be less than 50MB.',
+            'media_files.max' => 'You can upload up to 8 media files per post.',
+            'media_files.*.max' => 'Each post media file must be less than 50MB.',
         ]);
 
         $files = [];
-        if ($request->hasFile('images')) {
-            $files = array_merge($files, $request->file('images'));
+        if ($request->hasFile('media_files')) {
+            $files = array_merge($files, $request->file('media_files'));
         }
-        if ($request->hasFile('image')) {
-            $files[] = $request->file('image');
+        if ($request->hasFile('media')) {
+            $files[] = $request->file('media');
         }
 
         if (count($files) > 8) {
-            return response()->json(['message' => 'You can upload up to 8 images per post.'], 422);
+            return response()->json(['message' => 'You can upload up to 8 media files per post.'], 422);
         }
 
-        foreach ($files as $imageFile) {
-            $mimeType = strtolower((string) $imageFile?->getMimeType());
-            $extension = strtolower((string) $imageFile?->getClientOriginalExtension());
+        $mediaPaths = [];
+        $mediaTypes = [];
+        $imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'heic', 'heif', 'avif', 'jfif'];
+        $videoExtensions = ['mp4', 'mov', 'webm', 'mkv', '3gp', 'avi', 'wmv', 'mpeg'];
+        $videoMimeTypes = [
+            'video/mp4',
+            'video/quicktime',
+            'video/webm',
+            'video/x-matroska',
+            'video/3gpp',
+            'video/3gpp2',
+            'video/x-msvideo',
+            'video/x-ms-wmv',
+            'video/mpeg',
+        ];
 
-            $isImageMime = str_starts_with($mimeType, 'image/');
-            $imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'heic', 'heif', 'avif', 'jfif'];
-            $isImageExtension = in_array($extension, $imageExtensions, true);
+        foreach ($files as $file) {
+            $mimeType = strtolower((string) $file?->getMimeType());
+            $extension = strtolower((string) $file?->getClientOriginalExtension());
 
-            if (!$isImageMime && !$isImageExtension) {
+            $isImage = str_starts_with($mimeType, 'image/') || in_array($extension, $imageExtensions, true);
+            $isVideo = str_starts_with($mimeType, 'video/') || in_array($mimeType, $videoMimeTypes, true) || in_array($extension, $videoExtensions, true);
+
+            if (!$isImage && !$isVideo) {
                 throw ValidationException::withMessages([
-                    'image' => ['Please upload an image file (JPG, PNG, WebP, HEIC, HEIF, AVIF).'],
+                    'media' => ['Only image and supported video files are allowed.'],
                 ]);
             }
+
+            $mediaPaths[] = $file->store('posts', 'public');
+            $mediaTypes[] = $isImage ? 'image' : 'video';
         }
 
-        // Must have at least caption or image
+        // Must have at least caption or media
         if (empty($validated['caption']) && count($files) === 0) {
-            return response()->json(['message' => 'Post must have a caption or image'], 400);
-        }
-
-        $imagePaths = [];
-        foreach ($files as $file) {
-            $imagePaths[] = $file->store('posts', 'public');
+            return response()->json(['message' => 'Post must have a caption or media'], 400);
         }
 
         $post = Post::create([
             'user_id' => $request->user()->id,
             'caption' => $validated['caption'] ?? null,
-            'image_url' => $imagePaths[0] ?? null,
-            'media_urls' => count($imagePaths) > 0 ? $imagePaths : null,
+            'image_url' => $mediaPaths[0] ?? null,
+            'media_urls' => count($mediaPaths) > 0 ? $mediaPaths : null,
+            // Optionally, you can add a media_types column to store types if needed
         ]);
 
         $mentionedUserIds = $this->createPostMentionNotifications(
@@ -153,7 +167,6 @@ class PostController extends Controller
         );
 
         $post->load('user:id,name,username,avatar_url,is_approved');
-
         $post->mentioned_user_ids = $mentionedUserIds;
 
         return response()->json($post, 201);

@@ -83,6 +83,26 @@ class ConversationController extends Controller
             ]);
 
             $currentUser = auth()->user();
+            $otherUserIds = collect($validated['user_ids'])
+                ->map(fn ($userId) => (int) $userId)
+                ->filter(fn ($userId) => $userId !== (int) $currentUser->id)
+                ->unique()
+                ->values()
+                ->all();
+
+            if ($validated['type'] === 'private') {
+                if (count($otherUserIds) !== 1) {
+                    return response()->json([
+                        'message' => 'Private chats must include exactly one other user.',
+                    ], 422);
+                }
+
+                if ($currentUser->hasBlockedRelationshipWith($otherUserIds[0])) {
+                    return response()->json([
+                        'message' => 'You cannot start a chat because one of you has blocked the other.',
+                    ], 403);
+                }
+            }
 
             // Create conversation
             $conversation = Conversation::create([
@@ -95,11 +115,13 @@ class ConversationController extends Controller
             $conversation->members()->attach($currentUser->id);
 
             // Add other members
-            foreach ($validated['user_ids'] as $userId) {
+            foreach ($otherUserIds as $userId) {
                 if ($userId != $currentUser->id) {
                     $conversation->members()->attach($userId);
                 }
             }
+
+            $conversation->private_chat_blocked = false;
 
             self::flushConversationListCacheForUsers(array_merge([$currentUser->id], $validated['user_ids']));
 
@@ -153,6 +175,13 @@ class ConversationController extends Controller
                         'message' => 'Conversation not found',
                     ], 404);
                 }
+            }
+
+            $conversation->private_chat_blocked = false;
+
+            if ($conversation->type === 'private') {
+                $otherUser = $conversation->members->firstWhere('id', '!=', $currentUser->id);
+                $conversation->private_chat_blocked = (bool) ($otherUser && $currentUser->hasBlockedRelationshipWith($otherUser));
             }
 
             return response()->json([
@@ -385,6 +414,7 @@ class ConversationController extends Controller
             Message::where('conversation_id', $conversation->id)->update([
                 'content' => '[Message deleted]',
                 'story_id' => null,
+                'post_id' => null,
                 'edited_at' => now(),
             ]);
 

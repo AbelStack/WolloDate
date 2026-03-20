@@ -221,10 +221,12 @@ class FollowController extends Controller
                 $isStoryMention = $notification->type === 'mention_story';
 
                 return [
-                    'id' => 'mention-' . $notification->id,
+                    'id' => 'notification-' . $notification->id,
                     'type' => 'mention',
                     'status' => 'mention',
+                    'notification_type' => $notification->type,
                     'mention_type' => $isStoryMention ? 'story' : 'post',
+                    'content_type' => $isStoryMention ? 'story' : 'post',
                     'is_read' => (bool) $notification->is_read,
                     'message' => $notification->message,
                     'actor' => $notification->actor,
@@ -243,7 +245,7 @@ class FollowController extends Controller
 
         // Count of pending requests (for badge)
         $pendingCount = $activity->where('status', 'pending')->count();
-        $unreadMentionCount = UserNotification::where('recipient_id', $currentUser->id)
+        $unreadActivityCount = UserNotification::where('recipient_id', $currentUser->id)
             ->whereIn('type', ['mention_post', 'mention_story'])
             ->where('is_read', false)
             ->count();
@@ -251,8 +253,9 @@ class FollowController extends Controller
         return response()->json([
             'activity' => $result,
             'pending_count' => $pendingCount,
-            'mention_unread_count' => $unreadMentionCount,
-            'badge_count' => $pendingCount + $unreadMentionCount,
+            'mention_unread_count' => $unreadActivityCount,
+            'activity_unread_count' => $unreadActivityCount,
+            'badge_count' => $pendingCount + $unreadActivityCount,
         ]);
     }
 }

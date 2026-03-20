@@ -424,10 +424,13 @@ class StoryController extends Controller
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
-        // Delete media file
-        Storage::disk('local')->delete($story->media_path);
+        $mediaPath = $story->media_path;
 
         $story->delete();
+
+        if ($mediaPath) {
+            Storage::disk('local')->delete($mediaPath);
+        }
 
         return response()->json(['message' => 'Story deleted']);
     }

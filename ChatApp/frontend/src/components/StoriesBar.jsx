@@ -61,6 +61,34 @@ export default function StoriesBar() {
     }))
   }, [])
 
+  const handleStoryDeleted = useCallback((storyId, userId) => {
+    const storyIdStr = String(storyId)
+    const userIdStr = String(userId)
+
+    setStoriesByUser((prev) => prev.reduce((nextGroups, storyGroup) => {
+      if (String(storyGroup.user.id) !== userIdStr) {
+        nextGroups.push(storyGroup)
+        return nextGroups
+      }
+
+      const nextStories = (storyGroup.stories || []).filter(
+        (story) => String(story.id) !== storyIdStr
+      )
+
+      if (nextStories.length === 0) {
+        return nextGroups
+      }
+
+      nextGroups.push({
+        ...storyGroup,
+        stories: nextStories,
+        has_unviewed: nextStories.some((story) => !story.is_viewed)
+      })
+
+      return nextGroups
+    }, []))
+  }, [])
+
   const handleCloseViewer = () => {
     if (viewingUser?.user?.id) {
       const viewedUserId = String(viewingUser.user.id)
@@ -194,6 +222,7 @@ export default function StoriesBar() {
           initialUserIndex={Math.max(0, storiesByUser.findIndex(s => String(s.user.id) === String(viewingUser.user.id)))}
           initialStoryIndex={viewingIndex}
           onStoryViewed={handleStoryViewed}
+          onStoryDeleted={handleStoryDeleted}
           onClose={handleCloseViewer}
           currentUserId={user?.id}
         />

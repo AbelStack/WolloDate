@@ -19,7 +19,7 @@ class NotificationController extends Controller
             ->update(['is_read' => true]);
 
         return response()->json([
-            'message' => 'Mention notifications marked as read',
+            'message' => 'Activity notifications marked as read',
             'updated_count' => $count,
         ]);
     }

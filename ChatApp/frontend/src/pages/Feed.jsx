@@ -9,6 +9,7 @@ import Logo from '../components/Logo'
 import StoriesBar from '../components/StoriesBar'
 import ConfirmDialog from '../components/ConfirmDialog'
 import { resolveMediaUrl } from '../utils/media'
+import { SHARED_POST_MESSAGE } from '../utils/chatShares'
 import { isCreatorUser } from '../utils/creator'
 import { 
   Heart, MessageCircle, Share2, MoreHorizontal, 
@@ -28,6 +29,15 @@ const getPostMediaUrls = (post) => {
     : (post?.image_url ? [post.image_url] : [])
 
   return list.map((path) => resolveMediaUrl(path))
+}
+
+
+// Helper to check if a media URL is a video
+const isVideoUrl = (url) => {
+  if (!url) return false;
+  const videoExts = ['mp4', 'mov', 'webm', 'mkv', '3gp', 'avi', 'wmv', 'mpeg'];
+  const ext = url.split('.').pop().split('?')[0].toLowerCase();
+  return videoExts.includes(ext);
 }
 
 const renderTextWithMentions = (text, onMentionClick) => {
@@ -57,15 +67,15 @@ const renderTextWithMentions = (text, onMentionClick) => {
 
 export default function Feed() {
   const { user } = useAuth()
-  const { emitFollowNotify } = useSocket()
+  const { emitFollowNotify, emitNewMessage } = useSocket()
   const navigate = useNavigate()
   
   const [feed, setFeed] = useState([])
   const [loading, setLoading] = useState(true)
   const [posting, setPosting] = useState(false)
   const [newPostContent, setNewPostContent] = useState('')
-  const [newPostImages, setNewPostImages] = useState([])
-  const [imagePreviews, setImagePreviews] = useState([])
+  const [newPostMedia, setNewPostMedia] = useState([])
+  const [mediaPreviews, setMediaPreviews] = useState([])
   const [createPreviewIndex, setCreatePreviewIndex] = useState(0)
   const [postMediaIndexes, setPostMediaIndexes] = useState({})
   const [expandedComments, setExpandedComments] = useState({})
@@ -187,64 +197,67 @@ export default function Feed() {
     ;(urls || []).forEach(revokePreviewUrl)
   }
 
-  const handleImageSelect = (e) => {
+  const handleMediaSelect = (e) => {
     const files = Array.from(e.target.files || [])
     if (files.length > 0) {
       if (files.length > 8) {
-        alert('You can upload up to 8 images per post')
+        alert('You can upload up to 8 media files per post')
         return
       }
 
       const validated = []
       for (const file of files) {
-      const ext = (file.name.split('.').pop() || '').toLowerCase()
-      const mime = (file.type || '').toLowerCase()
-      const imageExts = new Set(['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'heic', 'heif', 'avif', 'jfif'])
-      const isImage = mime.startsWith('image/') || imageExts.has(ext)
+        const ext = (file.name.split('.').pop() || '').toLowerCase()
+        const mime = (file.type || '').toLowerCase()
+        const imageExts = new Set(['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'heic', 'heif', 'avif', 'jfif'])
+        const videoExts = new Set(['mp4', 'mov', 'webm', 'mkv', '3gp', 'avi', 'wmv', 'mpeg'])
+        const isImage = mime.startsWith('image/') || imageExts.has(ext)
+        const isVideo = mime.startsWith('video/') || videoExts.has(ext)
 
-      if (!isImage) {
-        alert('Please select an image file')
-        return
-      }
-      if (file.size > 25 * 1024 * 1024) {
-        alert('Image must be less than 25MB')
-        return
-      }
+        if (!isImage && !isVideo) {
+          alert('Please select an image or video file')
+          return
+        }
+        if ((isImage && file.size > 50 * 1024 * 1024) || (isVideo && file.size > 50 * 1024 * 1024)) {
+          alert('Each file must be less than 50MB')
+          return
+        }
         validated.push(file)
       }
 
-      revokePreviewUrls(imagePreviews)
-      setNewPostImages(validated)
-      setImagePreviews(validated.map((file) => URL.createObjectURL(file)))
+      revokePreviewUrls(mediaPreviews)
+      setNewPostMedia(validated)
+      setMediaPreviews(validated.map((file) => URL.createObjectURL(file)))
       setCreatePreviewIndex(0)
     }
   }
 
-  const removeImage = () => {
-    revokePreviewUrls(imagePreviews)
-    setNewPostImages([])
-    setImagePreviews([])
+  const removeMedia = () => {
+    revokePreviewUrls(mediaPreviews)
+    setNewPostMedia([])
+    setMediaPreviews([])
     setCreatePreviewIndex(0)
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
   const handleCreatePost = async () => {
-    if (!newPostContent.trim() && newPostImages.length === 0) return
-    
+    if (!newPostContent.trim() && newPostMedia.length === 0) return
     try {
       setPosting(true)
-      const res = await posts.create({
-        content: newPostContent,
-        images: newPostImages
-      })
-
+      const formData = new FormData()
+      if (newPostContent.trim()) formData.append('caption', newPostContent.trim())
+      if (newPostMedia.length > 1) {
+        newPostMedia.forEach((file) => formData.append('media_files[]', file))
+      } else if (newPostMedia.length === 1) {
+        formData.append('media', newPostMedia[0])
+      }
+      const res = await posts.create(formData)
       const mentionedUserIds = res?.data?.mentioned_user_ids || []
       mentionedUserIds.forEach((targetUserId) => emitFollowNotify(targetUserId))
-
       const newPost = { ...res.data, likes_count: 0, comments_count: 0, is_liked: false }
       setFeed([newPost, ...feed])
       setNewPostContent('')
-      removeImage()
+      removeMedia()
     } catch (err) {
       console.error('Failed to create post:', err)
       alert('Failed to create post')
@@ -332,6 +345,7 @@ export default function Feed() {
           ? { ...p, comments_count: p.comments_count + 1 }
           : p
       ))
+      // No comment-notification: do not emit notifications for comments
     } catch (err) {
       console.error('Failed to add comment:', err)
     }
@@ -396,6 +410,7 @@ export default function Feed() {
 
       setReplyInputs(prev => ({ ...prev, [key]: '' }))
       setActiveReplyBoxes(prev => ({ ...prev, [key]: false }))
+      // No comment-notification: do not emit notifications for replies
     } catch (err) {
       console.error('Failed to add reply:', err)
       alert('Failed to add reply')
@@ -565,6 +580,23 @@ export default function Feed() {
 
   const handleSendToChat = async (convId) => {
     if (!shareModalPost || sendingTo) return
+
+    try {
+      setSendingTo(convId)
+      const res = await messages.send(convId, {
+        content: SHARED_POST_MESSAGE,
+        post_id: shareModalPost.id,
+      })
+      emitNewMessage(convId, res.data?.data, res.data?.member_ids || [])
+      setShareModalPost(null)
+      setSendingTo(null)
+      return
+    } catch (err) {
+      console.error('Failed to send to chat:', err)
+      alert('Failed to share post')
+      setSendingTo(null)
+      return
+    }
     try {
       setSendingTo(convId)
       const shareText = `📌 Shared post from ${shareModalPost.user?.name || 'someone'}:\n${shareModalPost.caption || ''}\n${window.location.origin}/post/${shareModalPost.id}`
@@ -574,6 +606,25 @@ export default function Feed() {
     } catch (err) {
       console.error('Failed to send to chat:', err)
       alert('Failed to share post')
+      setSendingTo(null)
+    }
+  }
+
+  const sendSharedPostToChat = async (convId) => {
+    if (!shareModalPost || sendingTo) return
+
+    try {
+      setSendingTo(convId)
+      const res = await messages.send(convId, {
+        content: SHARED_POST_MESSAGE,
+        post_id: shareModalPost.id,
+      })
+      emitNewMessage(convId, res.data?.data, res.data?.member_ids || [])
+      setShareModalPost(null)
+    } catch (err) {
+      console.error('Failed to send to chat:', err)
+      alert('Failed to share post')
+    } finally {
       setSendingTo(null)
     }
   }
@@ -766,43 +817,59 @@ export default function Feed() {
     <div className="min-h-screen bg-black text-white relative overflow-hidden">
       <div className="relative z-10">
       {/* Header */}
-      <div className="sticky top-0 border-b border-gray-800 bg-black/95 backdrop-blur-xl px-4 h-14 flex items-center justify-center z-40">
+      <div className="sticky top-0 border-b border-gray-800 bg-black/95 backdrop-blur-xl px-2 sm:px-4 h-14 flex items-center justify-center z-40">
         <Logo size="sm" />
       </div>
 
       {/* Stories */}
       <StoriesBar />
 
-      <div className="max-w-6xl mx-auto py-4 px-4 grid grid-cols-1 lg:grid-cols-[minmax(0,640px)_320px] gap-6 items-start">
+      <div className="w-full max-w-6xl mx-auto py-2 px-1 sm:py-4 sm:px-4 grid grid-cols-1 gap-4 sm:gap-6 items-start lg:grid-cols-[minmax(0,1fr)_320px]">
         <div>
           {/* Create Post */}
-          <div className="rounded-2xl border border-gray-800 bg-gray-900 p-4 mb-6 shadow-[0_12px_34px_rgba(0,0,0,0.35)]">
+          <div className="rounded-2xl border border-gray-800 bg-gray-900 p-2 sm:p-4 mb-4 sm:mb-6 shadow-[0_12px_34px_rgba(0,0,0,0.35)]">
           <div className="flex gap-3">
             <img
               src={getAvatarUrl(user)}
               alt={user?.name}
-              className="w-10 h-10 rounded-full object-cover"
+              className="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover"
             />
-            <div className="flex-1">
+            <div className="flex-1 min-w-0">
               <textarea
                 value={newPostContent}
                 onChange={(e) => setNewPostContent(e.target.value)}
                 placeholder="Share something real with your campus..."
-                className="w-full resize-none bg-transparent border-0 focus:ring-0 text-white placeholder-gray-500 text-sm"
+                className="w-full resize-none bg-transparent border-0 focus:ring-0 text-white placeholder-gray-500 text-sm min-h-12"
                 rows={3}
               />
               
-              {imagePreviews.length > 0 && (
-                <div className="relative mt-2">
-                  <img
-                    src={imagePreviews[createPreviewIndex]}
-                    alt="Preview"
-                    className="w-full max-h-54 rounded-lg object-contain"
-                    onError={() => {
-                      setImagePreviews([])
-                    }}
-                  />
-                  {imagePreviews.length > 1 && (
+              {mediaPreviews.length > 0 && (
+                <div className="relative mt-2 w-full max-w-full">
+                  {(() => {
+                    const file = newPostMedia[createPreviewIndex];
+                    const url = mediaPreviews[createPreviewIndex];
+                    if (!file || !url) return null;
+                    const isVideo = (file.type || '').startsWith('video/');
+                    return isVideo ? (
+                      <video
+                        src={url}
+                        className="w-full max-h-52 sm:max-h-54 rounded-lg object-contain"
+                        controls
+                        autoPlay
+                        muted
+                        loop
+                        onError={() => setMediaPreviews([])}
+                      />
+                    ) : (
+                      <img
+                        src={url}
+                        alt="Preview"
+                        className="w-full max-h-52 sm:max-h-54 rounded-lg object-contain"
+                        onError={() => setMediaPreviews([])}
+                      />
+                    );
+                  })()}
+                  {mediaPreviews.length > 1 && (
                     <>
                       <button
                         type="button"
@@ -819,12 +886,12 @@ export default function Feed() {
                         {'>'}
                       </button>
                       <div className="absolute bottom-2 left-1/2 -translate-x-1/2 rounded-full bg-black/55 px-2 py-0.5 text-xs text-white">
-                        {createPreviewIndex + 1}/{imagePreviews.length}
+                        {createPreviewIndex + 1}/{mediaPreviews.length}
                       </div>
                     </>
                   )}
                   <button
-                    onClick={removeImage}
+                    onClick={removeMedia}
                     className="absolute top-2 right-2 p-1 bg-black/50 rounded-full text-white hover:bg-black/70"
                   >
                     <X className="w-4 h-4" />
@@ -832,16 +899,16 @@ export default function Feed() {
                 </div>
               )}
 
-              {imagePreviews.length === 0 && newPostImages.length > 0 && (
-                <div className="mt-2 rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 flex items-center justify-between gap-3">
+              {mediaPreviews.length === 0 && newPostMedia.length > 0 && (
+                <div className="mt-2 rounded-lg border border-gray-700 bg-gray-800 px-2 sm:px-3 py-2 flex flex-wrap items-center justify-between gap-2 sm:gap-3">
                   <div className="min-w-0">
-                    <p className="text-xs text-gray-300">Attached images</p>
-                    <p className="text-sm text-white truncate">{newPostImages.length} selected</p>
+                    <p className="text-xs text-gray-300">Attached media</p>
+                    <p className="text-sm text-white truncate max-w-[120px] sm:max-w-none">{newPostMedia.length} selected</p>
                   </div>
                   <button
-                    onClick={removeImage}
+                    onClick={removeMedia}
                     className="p-1.5 bg-black/40 rounded-full text-white hover:bg-black/60"
-                    aria-label="Remove attached image"
+                    aria-label="Remove attached media"
                   >
                     <X className="w-4 h-4" />
                   </button>
@@ -852,8 +919,8 @@ export default function Feed() {
                 <input
                   type="file"
                   ref={fileInputRef}
-                  onChange={handleImageSelect}
-                  accept="image/*"
+                  onChange={handleMediaSelect}
+                  accept="image/*,video/*"
                   multiple
                   className="hidden"
                 />
@@ -862,12 +929,12 @@ export default function Feed() {
                   className="flex items-center gap-2 text-gray-400 hover:text-white transition"
                 >
                   <ImageIcon className="w-5 h-5" />
-                  <span className="text-sm">Photo</span>
+                  <span className="text-sm">Media</span>
                 </button>
                 
                   <button
                   onClick={handleCreatePost}
-                  disabled={posting || (!newPostContent.trim() && newPostImages.length === 0)}
+                  disabled={posting || (!newPostContent.trim() && newPostMedia.length === 0)}
                   className="px-4 py-2 bg-white text-black text-sm font-semibold rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                 >
                   {posting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Post'}
@@ -958,7 +1025,7 @@ export default function Feed() {
                           {post.user?.name}
                         </span>
                         {post.user?.is_approved && <VerifiedBadge size="xs" />}
-                        {isCreatorUser(post.user) && <CreatorBadge size="xs" />}
+                        {isCreatorUser(post.user) && <CreatorBadge size="compact" className="ml-1 align-middle" />}
                       </div>
                       <span className="text-xs text-gray-500">{formatTime(post.created_at)}</span>
                     </div>
@@ -993,25 +1060,37 @@ export default function Feed() {
 
                 {/* Post Image */}
                 {(() => {
-                  const mediaUrls = getPostMediaUrls(post)
-                  if (mediaUrls.length === 0) return null
+                  const mediaUrls = getPostMediaUrls(post);
+                  if (mediaUrls.length === 0) return null;
 
                   return (
                     <div className="relative">
                       <div
                         ref={(el) => {
-                          if (el) postMediaRefs.current[post.id] = el
+                          if (el) postMediaRefs.current[post.id] = el;
                         }}
                         className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide"
                         onScroll={(e) => handlePostMediaScroll(post.id, e)}
                       >
                         {mediaUrls.map((url, idx) => (
-                          <img
-                            key={`${post.id}-${idx}`}
-                            src={url}
-                            alt="Post"
-                            className="block w-full shrink-0 max-h-[60vh] object-contain snap-start"
-                          />
+                          isVideoUrl(url) ? (
+                            <video
+                              key={`${post.id}-video-${idx}`}
+                              src={url}
+                              className="block w-full shrink-0 max-h-[60vh] object-contain snap-start bg-black"
+                              controls
+                              autoPlay
+                              muted
+                              loop
+                            />
+                          ) : (
+                            <img
+                              key={`${post.id}-img-${idx}`}
+                              src={url}
+                              alt="Post"
+                              className="block w-full shrink-0 max-h-[60vh] object-contain snap-start"
+                            />
+                          )
                         ))}
                       </div>
                       {mediaUrls.length > 1 && (
@@ -1040,7 +1119,7 @@ export default function Feed() {
                         </>
                       )}
                     </div>
-                  )
+                  );
                 })()}
 
                 {/* Caption below media and above actions */}
@@ -1488,7 +1567,7 @@ export default function Feed() {
                     {filteredChats.slice(0, showAllShareChats || shareSearch.trim() ? filteredChats.length : 12).map(conv => (
                       <button
                         key={conv.id}
-                        onClick={() => handleSendToChat(conv.id)}
+                        onClick={() => sendSharedPostToChat(conv.id)}
                         disabled={sendingTo === conv.id}
                         className="group text-center disabled:opacity-60"
                         title={getConversationName(conv)}
@@ -1549,7 +1628,7 @@ export default function Feed() {
                     {shareChatList.map(conv => (
                       <button
                         key={conv.id}
-                        onClick={() => handleSendToChat(conv.id)}
+                        onClick={() => sendSharedPostToChat(conv.id)}
                         disabled={sendingTo === conv.id}
                         className="text-center disabled:opacity-60"
                       >

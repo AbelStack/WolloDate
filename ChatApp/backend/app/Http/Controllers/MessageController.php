@@ -4,14 +4,21 @@ namespace App\Http\Controllers;
 
 use App\Models\MediaAttachment;
 use App\Models\ConversationMember;
+use App\Models\Follow;
 use App\Models\Message;
 use App\Models\MessageReaction;
 use App\Models\MessageStatus;
+use App\Models\Post;
+use App\Models\Story;
 use App\Models\StarredMessage;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class MessageController extends Controller
 {
+    private const SHARED_STORY_CONTENT = '[Shared story]';
+    private const SHARED_POST_CONTENT = '[Shared post]';
+
     /**
      * Get messages from conversation (paginated)
      * GET /api/conversations/{id}/messages?page=1&limit=50
@@ -38,6 +45,7 @@ class MessageController extends Controller
                     'user_id',
                     'content',
                     'story_id',
+                    'post_id',
                     'edited_at',
                     'created_at',
                 ])
@@ -47,8 +55,12 @@ class MessageController extends Controller
                     'reactions:id,message_id,user_id,emoji',
                     'attachments:id,message_id,type,file_path,original_filename,mime_type',
                     'statuses:id,message_id,user_id,status',
-                    'story:id,user_id,media_type,media_path,expires_at',
+                    'story:id,user_id,media_type,media_path,caption,expires_at',
                     'story.user:id,name,username',
+                    'post:id,user_id,caption,image_url,media_urls,original_post_id',
+                    'post.user:id,name,username,avatar_url,is_approved',
+                    'post.originalPost:id,user_id,caption,image_url,media_urls',
+                    'post.originalPost.user:id,name,username,avatar_url,is_approved',
                 ])
                 ->orderBy('created_at', 'desc');
 
@@ -59,44 +71,10 @@ class MessageController extends Controller
             $messages = $messagesQuery->paginate($limit);
 
             // Add status field and story media URL to each message
-            $messages->getCollection()->transform(function ($message) use ($userId) {
-                $isDeleted = trim((string) $message->content) === '[Message deleted]';
+            $viewer = $request->user();
 
-                if ($message->user_id == $userId) {
-                    // For sender's messages: check other users' statuses
-                    $statuses = $message->statuses->where('user_id', '!=', $userId);
-                    if ($statuses->contains('status', 'seen')) {
-                        $message->status = 'seen';
-                    } elseif ($statuses->contains('status', 'delivered')) {
-                        $message->status = 'delivered';
-                    } else {
-                        $message->status = 'sent';
-                    }
-                } else {
-                    // For received messages: check if current user has seen it
-                    $myStatus = $message->statuses->where('user_id', $userId)->first();
-                    $message->status = $myStatus ? $myStatus->status : 'sent';
-                }
-
-                $message->deleted = $isDeleted;
-
-                // Hide attachments and story preview for deleted messages.
-                if ($isDeleted) {
-                    $message->setRelation('attachments', collect());
-                    $message->story_id = null;
-                }
-
-                // Add story media URL for story replies
-                if (!$isDeleted && $message->story) {
-                    $message->story_media_url = "/api/stories/{$message->story_id}/media";
-                    $message->story_media_type = $message->story->media_type;
-                    $message->story_owner = $message->story->user?->name ?? 'Unknown';
-                    $message->story_expired = $message->story->expires_at->isPast();
-                }
-
-                // Remove statuses relation from response to keep it clean
-                unset($message->statuses);
-                return $message;
+            $messages->getCollection()->transform(function ($message) use ($viewer) {
+                return $this->transformMessageForViewer($message, $viewer);
             });
 
             return response()->json($messages, 200);
@@ -119,9 +97,17 @@ class MessageController extends Controller
             $validated = $request->validate([
                 'content' => 'required|string|max:5000',
                 'media_id' => 'nullable|integer|exists:media_attachments,id',
+                'story_id' => 'nullable|integer|exists:stories,id',
+                'post_id' => 'nullable|integer|exists:posts,id',
             ]);
 
             $user = auth()->user();
+
+            if (!empty($validated['story_id']) && !empty($validated['post_id'])) {
+                return response()->json([
+                    'message' => 'A message can reference either a story or a post, not both.',
+                ], 422);
+            }
 
             // Verify user is a member of this conversation
             $memberRecord = ConversationMember::where('conversation_id', $conversationId)
@@ -132,16 +118,47 @@ class MessageController extends Controller
                 return response()->json(['message' => 'Unauthorized'], 403);
             }
 
+            $conversation = $memberRecord->conversation()->with('members:id')->first();
+            if ($conversation?->type === 'private') {
+                $otherUser = $conversation->members->firstWhere('id', '!=', $user->id);
+
+                if ($otherUser && $user->hasBlockedRelationshipWith($otherUser)) {
+                    return response()->json([
+                        'message' => 'You cannot message this user because one of you has blocked the other.',
+                    ], 403);
+                }
+            }
+
             // Restore this conversation for sender if they had deleted it locally.
             if ($memberRecord->deleted_at) {
                 $memberRecord->deleted_at = null;
                 $memberRecord->save();
             }
 
+            $story = null;
+            if (!empty($validated['story_id'])) {
+                $story = Story::with('user:id,name,username')->findOrFail($validated['story_id']);
+
+                if (!$this->canViewStory($user, $story)) {
+                    return response()->json(['message' => 'You cannot share this story'], 403);
+                }
+            }
+
+            $post = null;
+            if (!empty($validated['post_id'])) {
+                $post = Post::with('user:id,name,username,avatar_url,is_approved')->findOrFail($validated['post_id']);
+
+                if (!$this->canViewPost($user, $post)) {
+                    return response()->json(['message' => 'You cannot share this post'], 403);
+                }
+            }
+
             $message = Message::create([
                 'conversation_id' => $conversationId,
                 'user_id' => $user->id,
                 'content' => $validated['content'],
+                'story_id' => $story?->id,
+                'post_id' => $post?->id,
             ]);
 
             if (!empty($validated['media_id'])) {
@@ -150,13 +167,20 @@ class MessageController extends Controller
                     ->update(['message_id' => $message->id]);
             }
 
-            $message->load(['user:id,name,avatar_url', 'reactions', 'attachments', 'statuses']);
+            $message->load([
+                'user:id,name,username,avatar_url,is_approved',
+                'reactions',
+                'attachments',
+                'statuses',
+                'story:id,user_id,media_type,media_path,caption,expires_at',
+                'story.user:id,name,username',
+                'post:id,user_id,caption,image_url,media_urls,original_post_id',
+                'post.user:id,name,username,avatar_url,is_approved',
+                'post.originalPost:id,user_id,caption,image_url,media_urls',
+                'post.originalPost.user:id,name,username,avatar_url,is_approved',
+            ]);
 
-            if ($message->user_id == $user->id) {
-                $message->status = 'sent';
-            }
-
-            unset($message->statuses);
+            $message = $this->transformMessageForViewer($message, $user);
 
             // Emit WebSocket event (will implement later)
             // broadcast(new MessageSent($message));
@@ -654,5 +678,90 @@ class MessageController extends Controller
         }
 
         return $totalUnread;
+    }
+
+    private function transformMessageForViewer(Message $message, User $viewer): Message
+    {
+        $viewerId = $viewer->id;
+        $isDeleted = trim((string) $message->content) === '[Message deleted]';
+
+        if ($message->relationLoaded('statuses')) {
+            if ($message->user_id == $viewerId) {
+                $statuses = $message->statuses->where('user_id', '!=', $viewerId);
+                if ($statuses->contains('status', 'seen')) {
+                    $message->status = 'seen';
+                } elseif ($statuses->contains('status', 'delivered')) {
+                    $message->status = 'delivered';
+                } else {
+                    $message->status = 'sent';
+                }
+            } else {
+                $myStatus = $message->statuses->where('user_id', $viewerId)->first();
+                $message->status = $myStatus ? $myStatus->status : 'sent';
+            }
+        } elseif (!isset($message->status)) {
+            $message->status = $message->user_id == $viewerId ? 'sent' : 'sent';
+        }
+
+        $message->deleted = $isDeleted;
+
+        if ($isDeleted) {
+            $message->setRelation('attachments', collect());
+            $message->story_id = null;
+            $message->post_id = null;
+            unset($message->statuses);
+            return $message;
+        }
+
+        if ($message->story) {
+            $message->story_context = trim((string) $message->content) === self::SHARED_STORY_CONTENT ? 'shared' : 'reply';
+
+            if ($this->canViewStory($viewer, $message->story)) {
+                $message->story_media_url = "/api/stories/{$message->story_id}/media";
+                $message->story_media_type = $message->story->media_type;
+                $message->story_owner = $message->story->user?->name ?? 'Unknown';
+                $message->story_caption = $message->story->caption;
+                $message->story_expired = $message->story->expires_at->isPast();
+            } else {
+                $message->story_unavailable = true;
+            }
+        }
+
+        if ($message->post) {
+            $message->post_context = trim((string) $message->content) === self::SHARED_POST_CONTENT ? 'shared' : 'linked';
+
+            if ($this->canViewPost($viewer, $message->post)) {
+                $previewPost = $message->post->originalPost ?: $message->post;
+                $message->post_owner = $previewPost->user?->name ?? 'Unknown';
+                $message->post_owner_username = $previewPost->user?->username;
+                $message->post_caption = $previewPost->caption;
+                $message->post_image_url = $previewPost->image_url;
+                $message->post_media_urls = $previewPost->media_urls;
+            } else {
+                $message->post_unavailable = true;
+            }
+        }
+
+        unset($message->statuses);
+        return $message;
+    }
+
+    private function canViewStory(User $viewer, Story $story): bool
+    {
+        if ($viewer->id === $story->user_id) {
+            return true;
+        }
+
+        return Follow::where('follower_id', $viewer->id)
+            ->where('following_id', $story->user_id)
+            ->where('status', 'accepted')
+            ->exists();
+    }
+
+    private function canViewPost(User $viewer, Post $post): bool
+    {
+        $post->loadMissing('user');
+
+        return $viewer->id === $post->user_id || $viewer->canViewProfile($post->user);
     }
 }

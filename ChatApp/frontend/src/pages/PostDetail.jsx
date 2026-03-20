@@ -3,6 +3,8 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, Heart, Loader2, MessageCircle, Send, Share2, X, Link as LinkIcon, Pencil } from 'lucide-react'
 import VerifiedBadge from '../components/VerifiedBadge'
 import { comments, conversations, messages, posts } from '../api'
+import { useSocket } from '../context/useSocket'
+import { SHARED_POST_MESSAGE } from '../utils/chatShares'
 import { resolveMediaUrl } from '../utils/media'
 import { useAuth } from '../context/AuthContext'
 
@@ -27,6 +29,7 @@ export default function PostDetail() {
   const navigate = useNavigate()
   const { postId } = useParams()
   const { user } = useAuth()
+  const { emitFollowNotify, emitNewMessage } = useSocket()
 
   const [post, setPost] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -105,6 +108,7 @@ export default function PostDetail() {
         comments_count: Number(prev.comments_count || 0) + 1,
       }))
       setCommentInput('')
+      // No comment-notification: do not emit notifications for comments
     } catch {
       // Keep UI simple: silent failure is avoided by retaining current input.
     } finally {
@@ -151,8 +155,42 @@ export default function PostDetail() {
 
     try {
       setSendingTo(convId)
+      const res = await messages.send(convId, {
+        content: SHARED_POST_MESSAGE,
+        post_id: post.id,
+      })
+      emitNewMessage(convId, res.data?.data, res.data?.member_ids || [])
+      setShareModalOpen(false)
+      return
+    } catch {
+      // Fail silently to avoid breaking navigation flow.
+      return
+    } finally {
+      setSendingTo(null)
+    }
+
+    try {
+      setSendingTo(convId)
       const shareText = `📌 Shared post from ${post.user?.name || 'someone'}:\n${post.caption || ''}\n${window.location.origin}/post/${post.id}`
       await messages.send(convId, { content: shareText })
+      setShareModalOpen(false)
+    } catch {
+      // Fail silently to avoid breaking navigation flow.
+    } finally {
+      setSendingTo(null)
+    }
+  }
+
+  const sendSharedPostToChat = async (convId) => {
+    if (!post || sendingTo) return
+
+    try {
+      setSendingTo(convId)
+      const res = await messages.send(convId, {
+        content: SHARED_POST_MESSAGE,
+        post_id: post.id,
+      })
+      emitNewMessage(convId, res.data?.data, res.data?.member_ids || [])
       setShareModalOpen(false)
     } catch {
       // Fail silently to avoid breaking navigation flow.
@@ -213,6 +251,8 @@ export default function PostDetail() {
 
     return list.map((path) => resolveMediaUrl(path))
   }
+
+  // posts: allow both images and videos
 
   const handleMediaScroll = (e) => {
     const { scrollLeft, clientWidth } = e.currentTarget
@@ -288,10 +328,19 @@ export default function PostDetail() {
               </div>
             </div>
 
+            {/* Media rendering block: allow both images and videos */}
             {(() => {
-              const mediaUrls = getPostMediaUrls(post)
-              if (mediaUrls.length === 0) return null
-
+              const mediaUrls = getPostMediaUrls(post);
+              if (!mediaUrls || mediaUrls.length === 0) return null;
+              // Guess type by file extension
+              const getType = (url) => {
+                const ext = (url.split('.').pop() || '').toLowerCase();
+                const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'heic', 'heif', 'avif', 'jfif'];
+                const videoExts = ['mp4', 'mov', 'webm', 'mkv', '3gp', 'avi', 'wmv', 'mpeg'];
+                if (imageExts.includes(ext)) return 'image';
+                if (videoExts.includes(ext)) return 'video';
+                return 'image';
+              };
               return (
                 <div className="relative">
                   <div
@@ -299,14 +348,25 @@ export default function PostDetail() {
                     className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide"
                     onScroll={handleMediaScroll}
                   >
-                    {mediaUrls.map((url, idx) => (
-                      <img
-                        key={`${post.id}-${idx}`}
-                        src={url}
-                        alt="Post"
-                        className="w-full shrink-0 max-h-[65vh] object-contain bg-black snap-start"
-                      />
-                    ))}
+                    {mediaUrls.map((url, idx) => {
+                      const type = getType(url);
+                      return type === 'video' ? (
+                        <video
+                          key={`${post.id}-video-${idx}`}
+                          src={url}
+                          className="w-full shrink-0 max-h-[65vh] object-contain bg-black snap-start"
+                          controls
+                          playsInline
+                        />
+                      ) : (
+                        <img
+                          key={`${post.id}-img-${idx}`}
+                          src={url}
+                          alt="Post"
+                          className="w-full shrink-0 max-h-[65vh] object-contain bg-black snap-start"
+                        />
+                      );
+                    })}
                   </div>
                   {mediaUrls.length > 1 && (
                     <>
@@ -332,7 +392,7 @@ export default function PostDetail() {
                     </>
                   )}
                 </div>
-              )
+              );
             })()}
 
             {(post.caption || post.user?.id === user?.id) && (
@@ -481,7 +541,7 @@ export default function PostDetail() {
                       <button
                         key={conv.id}
                         type="button"
-                        onClick={() => handleSendToChat(conv.id)}
+                        onClick={() => sendSharedPostToChat(conv.id)}
                         disabled={Boolean(sendingTo)}
                         className="text-center disabled:opacity-60"
                       >
@@ -536,7 +596,7 @@ export default function PostDetail() {
                 ) : (
                   <div className="grid grid-cols-3 gap-x-4 gap-y-6">
                     {filteredChats.slice(0, 12).map(conv => (
-                      <button key={conv.id} type="button" onClick={() => handleSendToChat(conv.id)} disabled={Boolean(sendingTo)} className="text-center disabled:opacity-60">
+                      <button key={conv.id} type="button" onClick={() => sendSharedPostToChat(conv.id)} disabled={Boolean(sendingTo)} className="text-center disabled:opacity-60">
                         <div className="mx-auto w-18 h-18 rounded-full overflow-hidden border border-gray-700">
                           <img src={getConversationAvatar(conv)} alt="" className="w-full h-full object-cover" />
                         </div>

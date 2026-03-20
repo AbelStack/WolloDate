@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Message extends BaseModel
 {
-    protected $fillable = ['conversation_id', 'user_id', 'content', 'edited_at', 'story_id'];
+    protected $fillable = ['conversation_id', 'user_id', 'content', 'edited_at', 'story_id', 'post_id'];
 
     protected $casts = [
         'edited_at' => 'datetime',
@@ -27,6 +27,11 @@ class Message extends BaseModel
     public function story(): BelongsTo
     {
         return $this->belongsTo(Story::class);
+    }
+
+    public function post(): BelongsTo
+    {
+        return $this->belongsTo(Post::class);
     }
 
     public function statuses(): HasMany

@@ -108,17 +108,18 @@ export default function Notifications() {
   }
 
   const mentionItems = activity.filter(item => item.type === 'mention')
-    const openMentionTarget = (item) => {
-      if (item.mention_type === 'story' && item.story_id) {
-        navigate(`/story/${item.story_id}`)
-        return
-      }
 
-      if (item.mention_type === 'post' && item.post_id) {
-        navigate(`/post/${item.post_id}`)
-        return
-      }
+  const openActivityTarget = (item) => {
+    if ((item.content_type || item.mention_type) === 'story' && item.story_id) {
+      navigate(`/story/${item.story_id}`)
+      return
     }
+
+    if (item.post_id) {
+      navigate(`/post/${item.post_id}`)
+      return
+    }
+  }
 
   const pendingItems = activity.filter(item => item.type === 'follow' && item.status === 'pending')
   const acceptedItems = activity.filter(item => item.type === 'follow' && item.status === 'accepted')
@@ -158,7 +159,7 @@ export default function Notifications() {
                     <button
                       key={item.id}
                       type="button"
-                      onClick={() => openMentionTarget(item)}
+                      onClick={() => openActivityTarget(item)}
                       className="w-full text-left p-4 flex items-center gap-3 hover:bg-gray-850"
                     >
                       <img

@@ -16,6 +16,8 @@ import {
 } from 'lucide-react'
 
 export default function Profile() {
+    // Modal for viewing profile photo
+    const [showPhotoModal, setShowPhotoModal] = useState(false);
   const { userId } = useParams()
   const navigate = useNavigate()
   const { user, logout, refreshUser } = useAuth()
@@ -423,7 +425,9 @@ export default function Profile() {
               <img
                 src={getAvatarUrl(profile)}
                 alt={profile?.name}
-                className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover border-2 border-gray-800"
+                className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover border-2 border-gray-800 cursor-pointer"
+                onClick={() => { if (!isOwnProfile) setShowPhotoModal(true); }}
+                style={{ pointerEvents: isOwnProfile ? 'none' : 'auto' }}
               />
               {isOwnProfile && (
                 <>
@@ -442,6 +446,22 @@ export default function Profile() {
                     className="hidden"
                   />
                 </>
+              )}
+              {/* Profile Photo Modal */}
+              {showPhotoModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90" onClick={() => setShowPhotoModal(false)}>
+                  <div className="absolute top-4 right-4">
+                    <button onClick={() => setShowPhotoModal(false)} className="p-2 rounded-full bg-black/60 hover:bg-black/80">
+                      <X className="w-7 h-7 text-white" />
+                    </button>
+                  </div>
+                  <img
+                    src={getAvatarUrl(profile)}
+                    alt={profile?.name}
+                    className="max-w-[90vw] max-h-[80vh] rounded-2xl object-contain border-2 border-gray-800 shadow-2xl"
+                    onClick={e => e.stopPropagation()}
+                  />
+                </div>
               )}
             </div>
 
@@ -548,11 +568,19 @@ export default function Profile() {
                     className="aspect-square relative group overflow-hidden bg-gray-900"
                   >
                     {mediaList.length > 0 ? (
-                      <img
-                        src={resolveMediaUrl(mediaList[0])}
-                        alt=""
-                        className="w-full h-full object-cover"
-                      />
+                      (() => {
+                        const url = resolveMediaUrl(mediaList[0]);
+                        const isVideo = /\.(mp4|webm|ogg)$/i.test(url);
+                        if (isVideo) {
+                          return (
+                            <video src={url} className="w-full h-full object-cover" controls={false} muted playsInline preload="metadata" />
+                          );
+                        } else {
+                          return (
+                            <img src={url} alt="" className="w-full h-full object-cover" />
+                          );
+                        }
+                      })()
                     ) : (
                       <div className="w-full h-full flex items-center justify-center p-2 bg-gray-900">
                         <p className="text-xs text-gray-400 line-clamp-4">{post.caption}</p>

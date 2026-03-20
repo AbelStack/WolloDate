@@ -4,6 +4,8 @@ import { useAuth } from '../context/AuthContext'
 import { useSocket } from '../context/useSocket'
 import { conversations, messages, users, media, stories } from '../api'
 import StoryViewer from '../components/StoryViewer'
+import { SHARED_POST_MESSAGE, SHARED_STORY_MESSAGE } from '../utils/chatShares'
+import { resolveMediaUrl } from '../utils/media'
 import { 
   Send, Info, Heart, Smile, PenSquare, 
   ChevronDown, X, Check, CheckCheck, Edit2, 
@@ -84,8 +86,37 @@ export default function Chat() {
   const refreshConversationsTimerRef = useRef(null)
   const audioRefs = useRef({})
   const confirmActionRef = useRef(null)
-  
+
   const commonEmojis = ['👍', '❤️', '😂', '😮', '😢', '😠', '🔥', '🎉', '👏', '🙏', '😍', '🤔', '😊', '😎', '🤣', '💯']
+
+  const getPostMediaUrls = (post) => {
+    const list = Array.isArray(post?.media_urls) && post.media_urls.length > 0
+      ? post.media_urls
+      : (post?.image_url ? [post.image_url] : [])
+
+    return list.map((path) => resolveMediaUrl(path))
+  }
+
+  const isSharedStoryMessage = (msg) => (
+    Boolean(msg?.story_id) && (
+      msg?.story_context === 'shared' ||
+      String(msg?.content || '').trim() === SHARED_STORY_MESSAGE
+    )
+  )
+
+  const isSharedPostMessage = (msg) => (
+    Boolean(msg?.post_id) && (
+      msg?.post_context === 'shared' ||
+      String(msg?.content || '').trim() === SHARED_POST_MESSAGE
+    )
+  )
+
+  const getConversationPreviewText = (lastMessage) => {
+    const content = String(lastMessage?.content || '').trim()
+    if (content === SHARED_STORY_MESSAGE) return 'Shared a story'
+    if (content === SHARED_POST_MESSAGE) return 'Shared a post'
+    return content
+  }
 
   const appendMessageIfMissing = useCallback((incomingMessage, extraFields = {}) => {
     if (!incomingMessage?.id) return
@@ -234,6 +265,10 @@ export default function Chat() {
 
     const handleNewMessage = ({ conversationId: convId, message }) => {
       if (String(convId) === String(conversationId)) {
+        if (message?.story_id || message?.post_id) {
+          void loadMessages(convId)
+          return
+        }
         // Chat is open — add message and mark as seen
         appendMessageIfMissing(message, { status: 'seen' })
         emitMessageStatus(convId, message.id, 'seen')
@@ -453,6 +488,7 @@ export default function Chat() {
   const sendMessage = async e => {
     e.preventDefault()
     if (!newMsg.trim() || !conversationId) return
+    if (isActivePrivateChatBlocked()) return
     
     // Clear typing indicator
     sendTyping(conversationId, false)
@@ -544,6 +580,7 @@ export default function Chat() {
 
   const uploadAndSendMedia = async (file) => {
     if (!file || !conversationId) return
+    if (isActivePrivateChatBlocked()) return
 
     const extension = (file.name.split('.').pop() || '').toLowerCase()
     const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'heic', 'heif', 'avif', 'jfif']
@@ -1001,6 +1038,7 @@ export default function Chat() {
         try {
           await users.block(other.id)
           setBlockedUserIds(prev => new Set([...prev, other.id]))
+          setActiveConv(prev => prev ? { ...prev, private_chat_blocked: true } : prev)
           requestConversationsRefresh(120)
           setActionToast({ type: 'success', message: 'User blocked' })
         } catch (err) {
@@ -1031,6 +1069,7 @@ export default function Chat() {
             next.delete(other.id)
             return next
           })
+          setActiveConv(prev => prev ? { ...prev, private_chat_blocked: false } : prev)
           setActionToast({ type: 'success', message: 'User unblocked' })
         } catch (err) {
           console.error('Failed to unblock user', err)
@@ -1044,6 +1083,11 @@ export default function Chat() {
     if (!activeConv || activeConv.type !== 'private') return false
     const other = getOtherUser(activeConv)
     return Boolean(other?.id && blockedUserIds.has(other.id))
+  }
+
+  const isActivePrivateChatBlocked = () => {
+    if (!activeConv || activeConv.type !== 'private') return false
+    return Boolean(activeConv.private_chat_blocked || isActivePrivateUserBlocked())
   }
 
   const copyProfileLink = async () => {
@@ -1082,12 +1126,6 @@ export default function Chat() {
     return `${minutes}:${seconds}`
   }
 
-  const resolveMediaUrl = (path) => {
-    if (!path) return ''
-    if (/^https?:\/\//i.test(path)) return path
-    return path.startsWith('/') ? path : `/${path}`
-  }
-
   const getAttachmentData = (msg) => {
     const attachment = msg.attachments?.[0]
     if (attachment) {
@@ -1116,11 +1154,41 @@ export default function Chat() {
     if (!attachment) return
 
     const fallbackName = attachment.name || `${attachment.type || 'file'}-${msg.id}`
-    const triggerDownload = (blobOrUrl, filename) => {
+    const triggerDownload = async (blobOrUrl, filename) => {
       const link = document.createElement('a')
       link.style.display = 'none'
       if (blobOrUrl instanceof Blob) {
+        const mimeType = blobOrUrl.type || attachment.mimeType || 'application/octet-stream'
+        const isMobileBrowser = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
+
+        if (typeof File !== 'undefined' && navigator.share && navigator.canShare) {
+          try {
+            const file = new File([blobOrUrl], filename, { type: mimeType })
+            if (navigator.canShare({ files: [file] })) {
+              await navigator.share({
+                files: [file],
+                title: filename,
+              })
+              return
+            }
+          } catch (shareErr) {
+            if (shareErr?.name === 'AbortError') {
+              return
+            }
+          }
+        }
+
         const blobUrl = URL.createObjectURL(blobOrUrl)
+
+        if (isMobileBrowser) {
+          const opened = window.open(blobUrl, '_blank', 'noopener,noreferrer')
+          if (!opened) {
+            window.location.href = blobUrl
+          }
+          setTimeout(() => URL.revokeObjectURL(blobUrl), 60000)
+          return
+        }
+
         link.href = blobUrl
         link.download = filename
         document.body.appendChild(link)
@@ -1147,12 +1215,12 @@ export default function Chat() {
         const decodedName = matchedFilename
           ? decodeURIComponent(matchedFilename[1].replace(/"/g, '').trim())
           : fallbackName
-        triggerDownload(response.data, decodedName)
+        await triggerDownload(response.data, decodedName)
         return
       }
 
       if (attachment.url) {
-        triggerDownload(attachment.url, fallbackName)
+        await triggerDownload(attachment.url, fallbackName)
       }
     } catch (err) {
       console.error('Failed to download attachment', err)
@@ -1333,6 +1401,17 @@ export default function Chat() {
     if (msg.deleted) return <span className="italic text-gray-500">[Message deleted]</span>
 
     const attachment = getAttachmentData(msg)
+    const normalizedContent = String(msg.content || '').trim()
+    const isSharedStory = isSharedStoryMessage(msg)
+    const isSharedPost = isSharedPostMessage(msg)
+
+    if (!msg.story_id && normalizedContent === SHARED_STORY_MESSAGE) {
+      return <span className="italic text-gray-500">Story no longer available</span>
+    }
+
+    if (!msg.post_id && normalizedContent === SHARED_POST_MESSAGE) {
+      return <span className="italic text-gray-500">Post no longer available</span>
+    }
 
     // Story reply — show story thumbnail with reply text (Instagram-style)
     if (msg.story_id) {
@@ -1340,11 +1419,17 @@ export default function Chat() {
       const mediaUrl = msg.story_media_url ? `${msg.story_media_url}${token ? `?token=${token}` : ''}` : null
       return (
         <div>
-          <div className="mb-2 rounded-lg overflow-hidden border border-gray-700 bg-gray-800/60">
+          <button
+            type="button"
+            onClick={() => navigate(`/story/${msg.story_id}`)}
+            className="mb-2 w-full text-left rounded-lg overflow-hidden border border-gray-700 bg-gray-800/60"
+          >
             <div className="px-2 py-1 text-[10px] text-gray-400 bg-gray-800">
-              Replied to {msg.user_id === user.id ? `${msg.story_owner}'s` : 'your'} story
+              {isSharedStory
+                ? 'Shared story'
+                : `Replied to ${msg.user_id === user.id ? `${msg.story_owner}'s` : 'your'} story`}
             </div>
-            {msg.story_expired ? (
+            {msg.story_unavailable || msg.story_expired ? (
               <div className="px-3 py-4 text-xs text-gray-500 italic text-center">Story no longer available</div>
             ) : mediaUrl ? (
               msg.story_media_type === 'video' ? (
@@ -1355,8 +1440,52 @@ export default function Chat() {
             ) : (
               <div className="px-3 py-4 text-xs text-gray-500 italic text-center">Story unavailable</div>
             )}
-          </div>
-          <span>{msg.content}</span>
+            {isSharedStory && msg.story_caption ? (
+              <div className="px-3 py-2 text-xs text-gray-300 whitespace-pre-wrap border-t border-gray-700/70">
+                {msg.story_caption}
+              </div>
+            ) : null}
+          </button>
+          {!isSharedStory && <span>{msg.content}</span>}
+        </div>
+      )
+    }
+
+    if (msg.post_id) {
+      const mediaUrls = getPostMediaUrls({ media_urls: msg.post_media_urls, image_url: msg.post_image_url })
+      const previewImage = mediaUrls[0]
+
+      return (
+        <div>
+          <button
+            type="button"
+            onClick={() => navigate(`/post/${msg.post_id}`)}
+            className="mb-2 w-full text-left rounded-lg overflow-hidden border border-gray-700 bg-gray-800/60"
+          >
+            <div className="px-2 py-1 text-[10px] text-gray-400 bg-gray-800">
+              Shared post
+            </div>
+            {msg.post_unavailable ? (
+              <div className="px-3 py-4 text-xs text-gray-500 italic text-center">Post no longer available</div>
+            ) : (
+              <>
+                {previewImage ? (
+                  <img src={previewImage} alt="Post" className="w-full max-h-40 object-cover" />
+                ) : null}
+                <div className="px-3 py-2">
+                  {msg.post_owner_username ? (
+                    <div className="text-xs text-cyan-300 mb-1">@{msg.post_owner_username}</div>
+                  ) : null}
+                  {msg.post_caption ? (
+                    <div className="text-sm text-gray-200 whitespace-pre-wrap line-clamp-4">{msg.post_caption}</div>
+                  ) : (
+                    <div className="text-xs text-gray-500 italic">Open post</div>
+                  )}
+                </div>
+              </>
+            )}
+          </button>
+          {!isSharedPost && <span>{msg.content}</span>}
         </div>
       )
     }
@@ -1557,7 +1686,7 @@ export default function Chat() {
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-sm truncate text-white">{other.name}</p>
                     <p className={`text-xs truncate ${isTypingInConv ? 'text-green-400' : 'text-gray-500'}`}>
-                      {isTypingInConv ? 'Typing...' : (conv.last_message?.content?.substring(0, 30) || 'Start chatting')}
+                      {isTypingInConv ? 'Typing...' : (getConversationPreviewText(conv.last_message)?.substring(0, 30) || 'Start chatting')}
                     </p>
                   </div>
                   {conv.unread_count > 0 && (
@@ -1973,11 +2102,17 @@ export default function Chat() {
                 </div>
               )}
 
+              {isActivePrivateChatBlocked() && (
+                <div className="mb-3 rounded-2xl border border-amber-500/25 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
+                  Messaging is unavailable because one of you has blocked the other.
+                </div>
+              )}
               <form onSubmit={sendMessage} className="flex items-center gap-2 md:gap-3 bg-gray-900 border border-gray-800 rounded-full px-3 md:px-4 py-2">
                 <button 
                   type="button"
+                  disabled={isActivePrivateChatBlocked()}
                   onClick={() => setShowInputEmoji(!showInputEmoji)}
-                  className={`${showInputEmoji ? 'text-white' : 'text-gray-500'} cursor-pointer hover:opacity-60`}
+                  className={`${showInputEmoji ? 'text-white' : 'text-gray-500'} cursor-pointer hover:opacity-60 disabled:cursor-not-allowed disabled:opacity-40`}
                 >
                   <Smile size={24} />
                 </button>
@@ -1987,28 +2122,35 @@ export default function Chat() {
                   value={newMsg}
                   onChange={e => { setNewMsg(e.target.value); handleTyping() }}
                   onInput={handleTyping}
-                  className="flex-1 bg-transparent outline-none text-sm text-white placeholder-gray-600 min-w-0"
+                  disabled={isActivePrivateChatBlocked()}
+                  className="flex-1 bg-transparent outline-none text-sm text-white placeholder-gray-600 min-w-0 disabled:cursor-not-allowed disabled:text-gray-500"
                 />
                 {newMsg.trim() ? (
-                  <button type="submit" className="text-white font-semibold text-sm hover:opacity-60 shrink-0">
+                  <button
+                    type="submit"
+                    disabled={isActivePrivateChatBlocked()}
+                    className="text-white font-semibold text-sm hover:opacity-60 shrink-0 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
                     Send
                   </button>
                 ) : (
                   <div className="flex items-center gap-2 md:gap-3 shrink-0">
                     <button
                       type="button"
+                      disabled={isActivePrivateChatBlocked()}
                       onClick={toggleRecording}
-                      className={`cursor-pointer hover:opacity-60 ${recording ? 'text-red-500 animate-pulse' : 'text-gray-500'}`}
+                      className={`cursor-pointer hover:opacity-60 disabled:cursor-not-allowed disabled:opacity-40 ${recording ? 'text-red-500 animate-pulse' : 'text-gray-500'}`}
                       aria-label={recording ? 'Stop recording and send' : 'Start recording'}
                     >
                       <Mic size={24} />
                     </button>
-                    <label className="cursor-pointer">
+                    <label className={`cursor-pointer ${isActivePrivateChatBlocked() ? 'pointer-events-none opacity-40' : ''}`}>
                       <Paperclip size={24} className="text-gray-500 hover:opacity-60" />
                       <input
                         type="file"
                         ref={fileInputRef}
                         onChange={handleFileUpload}
+                        disabled={isActivePrivateChatBlocked()}
                         accept="image/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.csv,.zip,.rar,.7z"
                         className="hidden"
                       />
@@ -2017,11 +2159,12 @@ export default function Chat() {
                       type="file"
                       ref={audioCaptureInputRef}
                       onChange={handleAudioCapture}
+                      disabled={isActivePrivateChatBlocked()}
                       accept="audio/*"
                       capture="user"
                       className="hidden"
                     />
-                    <Heart size={24} className="text-gray-500 cursor-pointer hover:opacity-60 hidden md:block" onClick={() => {
+                    <Heart size={24} className={`text-gray-500 cursor-pointer hover:opacity-60 hidden md:block ${isActivePrivateChatBlocked() ? 'pointer-events-none opacity-40' : ''}`} onClick={() => {
                       setNewMsg('❤️')
                       setTimeout(() => document.querySelector('form')?.requestSubmit(), 0)
                     }} />
@@ -2262,7 +2405,7 @@ export default function Chat() {
                       )}
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold text-white truncate">{other.name}</p>
-                        <p className="text-xs text-gray-500 truncate">{conv.last_message?.content || 'No messages yet'}</p>
+                        <p className="text-xs text-gray-500 truncate">{getConversationPreviewText(conv.last_message) || 'No messages yet'}</p>
                       </div>
                       {forwardingTo && String(forwardingTo) === String(conv.id) && (
                         <span className="text-xs text-blue-400">Sending...</span>

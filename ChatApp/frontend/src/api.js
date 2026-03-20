@@ -1,7 +1,8 @@
 import axios from 'axios'
+import { API_BASE_URL, buildApiUrl } from './utils/backendUrl'
 
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: API_BASE_URL,
   headers: { 'Content-Type': 'application/json' }
 })
 
@@ -156,17 +157,8 @@ export const media = {
 export const posts = {
   getFeed: (params) => api.get('/feed', { params }),
   getUserPosts: (userId, params) => api.get(`/users/${userId}/posts`, { params }),
-  create: (data) => {
-    const formData = new FormData()
-    if (data.content) formData.append('caption', data.content)
-
-    const images = Array.isArray(data.images) ? data.images : []
-    if (images.length > 0) {
-      images.forEach((img) => formData.append('images[]', img))
-    } else if (data.image) {
-      formData.append('image', data.image)
-    }
-
+  create: (formData) => {
+    // Accepts FormData directly (for media/images/videos)
     return api.post('/posts', formData, {
       headers: { 'Content-Type': 'multipart/form-data' }
     })
@@ -244,7 +236,7 @@ export const stories = {
   delete: (storyId) => api.delete(`/stories/${storyId}`),
   getMediaUrl: (storyId) => {
     const token = localStorage.getItem('token')
-    return `/api/stories/${storyId}/media${token ? `?token=${encodeURIComponent(token)}` : ''}`
+    return buildApiUrl(`/stories/${storyId}/media${token ? `?token=${encodeURIComponent(token)}` : ''}`)
   },
 }
 

@@ -81,6 +81,25 @@ class User extends Authenticatable implements MustVerifyEmailContract
         return $this->belongsToMany(User::class, 'user_blocks', 'blocked_user_id', 'user_id')->withTimestamps();
     }
 
+    public function hasBlockedUser($user): bool
+    {
+        $userId = $user instanceof self ? $user->id : (int) $user;
+
+        return $this->blockedUsers()->where('blocked_user_id', $userId)->exists();
+    }
+
+    public function isBlockedByUser($user): bool
+    {
+        $userId = $user instanceof self ? $user->id : (int) $user;
+
+        return $this->blockedByUsers()->where('user_id', $userId)->exists();
+    }
+
+    public function hasBlockedRelationshipWith($user): bool
+    {
+        return $this->hasBlockedUser($user) || $this->isBlockedByUser($user);
+    }
+
     public function friends(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'friends', 'user_id', 'friend_id')

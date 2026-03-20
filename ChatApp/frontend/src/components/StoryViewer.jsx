@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useSocket } from '../context/useSocket'
 import { stories, users, conversations, messages } from '../api'
 import ConfirmDialog from './ConfirmDialog'
+import { SHARED_STORY_MESSAGE } from '../utils/chatShares'
 import { X, ChevronLeft, ChevronRight, Eye, Trash2, Loader2, Heart, Send, Repeat2, Share2, Link as LinkIcon, MoreVertical, Pencil } from 'lucide-react'
 import VerifiedBadge from './VerifiedBadge'
 
@@ -36,6 +37,7 @@ export default function StoryViewer({
   initialUserIndex = 0,
   initialStoryIndex = 0,
   onStoryViewed,
+  onStoryDeleted,
   onClose,
   currentUserId
 }) {
@@ -62,6 +64,13 @@ export default function StoryViewer({
   const [sendingTo, setSendingTo] = useState(null)
   const [shareSearch, setShareSearch] = useState('')
   const [editedCaptions, setEditedCaptions] = useState({})
+  // Inline edit/repost state
+  const [editingCaption, setEditingCaption] = useState(false)
+  const [editingCaptionValue, setEditingCaptionValue] = useState('')
+  const [editingCaptionLoading, setEditingCaptionLoading] = useState(false)
+  const [repostingCaption, setRepostingCaption] = useState(false)
+  const [repostCaptionValue, setRepostCaptionValue] = useState('')
+  const [repostCaptionLoading, setRepostCaptionLoading] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [deletingStory, setDeletingStory] = useState(false)
   
@@ -76,7 +85,7 @@ export default function StoryViewer({
   const isOwnStory = currentUserStory?.user.id === currentUserId
   const effectiveCaption = currentStory ? (editedCaptions[currentStory.id] ?? currentStory.caption) : ''
   const mediaSrc = currentStory ? stories.getMediaUrl(currentStory.id) : null
-  const isInteractionLocked = showViewers || replyFocused || sharingStory || shareModalOpen
+  const isInteractionLocked = showViewers || replyFocused || sharingStory || shareModalOpen || editingCaption || repostingCaption
 
   useEffect(() => {
     if (!Array.isArray(userStories) || userStories.length === 0) return
@@ -289,43 +298,78 @@ export default function StoryViewer({
   const handleDelete = async () => {
     if (!isOwnStory || !currentStory || deletingStory) return
 
+    const deletedStoryId = currentStory.id
+    const deletedStoryOwnerId = currentUserStory.user.id
+    const wasOnlyStoryForUser = currentUserStory.stories.length === 1
+    const wasLastStoryForUser = currentStoryIndex >= currentUserStory.stories.length - 1
+
+    const finalizeDeletedStory = () => {
+      onStoryDeleted?.(deletedStoryId, deletedStoryOwnerId)
+
+      if (wasOnlyStoryForUser) {
+        onClose()
+        return
+      }
+
+      if (wasLastStoryForUser) {
+        setCurrentStoryIndex((prev) => Math.max(0, prev - 1))
+      }
+    }
+
     try {
       setDeletingStory(true)
-      await stories.delete(currentStory.id)
-      // If this was the only story, close viewer
-      if (currentUserStory.stories.length === 1) {
-        onClose()
-      } else {
-        // Go to next or previous story
-        if (currentStoryIndex < currentUserStory.stories.length - 1) {
-          // Stories will be refreshed on close
-        } else {
-          setCurrentStoryIndex(prev => prev - 1)
-        }
-      }
+      await stories.delete(deletedStoryId)
+      finalizeDeletedStory()
     } catch (err) {
       console.error('Failed to delete story:', err)
-      alert('Failed to delete story')
+      const status = err?.response?.status
+      const serverMsg = err?.response?.data?.message
+
+      // If backend says the story wasn't found, treat as deleted (it may have been removed server-side)
+      if (status === 404) {
+        console.warn('Story not found on server; treating as deleted')
+        finalizeDeletedStory()
+        return
+      }
+
+      if (serverMsg) {
+        alert(`Failed to delete story: ${serverMsg}`)
+      } else if (err?.response) {
+        alert(`Failed to delete story: ${err.response.status} ${err.response.statusText}`)
+      } else {
+        alert(`Failed to delete story: ${err?.message || 'Unknown error'}`)
+      }
     } finally {
       setDeletingStory(false)
       setShowDeleteConfirm(false)
     }
   }
 
-  const handleEditCaption = async () => {
+  const handleEditCaption = () => {
     if (!isOwnStory || !currentStory) return
+    setEditingCaptionValue(effectiveCaption || '')
+    setEditingCaption(true)
+  }
 
-    const nextCaption = window.prompt('Edit story caption (optional):', effectiveCaption || '')
-    if (nextCaption === null) return
-
+  const handleEditCaptionSave = async () => {
+    if (!isOwnStory || !currentStory) return
+    setEditingCaptionLoading(true)
     try {
-      const res = await stories.update(currentStory.id, { caption: nextCaption.trim() || null })
-      const updatedCaption = res.data?.story?.caption ?? (nextCaption.trim() || null)
+      const res = await stories.update(currentStory.id, { caption: editingCaptionValue.trim() || null })
+      const updatedCaption = res.data?.story?.caption ?? (editingCaptionValue.trim() || null)
       setEditedCaptions((prev) => ({ ...prev, [currentStory.id]: updatedCaption }))
+      setEditingCaption(false)
     } catch (err) {
       console.error('Failed to update story caption:', err)
-      alert('Failed to update story caption')
+      // Optionally show a toast or error UI
+    } finally {
+      setEditingCaptionLoading(false)
     }
+  }
+
+  const handleEditCaptionCancel = () => {
+    setEditingCaption(false)
+    setEditingCaptionValue('')
   }
 
   const toggleLike = async () => {
@@ -395,22 +439,33 @@ export default function StoryViewer({
     }
   }
 
-  const handleRepostStory = async () => {
+  const handleRepostStory = () => {
     if (!currentStory?.is_mentioned_for_viewer || repostingStory) return
+    setRepostCaptionValue('')
+    setRepostingCaption(true)
+  }
 
-    const repostCaption = window.prompt('Add a caption to your repost (optional):', '')
-    if (repostCaption === null) return
-
+  const handleRepostCaptionSave = async () => {
+    if (!currentStory?.is_mentioned_for_viewer || repostingStory) return
+    setRepostCaptionLoading(true)
+    setRepostingStory(true)
     try {
-      setRepostingStory(true)
-      await stories.repost(currentStory.id, repostCaption.trim())
-      alert('Story reposted to your story.')
+      await stories.repost(currentStory.id, repostCaptionValue.trim())
+      setRepostingCaption(false)
+      setRepostCaptionValue('')
       refreshNotificationCounts()
+      // Optionally show a toast or success UI
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to repost story')
+      // Optionally show a toast or error UI
     } finally {
+      setRepostCaptionLoading(false)
       setRepostingStory(false)
     }
+  }
+
+  const handleRepostCaptionCancel = () => {
+    setRepostingCaption(false)
+    setRepostCaptionValue('')
   }
 
   const handleShareStory = async () => {
@@ -462,6 +517,22 @@ export default function StoryViewer({
   const handleSendToChat = async (convId) => {
     if (!currentStory || sendingTo) return
 
+    try {
+      setSendingTo(convId)
+      const res = await messages.send(convId, {
+        content: SHARED_STORY_MESSAGE,
+        story_id: currentStory.id,
+      })
+      emitNewMessage(convId, res.data?.data, res.data?.member_ids || [])
+      setShareModalOpen(false)
+      setSendingTo(null)
+      return
+    } catch (err) {
+      console.error('Failed to send story to chat:', err)
+      setSendingTo(null)
+      return
+    }
+
     const shareUrl = `${window.location.origin}/story/${currentStory.id}`
 
     try {
@@ -472,6 +543,24 @@ export default function StoryViewer({
       setSendingTo(null)
     } catch (err) {
       console.error('Failed to send story to chat:', err)
+      setSendingTo(null)
+    }
+  }
+
+  const sendSharedStoryToChat = async (convId) => {
+    if (!currentStory || sendingTo) return
+
+    try {
+      setSendingTo(convId)
+      const res = await messages.send(convId, {
+        content: SHARED_STORY_MESSAGE,
+        story_id: currentStory.id,
+      })
+      emitNewMessage(convId, res.data?.data, res.data?.member_ids || [])
+      setShareModalOpen(false)
+    } catch (err) {
+      console.error('Failed to send story to chat:', err)
+    } finally {
       setSendingTo(null)
     }
   }
@@ -553,7 +642,7 @@ export default function StoryViewer({
       {/* Close button */}
       <button
         onClick={onClose}
-        className="absolute top-4 right-4 z-10 p-2 text-white hover:bg-white/10 rounded-full"
+        className="absolute top-4 right-4 z-10 hidden md:inline-flex p-2 text-white hover:bg-white/10 rounded-full"
       >
         <X className="w-6 h-6" />
       </button>
@@ -678,12 +767,23 @@ export default function StoryViewer({
                     e.stopPropagation()
                     setShowDeleteConfirm(true)
                   }}
-                  className="p-2 hover:bg-white/10 rounded-full"
+                  className="hidden md:inline-flex p-2 hover:bg-white/10 rounded-full"
                 >
                   <Trash2 className="w-5 h-5 text-white" />
                 </button>
               </>
             )}
+
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                onClose()
+              }}
+              className="p-2 hover:bg-white/10 rounded-full md:hidden"
+              title="Close story viewer"
+            >
+              <X className="w-5 h-5 text-white" />
+            </button>
           </div>
         </div>
 
@@ -718,22 +818,85 @@ export default function StoryViewer({
         </div>
 
         {/* Caption at bottom, like social feed style */}
-        {(currentStory.repost?.from_user || (effectiveCaption && effectiveCaption.trim())) && (
+        {/* Inline edit caption for own story */}
+        {(editingCaption && isOwnStory) ? (
           <div className={`absolute left-0 right-0 z-20 px-4 ${isOwnStory ? 'bottom-[calc(6.75rem+env(safe-area-inset-bottom))]' : 'bottom-[calc(7.5rem+env(safe-area-inset-bottom))]'}`}>
             <div className="max-w-md mx-auto">
-              <div className="rounded-xl bg-black/45 backdrop-blur-sm px-3 py-2">
-                {currentStory.repost?.from_user && (
-                  <p className="text-xs text-cyan-300 mb-1">
-                    Reposted from @{currentStory.repost.from_user.username}
-                  </p>
-                )}
-                {effectiveCaption && effectiveCaption.trim() && (
-                  <p className="text-sm text-white whitespace-pre-wrap wrap-break-word">{renderTextWithMentions(effectiveCaption, handleMentionClick)}</p>
-                )}
+              <div className="rounded-xl bg-black/70 backdrop-blur-sm px-3 py-2 flex flex-col gap-2">
+                <input
+                  type="text"
+                  className="w-full bg-black/40 border border-white/30 rounded px-3 py-2 text-white text-sm placeholder-gray-400 outline-none focus:border-white/60"
+                  value={editingCaptionValue}
+                  onChange={e => setEditingCaptionValue(e.target.value)}
+                  placeholder="Edit story caption (optional)"
+                  maxLength={2200}
+                  autoFocus
+                  disabled={editingCaptionLoading}
+                  onKeyDown={e => { if (e.key === 'Enter') handleEditCaptionSave() }}
+                />
+                <div className="flex gap-2 justify-end">
+                  <button
+                    className="px-3 py-1 rounded bg-gray-600 text-white text-xs hover:bg-gray-500 disabled:opacity-50"
+                    onClick={handleEditCaptionCancel}
+                    disabled={editingCaptionLoading}
+                  >Cancel</button>
+                  <button
+                    className="px-3 py-1 rounded bg-blue-500 text-white text-xs hover:bg-blue-600 disabled:opacity-50"
+                    onClick={handleEditCaptionSave}
+                    disabled={editingCaptionLoading}
+                  >{editingCaptionLoading ? 'Saving...' : 'Save'}</button>
+                </div>
               </div>
             </div>
           </div>
-        )}
+        ) : (repostingCaption ? (
+          <div className={`absolute left-0 right-0 z-20 px-4 ${isOwnStory ? 'bottom-[calc(6.75rem+env(safe-area-inset-bottom))]' : 'bottom-[calc(7.5rem+env(safe-area-inset-bottom))]'}`}>
+            <div className="max-w-md mx-auto">
+              <div className="rounded-xl bg-black/70 backdrop-blur-sm px-3 py-2 flex flex-col gap-2">
+                <input
+                  type="text"
+                  className="w-full bg-black/40 border border-white/30 rounded px-3 py-2 text-white text-sm placeholder-gray-400 outline-none focus:border-white/60"
+                  value={repostCaptionValue}
+                  onChange={e => setRepostCaptionValue(e.target.value)}
+                  placeholder="Add a caption to your repost (optional)"
+                  maxLength={2200}
+                  autoFocus
+                  disabled={repostCaptionLoading}
+                  onKeyDown={e => { if (e.key === 'Enter') handleRepostCaptionSave() }}
+                />
+                <div className="flex gap-2 justify-end">
+                  <button
+                    className="px-3 py-1 rounded bg-gray-600 text-white text-xs hover:bg-gray-500 disabled:opacity-50"
+                    onClick={handleRepostCaptionCancel}
+                    disabled={repostCaptionLoading}
+                  >Cancel</button>
+                  <button
+                    className="px-3 py-1 rounded bg-blue-500 text-white text-xs hover:bg-blue-600 disabled:opacity-50"
+                    onClick={handleRepostCaptionSave}
+                    disabled={repostCaptionLoading}
+                  >{repostCaptionLoading ? 'Reposting...' : 'Repost'}</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          (currentStory.repost?.from_user || (effectiveCaption && effectiveCaption.trim())) && (
+            <div className={`absolute left-0 right-0 z-20 px-4 ${isOwnStory ? 'bottom-[calc(6.75rem+env(safe-area-inset-bottom))]' : 'bottom-[calc(7.5rem+env(safe-area-inset-bottom))]'}`}>
+              <div className="max-w-md mx-auto">
+                <div className="rounded-xl bg-black/45 backdrop-blur-sm px-3 py-2">
+                  {currentStory.repost?.from_user && (
+                    <p className="text-xs text-cyan-300 mb-1">
+                      Reposted from @{currentStory.repost.from_user.username}
+                    </p>
+                  )}
+                  {effectiveCaption && effectiveCaption.trim() && (
+                    <p className="text-sm text-white whitespace-pre-wrap wrap-break-word">{renderTextWithMentions(effectiveCaption, handleMentionClick)}</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          )
+        ))}
       </div>
 
       {/* Reply bar + Like button (for non-own stories) — OUTSIDE the tap area */}
@@ -813,6 +976,26 @@ export default function StoryViewer({
           >
             <Eye className="w-5 h-5" />
             <span className="text-sm">{currentStory.view_count ?? 0}</span>
+          </button>
+        </div>
+      )}
+
+      {isOwnStory && (
+        <div className="absolute right-0 z-20 px-4 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] md:hidden"
+          onClick={(e) => e.stopPropagation()}
+          onMouseDown={(e) => e.stopPropagation()}
+          onTouchStart={(e) => e.stopPropagation()}
+          onTouchEnd={(e) => e.stopPropagation()}
+        >
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              setShowDeleteConfirm(true)
+            }}
+            className="flex items-center justify-center p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-full"
+            title="Delete story"
+          >
+            <Trash2 className="w-5 h-5" />
           </button>
         </div>
       )}
@@ -947,7 +1130,7 @@ export default function StoryViewer({
                       <button
                         key={conv.id}
                         type="button"
-                        onClick={() => handleSendToChat(conv.id)}
+                        onClick={() => sendSharedStoryToChat(conv.id)}
                         disabled={Boolean(sendingTo)}
                         className="text-center disabled:opacity-60"
                       >
@@ -998,7 +1181,7 @@ export default function StoryViewer({
                 ) : (
                   <div className="grid grid-cols-3 gap-x-4 gap-y-6">
                     {filteredChats.slice(0, 12).map(conv => (
-                      <button key={conv.id} type="button" onClick={() => handleSendToChat(conv.id)} disabled={Boolean(sendingTo)} className="text-center disabled:opacity-60">
+                      <button key={conv.id} type="button" onClick={() => sendSharedStoryToChat(conv.id)} disabled={Boolean(sendingTo)} className="text-center disabled:opacity-60">
                         <div className="mx-auto w-18 h-18 rounded-full overflow-hidden border border-gray-700">
                           <img src={getConversationAvatar(conv)} alt="" className="w-full h-full object-cover" />
                         </div>
