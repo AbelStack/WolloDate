@@ -254,14 +254,12 @@ class StoryController extends Controller
             return response()->json(['message' => 'You cannot view this story'], 403);
         }
 
-        // Don't track view for own stories
-        if ($story->user_id !== $currentUser->id) {
-            // Record view (upsert to avoid duplicates)
-            StoryView::firstOrCreate([
-                'story_id' => $story->id,
-                'viewer_id' => $currentUser->id,
-            ]);
-        }
+
+        // Record view (upsert to avoid duplicates)
+        StoryView::firstOrCreate([
+            'story_id' => $story->id,
+            'viewer_id' => $currentUser->id,
+        ]);
 
         return response()->json(['message' => 'Story viewed']);
     }
