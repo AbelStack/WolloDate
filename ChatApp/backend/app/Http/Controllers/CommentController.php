@@ -96,13 +96,14 @@ class CommentController extends Controller
      * PUT /api/comments/{commentId}
      */
     public function update(Request $request, $commentId)
-            \Log::info('Comment action', [
-                'action' => 'update',
-                'commentId' => $commentId,
-                'user' => $request->user() ? $request->user()->id : null,
-                'token' => $request->bearerToken(),
-            ]);
     {
+        \Log::info('Comment action', [
+            'action' => 'update',
+            'commentId' => $commentId,
+            'user' => $request->user() ? $request->user()->id : null,
+            'token' => $request->bearerToken(),
+        ]);
+
         $comment = Comment::findOrFail($commentId);
         $currentUser = $request->user();
 
@@ -135,13 +136,14 @@ class CommentController extends Controller
      * DELETE /api/comments/{commentId}
      */
     public function destroy(Request $request, $commentId)
-            \Log::info('Comment action', [
-                'action' => 'destroy',
-                'commentId' => $commentId,
-                'user' => $request->user() ? $request->user()->id : null,
-                'token' => $request->bearerToken(),
-            ]);
     {
+        \Log::info('Comment action', [
+            'action' => 'destroy',
+            'commentId' => $commentId,
+            'user' => $request->user() ? $request->user()->id : null,
+            'token' => $request->bearerToken(),
+        ]);
+
         $comment = Comment::findOrFail($commentId);
         $currentUser = $request->user();
 
