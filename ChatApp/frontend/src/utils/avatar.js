@@ -6,13 +6,13 @@ export const getAvatarUrl = (user) => {
   // Try avatar_url first
   if (user.avatar_url) {
     const resolved = resolveMediaUrl(user.avatar_url)
-    if (resolved) return resolved
+    if (resolved && resolved.trim()) return resolved
   }
   
   // Try avatar field
   if (user.avatar) {
     const resolved = resolveMediaUrl(user.avatar)
-    if (resolved) return resolved
+    if (resolved && resolved.trim()) return resolved
   }
   
   // Fallback: generate SVG with initials
@@ -27,6 +27,6 @@ export const getDefaultAvatar = (name) => {
     .toUpperCase()
     .slice(0, 2)
   
-  const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100'><rect fill='%234f46e5' width='100' height='100'/><text x='50' y='50' font-size='40' fill='white' text-anchor='middle' dy='.3em' font-family='Arial'>${initials}</text></svg>`
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect fill="#4f46e5" width="100" height="100"/><text x="50" y="55" font-size="40" font-weight="bold" fill="white" text-anchor="middle" font-family="Arial, sans-serif">${initials}</text></svg>`
   return `data:image/svg+xml;base64,${btoa(svg)}`
 }
