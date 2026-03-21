@@ -1502,19 +1502,22 @@ export default function Feed() {
           </div>
 
           {suggestions.slice(0, 3).length > 0 && (
-            <div className="rounded-2xl border border-gray-700/50 bg-gray-900/60 backdrop-blur-sm p-4">
-              <h3 className="text-sm font-semibold text-slate-200 mb-3">People Around You</h3>
+            <div className="rounded-2xl border p-4" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-bg-card)' }}>
+              <h3 className="text-sm font-semibold mb-3" style={{ color: 'var(--color-text-primary)' }}>People Around You</h3>
               <div className="space-y-3">
                 {suggestions.slice(0, 3).map((s) => (
                   <button
                     key={s.id}
                     onClick={() => navigate(`/profile/${s.id}`)}
-                    className="w-full flex items-center gap-3 rounded-xl px-2 py-2 hover:bg-gray-800/60 text-left"
+                    className="w-full flex items-center gap-3 rounded-xl px-2 py-2 text-left transition"
+                    style={{ backgroundColor: 'transparent' }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--color-bg-elevated)'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                   >
                     <img src={getAvatarUrl(s)} alt={s.name} className="w-10 h-10 rounded-full object-cover" />
                     <div className="min-w-0">
-                      <p className="text-sm text-white truncate flex items-center gap-1">{s.name} {isCreatorUser(s) && <CreatorBadge size="xs" />}</p>
-                      <p className="text-xs text-slate-400 truncate">{s.department_name || 'Campus student'}</p>
+                      <p className="text-sm truncate flex items-center gap-1" style={{ color: 'var(--color-text-primary)' }}>{s.name} {isCreatorUser(s) && <CreatorBadge size="xs" />}</p>
+                      <p className="text-xs truncate" style={{ color: 'var(--color-text-secondary)' }}>{s.department_name || 'Campus student'}</p>
                     </div>
                   </button>
                 ))}
