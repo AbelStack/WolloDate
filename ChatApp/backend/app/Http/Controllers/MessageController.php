@@ -761,14 +761,23 @@ class MessageController extends Controller
 
     private function canViewStory(User $viewer, Story $story): bool
     {
-        if ($viewer->id === $story->user_id) {
-            return true;
-        }
+        // Allow if story is not expired and not blocked
+        $isOwner = (string)$viewer->id === (string)$story->user_id;
+        $isExpired = $story->expires_at->isPast();
+        $blocked = $viewer->hasBlockedRelationshipWith($story->user);
 
-        return Follow::where('follower_id', $viewer->id)
-            ->where('following_id', $story->user_id)
-            ->where('status', 'accepted')
-            ->exists();
+        \Log::info('canViewStory debug', [
+            'viewer_id' => $viewer->id,
+            'story_user_id' => $story->user_id,
+            'is_owner' => $isOwner,
+            'is_expired' => $isExpired,
+            'blocked' => $blocked,
+        ]);
+
+        if ($isOwner) return true;
+        if ($isExpired) return false;
+        if ($blocked) return false;
+        return true;
     }
 
     private function canViewPost(User $viewer, Post $post): bool
