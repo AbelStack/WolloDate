@@ -9,7 +9,7 @@ export default function CreatorBadge({ size = 'compact', className = '' }) {
   const sizeClass = sizeMap[size] || sizeMap.compact;
   return (
     <span
-      className={`inline-flex shrink-0 whitespace-nowrap items-center rounded-full border border-amber-400/35 bg-amber-500/15 font-semibold uppercase tracking-wide text-amber-200 ${sizeClass} ${className}`}
+      className={`inline-flex shrink-0 whitespace-nowrap items-center rounded-full font-semibold uppercase tracking-wide ${sizeClass} ${className} dark:border-amber-400/35 dark:bg-amber-500/15 dark:text-amber-200 light:border-black/20 light:bg-black light:text-white`}
       style={{ lineHeight: '1', verticalAlign: 'middle' }}
       title="Creator of WolloDate"
       aria-label="Creator of WolloDate"

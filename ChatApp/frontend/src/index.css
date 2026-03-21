@@ -496,3 +496,28 @@ body {
 .light ::-webkit-scrollbar-thumb:hover {
   background: #9ca3af;
 }
+
+/* Creator Badge theme support */
+.light .dark\:border-amber-400\/35 {
+  border-color: rgba(0, 0, 0, 0.2) !important;
+}
+
+.light .dark\:bg-amber-500\/15 {
+  background-color: #000000 !important;
+}
+
+.light .dark\:text-amber-200 {
+  color: #ffffff !important;
+}
+
+.dark .light\:border-black\/20 {
+  border-color: rgba(251, 191, 36, 0.35) !important;
+}
+
+.dark .light\:bg-black {
+  background-color: rgba(245, 158, 11, 0.15) !important;
+}
+
+.dark .light\:text-white {
+  color: #fcd34d !important;
+}
