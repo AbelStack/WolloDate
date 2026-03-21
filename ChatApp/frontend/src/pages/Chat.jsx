@@ -1431,7 +1431,7 @@ export default function Chat() {
               msg.story_media_type === 'video' ? (
                 <video src={mediaUrl} className="w-full max-h-32 object-cover" muted />
               ) : (
-                <StoryImageWithFallback src={mediaUrl} />
+                <img src={mediaUrl} alt="Story" className="w-full max-h-32 object-cover" />
               )
             ) : (
               <div className="px-3 py-4 text-xs text-gray-500 italic text-center">Story unavailable</div>
