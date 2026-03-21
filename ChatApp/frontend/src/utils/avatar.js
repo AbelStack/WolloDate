@@ -27,5 +27,6 @@ export const getDefaultAvatar = (name) => {
     .toUpperCase()
     .slice(0, 2)
   
-  return `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect fill='%234f46e5' width='100' height='100'/%3E%3Ctext x='50' y='50' font-size='40' fill='white' text-anchor='middle' dy='.3em' font-family='Arial'%3E${initials}%3C/text%3E%3C/svg%3E`
+  const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100'><rect fill='%234f46e5' width='100' height='100'/><text x='50' y='50' font-size='40' fill='white' text-anchor='middle' dy='.3em' font-family='Arial'>${initials}</text></svg>`
+  return `data:image/svg+xml;base64,${btoa(svg)}`
 }
