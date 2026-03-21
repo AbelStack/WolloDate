@@ -433,10 +433,16 @@ class StoryController extends Controller
             'current_user' => $currentUser ? $currentUser->toArray() : null,
         ]);
 
-        if ($story->user_id !== $currentUser->id) {
+
+        // Allow deletion if the current user is either the story owner or the original owner of a repost
+        $isOwner = $story->user_id === $currentUser->id;
+        $isOriginalOwnerOfRepost = $story->repost_of_story_id && $story->repost_from_user_id && $story->repost_from_user_id === $currentUser->id;
+
+        if (!($isOwner || $isOriginalOwnerOfRepost)) {
             \Log::warning('Unauthorized story delete', [
                 'story_id' => $story->id,
                 'story_user_id' => $story->user_id,
+                'repost_from_user_id' => $story->repost_from_user_id,
                 'current_user_id' => $currentUser ? $currentUser->id : null,
             ]);
             return response()->json(['message' => 'Unauthorized'], 403);
