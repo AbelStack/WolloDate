@@ -209,11 +209,34 @@ class PostController extends Controller
      */
     public function update(Request $request, $postId)
     {
+
         $post = Post::findOrFail($postId);
         $user = $request->user();
 
-        if ($post->user_id !== $user->id) {
-            return response()->json(['message' => 'Unauthorized'], 403);
+        if ((string)$post->user_id !== (string)$user->id) {
+            \Log::warning('Unauthorized post update', [
+                'post_id' => $post->id,
+                'post_user_id' => $post->user_id,
+                'post_user_id_type' => gettype($post->user_id),
+                'current_user_id' => $user ? $user->id : null,
+                'current_user_id_type' => $user ? gettype($user->id) : null,
+                'current_user' => $user ? $user->toArray() : null,
+                'auth_guard' => auth()->getDefaultDriver(),
+                'auth_check' => auth()->check(),
+            ]);
+            return response()->json([
+                'message' => 'Unauthorized',
+                'debug' => [
+                    'post_id' => $post->id,
+                    'post_user_id' => $post->user_id,
+                    'post_user_id_type' => gettype($post->user_id),
+                    'current_user_id' => $user ? $user->id : null,
+                    'current_user_id_type' => $user ? gettype($user->id) : null,
+                    'current_user' => $user ? $user->toArray() : null,
+                    'auth_guard' => auth()->getDefaultDriver(),
+                    'auth_check' => auth()->check(),
+                ]
+            ], 403);
         }
 
         $validated = $request->validate([
@@ -246,11 +269,35 @@ class PostController extends Controller
      */
     public function destroy(Request $request, $postId)
     {
+
         $post = Post::findOrFail($postId);
+        $user = $request->user();
 
         // Only owner can delete (admin deletion is through admin routes)
-        if ($post->user_id !== $request->user()->id) {
-            return response()->json(['message' => 'Unauthorized'], 403);
+        if ((string)$post->user_id !== (string)($user ? $user->id : null)) {
+            \Log::warning('Unauthorized post delete', [
+                'post_id' => $post->id,
+                'post_user_id' => $post->user_id,
+                'post_user_id_type' => gettype($post->user_id),
+                'current_user_id' => $user ? $user->id : null,
+                'current_user_id_type' => $user ? gettype($user->id) : null,
+                'current_user' => $user ? $user->toArray() : null,
+                'auth_guard' => auth()->getDefaultDriver(),
+                'auth_check' => auth()->check(),
+            ]);
+            return response()->json([
+                'message' => 'Unauthorized',
+                'debug' => [
+                    'post_id' => $post->id,
+                    'post_user_id' => $post->user_id,
+                    'post_user_id_type' => gettype($post->user_id),
+                    'current_user_id' => $user ? $user->id : null,
+                    'current_user_id_type' => $user ? gettype($user->id) : null,
+                    'current_user' => $user ? $user->toArray() : null,
+                    'auth_guard' => auth()->getDefaultDriver(),
+                    'auth_check' => auth()->check(),
+                ]
+            ], 403);
         }
 
         $mediaPaths = [];

@@ -716,14 +716,27 @@ class MessageController extends Controller
         if ($message->story) {
             $message->story_context = trim((string) $message->content) === self::SHARED_STORY_CONTENT ? 'shared' : 'reply';
 
-            if ($this->canViewStory($viewer, $message->story)) {
+            $idMatch = (string)$message->story->id === (string)$message->story_id;
+            $canView = $this->canViewStory($viewer, $message->story);
+            $isExpired = $message->story->expires_at->isPast();
+
+            if ($idMatch && $canView) {
                 $message->story_media_url = "/api/stories/{$message->story_id}/media";
                 $message->story_media_type = $message->story->media_type;
                 $message->story_owner = $message->story->user?->name ?? 'Unknown';
                 $message->story_caption = $message->story->caption;
-                $message->story_expired = $message->story->expires_at->isPast();
+                $message->story_expired = $isExpired;
             } else {
                 $message->story_unavailable = true;
+                \Log::info('Story unavailable in chat reply', [
+                    'story_id' => $message->story_id,
+                    'story_exists' => $message->story ? true : false,
+                    'id_match' => $idMatch,
+                    'can_view' => $canView,
+                    'is_expired' => $isExpired,
+                    'viewer_id' => $viewer->id,
+                    'story_user_id' => $message->story ? $message->story->user_id : null,
+                ]);
             }
         }
 

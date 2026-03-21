@@ -281,7 +281,7 @@ class StoryController extends Controller
         $currentUser = $request->user();
 
         // Only owner can see viewers
-        if ($story->user_id !== $currentUser->id) {
+        if ((string)$story->user_id !== (string)$currentUser->id) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
@@ -699,8 +699,8 @@ class StoryController extends Controller
                     'is_approved' => $story->repostFromUser->is_approved,
                 ] : null,
             ] : null,
-            'view_count' => $story->user_id === $viewer->id ? $story->view_count : null,
-            'like_count' => $story->user_id === $viewer->id ? $story->like_count : null,
+            'view_count' => (string)$story->user_id === (string)$viewer->id ? $story->view_count : null,
+            'like_count' => (string)$story->user_id === (string)$viewer->id ? $story->like_count : null,
             'created_at' => $story->created_at,
             'expires_at' => $story->expires_at,
         ];
