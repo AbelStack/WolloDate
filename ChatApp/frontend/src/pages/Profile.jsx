@@ -418,13 +418,13 @@ export default function Profile() {
         <div className="p-6 pt-14 relative">
           <div className="flex items-start gap-6">
             {/* Avatar */}
-            <div className="relative">
+            <div className="relative shrink-0">
               <img
                 src={getAvatarUrl(profile)}
                 alt={profile?.name}
-                className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover border-2 border-gray-800 cursor-pointer"
+                className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover border-2 border-gray-800 cursor-pointer flex-shrink-0"
                 onClick={() => { if (!isOwnProfile) setShowPhotoModal(true); }}
-                style={{ pointerEvents: isOwnProfile ? 'none' : 'auto' }}
+                style={{ pointerEvents: isOwnProfile ? 'none' : 'auto', aspectRatio: '1 / 1' }}
               />
               {isOwnProfile && (
                 <>
@@ -738,7 +738,7 @@ export default function Profile() {
                         onClick={() => { setEditing(false); navigate(`/profile/${blockedUser.id}`) }}
                         className="flex items-center gap-3 min-w-0"
                       >
-                        <img src={getAvatarUrl(blockedUser)} alt="" className="w-9 h-9 rounded-full object-cover" />
+                        <img src={getAvatarUrl(blockedUser)} alt="" className="w-9 h-9 rounded-full object-cover flex-shrink-0" style={{ aspectRatio: '1 / 1' }} />
                         <div className="text-left min-w-0">
                           <p className="text-sm text-white truncate">{blockedUser.name}</p>
                           <p className="text-xs text-gray-500 truncate">{blockedUser.email}</p>
@@ -795,7 +795,7 @@ export default function Profile() {
                     onClick={() => { setShowFollowersModal(false); navigate(`/profile/${f.id}`) }}
                     className="w-full flex items-center gap-3 p-3 hover:bg-gray-800 transition"
                   >
-                    <img src={getAvatarUrl(f)} alt="" className="w-10 h-10 rounded-full object-cover" />
+                    <img src={getAvatarUrl(f)} alt="" className="w-10 h-10 rounded-full object-cover flex-shrink-0" style={{ aspectRatio: '1 / 1' }} />
                     <div className="flex-1 text-left">
                       <p className="font-semibold text-sm text-white flex items-center gap-1">
                         {f.name} {f.is_approved && <VerifiedBadge size="xs" />}
@@ -835,7 +835,7 @@ export default function Profile() {
                     onClick={() => { setShowFollowingModal(false); navigate(`/profile/${f.id}`) }}
                     className="w-full flex items-center gap-3 p-3 hover:bg-gray-800 transition"
                   >
-                    <img src={getAvatarUrl(f)} alt="" className="w-10 h-10 rounded-full object-cover" />
+                    <img src={getAvatarUrl(f)} alt="" className="w-10 h-10 rounded-full object-cover flex-shrink-0" style={{ aspectRatio: '1 / 1' }} />
                     <div className="flex-1 text-left">
                       <p className="font-semibold text-sm text-white flex items-center gap-1">
                         {f.name} {f.is_approved && <VerifiedBadge size="xs" />}

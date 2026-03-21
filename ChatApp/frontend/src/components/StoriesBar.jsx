@@ -156,6 +156,7 @@ export default function StoriesBar() {
                     src={getAvatarUrl(currentUserStory.user)}
                     alt={currentUserStory.user.name}
                     className="w-full h-full rounded-full object-cover border-2 border-black"
+                    style={{ aspectRatio: '1 / 1' }}
                   />
                 </button>
               ) : (
@@ -168,6 +169,7 @@ export default function StoriesBar() {
                     src={getAvatarUrl(user)}
                     alt={user?.name}
                     className="w-full h-full rounded-full object-cover opacity-60"
+                    style={{ aspectRatio: '1 / 1' }}
                   />
                 </button>
               )}
@@ -201,6 +203,7 @@ export default function StoriesBar() {
                   src={getAvatarUrl(userStory.user)}
                   alt={userStory.user.name}
                   className={`w-full h-full rounded-full object-cover ${userStory.has_unviewed ? 'border-2 border-black' : ''}`}
+                  style={{ aspectRatio: '1 / 1' }}
                 />
               </div>
               <span className="text-xs text-gray-400 mt-1 truncate w-16 text-center">

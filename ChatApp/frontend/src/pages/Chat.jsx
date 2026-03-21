@@ -1664,7 +1664,7 @@ export default function Chat() {
                         }}
                         className={`rounded-full p-0.5 ${hasUnviewedStory(other.id) ? 'bg-linear-to-tr from-blue-400 via-cyan-500 to-blue-600' : 'bg-transparent'}`}
                       >
-                        <img src={getAvatarUrl(other)} className="w-12 h-12 rounded-full object-cover border-2 border-black" alt="" />
+                        <img src={getAvatarUrl(other)} className="w-12 h-12 rounded-full object-cover border-2 border-black flex-shrink-0" alt="" style={{ aspectRatio: '1 / 1' }} />
                       </button>
                     ) : (
                       <div className="w-12 h-12 rounded-full bg-linear-to-br from-blue-500 to-cyan-600 flex items-center justify-center text-white font-semibold text-sm">
@@ -1717,7 +1717,7 @@ export default function Chat() {
                       }}
                       className={`rounded-full p-0.5 ${hasUnviewedStory(getOtherUser(activeConv).id) ? 'bg-linear-to-tr from-blue-400 via-cyan-500 to-blue-600' : 'bg-transparent'}`}
                     >
-                      <img src={getAvatarUrl(getOtherUser(activeConv))} className="w-10 h-10 rounded-full object-cover border-2 border-black" alt="" />
+                      <img src={getAvatarUrl(getOtherUser(activeConv))} className="w-10 h-10 rounded-full object-cover border-2 border-black flex-shrink-0" alt="" style={{ aspectRatio: '1 / 1' }} />
                     </button>
                   ) : (
                     <div className="w-10 h-10 rounded-full bg-linear-to-br from-blue-500 to-cyan-600 flex items-center justify-center text-white text-sm font-semibold">
@@ -2236,7 +2236,7 @@ export default function Chat() {
                   onClick={() => startConversation(u)}
                   className="flex items-center gap-3 px-4 py-2 cursor-pointer hover:bg-gray-800 transition"
                 >
-                  <img src={getAvatarUrl(u)} className="w-10 h-10 rounded-full object-cover" alt="" />
+                  <img src={getAvatarUrl(u)} className="w-10 h-10 rounded-full object-cover flex-shrink-0" alt="" style={{ aspectRatio: '1 / 1' }} />
                   <div className="flex-1">
                     <p className="font-semibold text-sm text-white">{u.name}</p>
                     <p className="text-gray-500 text-xs">{u.email}</p>
@@ -2315,7 +2315,7 @@ export default function Chat() {
                     onClick={() => toggleUserSelection(u)}
                     className="flex items-center gap-3 px-4 py-2 cursor-pointer hover:bg-gray-800 transition"
                   >
-                    <img src={getAvatarUrl(u)} className="w-10 h-10 rounded-full object-cover" alt="" />
+                    <img src={getAvatarUrl(u)} className="w-10 h-10 rounded-full object-cover flex-shrink-0" alt="" style={{ aspectRatio: '1 / 1' }} />
                     <div className="flex-1">
                       <p className="font-semibold text-sm text-white">{u.name}</p>
                       <p className="text-gray-500 text-xs">{u.email}</p>
@@ -2373,7 +2373,7 @@ export default function Chat() {
                           <Users size={18} />
                         </div>
                       ) : (
-                        <img src={getAvatarUrl(other)} className="w-10 h-10 rounded-full object-cover" alt="" />
+                        <img src={getAvatarUrl(other)} className="w-10 h-10 rounded-full object-cover flex-shrink-0" alt="" style={{ aspectRatio: '1 / 1' }} />
                       )}
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold text-white truncate">{other.name}</p>
