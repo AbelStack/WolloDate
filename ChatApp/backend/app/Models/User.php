@@ -26,6 +26,7 @@ class User extends Authenticatable implements MustVerifyEmailContract
         'is_online' => 'boolean',
         'is_approved' => 'boolean',
         'is_private' => 'boolean',
+        'is_banned' => 'boolean',
         'approved_at' => 'datetime',
     ];
 
