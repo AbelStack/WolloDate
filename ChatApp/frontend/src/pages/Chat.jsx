@@ -1943,29 +1943,6 @@ export default function Chat() {
                           </div>
                         )}
 
-                        {/* Always-visible Edit/Delete for own messages */}
-                        {isMine && !msg.deleted && (
-                          <div className="flex gap-1 mt-1">
-                            {canEdit(msg) && (
-                              <button
-                                onClick={() => { setEditingMessage(msg.id); setEditContent(msg.content); setShowMessageMenu(null); setActiveActionMessageId(null) }}
-                                className="flex items-center gap-1 px-2 py-1 rounded text-xs text-white bg-gray-700 hover:bg-gray-600"
-                                title="Edit"
-                              >
-                                <Edit2 size={14} /> Edit
-                              </button>
-                            )}
-                            {canDelete(msg) && (
-                              <button
-                                onClick={() => { deleteMessage(msg.id); setShowMessageMenu(null); setActiveActionMessageId(null) }}
-                                className="flex items-center gap-1 px-2 py-1 rounded text-xs text-red-400 bg-gray-700 hover:bg-gray-600"
-                                title="Delete"
-                              >
-                                <Trash2 size={14} /> Delete
-                              </button>
-                            )}
-                          </div>
-                        )}
                       </div>
 
                       {/* Message actions menu (Reply, React, Copy, Forward) */}
