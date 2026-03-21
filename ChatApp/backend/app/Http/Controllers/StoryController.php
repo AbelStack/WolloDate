@@ -256,10 +256,17 @@ class StoryController extends Controller
 
 
         // Record view (upsert to avoid duplicates)
-        StoryView::firstOrCreate([
-            'story_id' => $story->id,
-            'viewer_id' => $currentUser->id,
-        ]);
+
+        // Always set viewed_at to now (firstOrCreate does not update it if record exists)
+        StoryView::updateOrCreate(
+            [
+                'story_id' => $story->id,
+                'viewer_id' => $currentUser->id,
+            ],
+            [
+                'viewed_at' => now(),
+            ]
+        );
 
         return response()->json(['message' => 'Story viewed']);
     }
