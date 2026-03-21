@@ -373,9 +373,11 @@ export default function Profile() {
   }
 
   const getAvatarUrl = (u) => {
-    if (u?.avatar_url) return u.avatar_url
+    if (u?.avatar_url) return resolveMediaUrl(u.avatar_url)
     if (u?.avatar) return resolveMediaUrl(u.avatar)
-    return `https://ui-avatars.com/api/?name=${u?.name || 'U'}&background=random`
+    // Fallback: use initials with a solid color
+    const initials = (u?.name || 'U').split(' ').map(n => n[0]).join('').toUpperCase()
+    return `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect fill='%234f46e5' width='100' height='100'/%3E%3Ctext x='50' y='50' font-size='40' fill='white' text-anchor='middle' dy='.3em' font-family='Arial'%3E${initials}%3C/text%3E%3C/svg%3E`
   }
 
   if (loading) {
