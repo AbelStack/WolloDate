@@ -375,6 +375,117 @@ export default function PostDetail() {
                 <p className="text-xs text-gray-500">{formatTime(post.created_at)}</p>
               </div>
             </div>
+            {/* Media Section */}
+            {getPostMediaUrls(post).length > 0 && (
+              <div className="relative bg-black">
+                <div
+                  ref={mediaContainerRef}
+                  onScroll={handleMediaScroll}
+                  className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide"
+                  style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                >
+                  {getPostMediaUrls(post).map((url, idx) => {
+                    const isVideo = /\.(mp4|webm|ogg)$/i.test(url)
+                    return (
+                      <div key={idx} className="w-full shrink-0 snap-start">
+                        {isVideo ? (
+                          <video
+                            src={url}
+                            controls
+                            className="w-full max-h-125 object-contain"
+                          />
+                        ) : (
+                          <img
+                            src={url}
+                            alt={`Post media ${idx + 1}`}
+                            className="w-full max-h-125 object-contain"
+                          />
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+                {getPostMediaUrls(post).length > 1 && (
+                  <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
+                    {getPostMediaUrls(post).map((_, idx) => (
+                      <div
+                        key={idx}
+                        className={`w-1.5 h-1.5 rounded-full ${
+                          idx === mediaIndex ? 'bg-white' : 'bg-gray-500'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Caption Section */}
+            <div className="px-4 py-3">
+              {editingCaption ? (
+                <div className="flex flex-col gap-2">
+                  <textarea
+                    value={captionInput}
+                    onChange={(e) => setCaptionInput(e.target.value)}
+                    className="w-full px-3 py-2 rounded bg-gray-800 text-white resize-none"
+                    rows={3}
+                    disabled={savingCaption}
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      onClick={saveCaption}
+                      disabled={savingCaption}
+                      className="px-4 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
+                    >
+                      {savingCaption ? 'Saving...' : 'Save'}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setEditingCaption(false)
+                        setCaptionInput(post.caption || '')
+                      }}
+                      className="px-4 py-1 bg-gray-700 text-white rounded hover:bg-gray-600"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-start gap-2">
+                  <p className="text-sm text-gray-200 flex-1">{post.caption || 'No caption'}</p>
+                  {post.user?.id === user?.id && (
+                    <button
+                      onClick={() => setEditingCaption(true)}
+                      className="text-gray-400 hover:text-white"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex items-center gap-4 px-4 py-2 border-t border-gray-800">
+              <button
+                onClick={handleLike}
+                className="flex items-center gap-1 hover:opacity-60"
+              >
+                <Heart
+                  size={24}
+                  className={post.is_liked ? 'fill-red-500 text-red-500' : 'text-white'}
+                />
+                <span className="text-sm">{post.likes_count || 0}</span>
+              </button>
+              <button className="flex items-center gap-1 hover:opacity-60">
+                <MessageCircle size={24} />
+                <span className="text-sm">{post.comments_count || 0}</span>
+              </button>
+              <button onClick={handleOpenShare} className="hover:opacity-60">
+                <Share2 size={24} />
+              </button>
+            </div>
+
             {/* Comments Section */}
             <div className="border-t border-gray-800 px-4 py-3">
               <h3 className="text-sm text-gray-400 mb-2">{post.comments.length} Comments</h3>
@@ -437,9 +548,103 @@ export default function PostDetail() {
                 </div>
               ))}
             </div>
+
+            {/* Add Comment Input */}
+            <div className="border-t border-gray-800 px-4 py-3 flex items-center gap-2">
+              <input
+                type="text"
+                value={commentInput}
+                onChange={(e) => setCommentInput(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleAddComment()}
+                placeholder="Write a comment..."
+                className="flex-1 px-3 py-2 rounded-full bg-gray-800 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                disabled={submittingComment}
+              />
+              <button
+                onClick={handleAddComment}
+                disabled={submittingComment || !commentInput.trim()}
+                className="p-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {submittingComment ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  <Send size={20} />
+                )}
+              </button>
+            </div>
           </div>
         ) : null}
       </div>
+
+      {/* Share Modal */}
+      {shareModalOpen && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+          <div className="bg-gray-900 rounded-2xl w-full max-w-md max-h-[80vh] flex flex-col">
+            <div className="flex items-center justify-between p-4 border-b border-gray-800">
+              <h2 className="text-lg font-semibold">Share Post</h2>
+              <button onClick={() => setShareModalOpen(false)} className="hover:opacity-60">
+                <X size={24} />
+              </button>
+            </div>
+
+            <div className="p-4 space-y-3">
+              <button
+                onClick={() => handleQuickShareAction('copy')}
+                className="w-full flex items-center gap-3 p-3 rounded-lg bg-gray-800 hover:bg-gray-700"
+              >
+                <LinkIcon size={20} />
+                <span>Copy Link</span>
+              </button>
+              <button
+                onClick={() => handleQuickShareAction('whatsapp')}
+                className="w-full flex items-center gap-3 p-3 rounded-lg bg-gray-800 hover:bg-gray-700"
+              >
+                <Share2 size={20} />
+                <span>Share to WhatsApp</span>
+              </button>
+            </div>
+
+            <div className="border-t border-gray-800 p-4">
+              <h3 className="text-sm font-semibold mb-2">Send to Chat</h3>
+              <input
+                type="text"
+                value={shareSearch}
+                onChange={(e) => setShareSearch(e.target.value)}
+                placeholder="Search chats..."
+                className="w-full px-3 py-2 rounded-lg bg-gray-800 text-white placeholder-gray-500 mb-3"
+              />
+              <div className="max-h-60 overflow-y-auto space-y-2">
+                {loadingChats ? (
+                  <div className="flex justify-center py-4">
+                    <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+                  </div>
+                ) : filteredChats.length === 0 ? (
+                  <p className="text-sm text-gray-500 text-center py-4">No chats found</p>
+                ) : (
+                  filteredChats.map((conv) => (
+                    <button
+                      key={conv.id}
+                      onClick={() => handleSendToChat(conv.id)}
+                      disabled={sendingTo === conv.id}
+                      className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-gray-800 disabled:opacity-50"
+                    >
+                      <img
+                        src={getConversationAvatar(conv)}
+                        alt={getConversationName(conv)}
+                        className="w-10 h-10 rounded-full object-cover"
+                      />
+                      <span className="flex-1 text-left truncate">{getConversationName(conv)}</span>
+                      {sendingTo === conv.id && (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      )}
+                    </button>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

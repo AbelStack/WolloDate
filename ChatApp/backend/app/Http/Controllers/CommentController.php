@@ -113,7 +113,7 @@ class CommentController extends Controller
             'requestToken' => $request->bearerToken(),
         ]);
 
-        if ($comment->user_id !== $currentUser->id) {
+        if ((string)$comment->user_id !== (string)($currentUser ? $currentUser->id : null)) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
@@ -147,8 +147,8 @@ class CommentController extends Controller
 
         // Only comment owner or post owner can delete (admin deletion is through admin routes)
         $post = $comment->post;
-        if ($comment->user_id !== $currentUser->id 
-            && $post->user_id !== $currentUser->id 
+        if ((string)$comment->user_id !== (string)($currentUser ? $currentUser->id : null)
+            && (string)$post->user_id !== (string)($currentUser ? $currentUser->id : null)
         ) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
