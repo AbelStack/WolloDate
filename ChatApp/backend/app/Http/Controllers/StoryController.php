@@ -422,41 +422,75 @@ class StoryController extends Controller
      */
     public function destroy(Request $request, $storyId)
     {
-        $story = Story::findOrFail($storyId);
-        $currentUser = $request->user();
 
-        // Debug logging for troubleshooting unauthorized error
-        \Log::info('Story delete attempt', [
-            'story_id' => $story->id,
-            'story_user_id' => $story->user_id,
-            'current_user_id' => $currentUser ? $currentUser->id : null,
-            'current_user' => $currentUser ? $currentUser->toArray() : null,
-        ]);
+        try {
+            $story = Story::findOrFail($storyId);
+            $currentUser = $request->user();
 
-
-        // Allow deletion if the current user is either the story owner or the original owner of a repost
-        $isOwner = $story->user_id === $currentUser->id;
-        $isOriginalOwnerOfRepost = $story->repost_of_story_id && $story->repost_from_user_id && $story->repost_from_user_id === $currentUser->id;
-
-        if (!($isOwner || $isOriginalOwnerOfRepost)) {
-            \Log::warning('Unauthorized story delete', [
+            // Debug logging for troubleshooting unauthorized error
+            \Log::info('Story delete attempt', [
                 'story_id' => $story->id,
                 'story_user_id' => $story->user_id,
+                'story_user_id_type' => gettype($story->user_id),
                 'repost_from_user_id' => $story->repost_from_user_id,
                 'current_user_id' => $currentUser ? $currentUser->id : null,
+                'current_user_id_type' => $currentUser ? gettype($currentUser->id) : null,
+                'current_user' => $currentUser ? $currentUser->toArray() : null,
+                'auth_guard' => auth()->getDefaultDriver(),
+                'auth_check' => auth()->check(),
             ]);
-            return response()->json(['message' => 'Unauthorized'], 403);
+
+            // Allow deletion if the current user is either the story owner or the original owner of a repost
+            $isOwner = (string)$story->user_id === (string)($currentUser ? $currentUser->id : null);
+            $isOriginalOwnerOfRepost = $story->repost_of_story_id && $story->repost_from_user_id && (string)$story->repost_from_user_id === (string)($currentUser ? $currentUser->id : null);
+
+            if (!($isOwner || $isOriginalOwnerOfRepost)) {
+                \Log::warning('Unauthorized story delete', [
+                    'story_id' => $story->id,
+                    'story_user_id' => $story->user_id,
+                    'repost_from_user_id' => $story->repost_from_user_id,
+                    'current_user_id' => $currentUser ? $currentUser->id : null,
+                    'auth_guard' => auth()->getDefaultDriver(),
+                    'auth_check' => auth()->check(),
+                ]);
+                return response()->json([
+                    'message' => 'Unauthorized',
+                    'debug' => [
+                        'story_id' => $story->id,
+                        'story_user_id' => $story->user_id,
+                        'story_user_id_type' => gettype($story->user_id),
+                        'repost_from_user_id' => $story->repost_from_user_id,
+                        'current_user_id' => $currentUser ? $currentUser->id : null,
+                        'current_user_id_type' => $currentUser ? gettype($currentUser->id) : null,
+                        'current_user' => $currentUser ? $currentUser->toArray() : null,
+                        'auth_guard' => auth()->getDefaultDriver(),
+                        'auth_check' => auth()->check(),
+                    ]
+                ], 403);
+            }
+
+            $mediaPath = $story->media_path;
+
+            $story->delete();
+
+            if ($mediaPath) {
+                Storage::disk('local')->delete($mediaPath);
+            }
+
+            return response()->json(['message' => 'Story deleted']);
+        } catch (\Throwable $e) {
+            \Log::error('Error deleting story', [
+                'story_id' => $storyId,
+                'user_id' => $request->user() ? $request->user()->id : null,
+                'exception' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return response()->json([
+                'message' => 'Failed to delete story',
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ], 500);
         }
-
-        $mediaPath = $story->media_path;
-
-        $story->delete();
-
-        if ($mediaPath) {
-            Storage::disk('local')->delete($mediaPath);
-        }
-
-        return response()->json(['message' => 'Story deleted']);
     }
 
     /**
@@ -465,32 +499,64 @@ class StoryController extends Controller
      */
     public function update(Request $request, $storyId)
     {
-        $story = Story::findOrFail($storyId);
-        $currentUser = $request->user();
+        try {
+            $story = Story::findOrFail($storyId);
+            $currentUser = $request->user();
 
-        if ($story->user_id !== $currentUser->id) {
-            return response()->json(['message' => 'Unauthorized'], 403);
+            if ((string)$story->user_id !== (string)($currentUser ? $currentUser->id : null)) {
+                \Log::warning('Unauthorized story update', [
+                    'story_id' => $story->id,
+                    'story_user_id' => $story->user_id,
+                    'current_user_id' => $currentUser ? $currentUser->id : null,
+                    'current_user' => $currentUser ? $currentUser->toArray() : null,
+                    'auth_guard' => auth()->getDefaultDriver(),
+                    'auth_check' => auth()->check(),
+                ]);
+                return response()->json([
+                    'message' => 'Unauthorized',
+                    'debug' => [
+                        'story_id' => $story->id,
+                        'story_user_id' => $story->user_id,
+                        'current_user_id' => $currentUser ? $currentUser->id : null,
+                        'current_user' => $currentUser ? $currentUser->toArray() : null,
+                        'auth_guard' => auth()->getDefaultDriver(),
+                        'auth_check' => auth()->check(),
+                    ]
+                ], 403);
+            }
+
+            $validated = $request->validate([
+                'caption' => 'nullable|string|max:500',
+            ]);
+
+            $story->update([
+                'caption' => $validated['caption'] ?? null,
+            ]);
+
+            $mentionedUserIds = $this->createStoryMentionNotifications(
+                $currentUser,
+                $story,
+                $validated['caption'] ?? null
+            );
+
+            return response()->json([
+                'message' => 'Story updated',
+                'story' => $this->formatStory($story->fresh(), $currentUser),
+                'mentioned_user_ids' => $mentionedUserIds,
+            ]);
+        } catch (\Throwable $e) {
+            \Log::error('Error updating story', [
+                'story_id' => $storyId,
+                'user_id' => $request->user() ? $request->user()->id : null,
+                'exception' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return response()->json([
+                'message' => 'Failed to update story',
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ], 500);
         }
-
-        $validated = $request->validate([
-            'caption' => 'nullable|string|max:500',
-        ]);
-
-        $story->update([
-            'caption' => $validated['caption'] ?? null,
-        ]);
-
-        $mentionedUserIds = $this->createStoryMentionNotifications(
-            $currentUser,
-            $story,
-            $validated['caption'] ?? null
-        );
-
-        return response()->json([
-            'message' => 'Story updated',
-            'story' => $this->formatStory($story->fresh(), $currentUser),
-            'mentioned_user_ids' => $mentionedUserIds,
-        ]);
     }
 
     /**
