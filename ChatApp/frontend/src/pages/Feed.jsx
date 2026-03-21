@@ -802,17 +802,17 @@ export default function Feed() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh] bg-black">
-        <Loader2 className="w-8 h-8 animate-spin text-white" />
+      <div className="flex items-center justify-center min-h-[60vh]" style={{ backgroundColor: 'var(--color-bg-base)' }}>
+        <Loader2 className="w-8 h-8 animate-spin" style={{ color: 'var(--color-text-primary)' }} />
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-black text-white relative overflow-hidden">
+    <div className="min-h-screen text-white relative overflow-hidden" style={{ backgroundColor: 'var(--color-bg-base)', color: 'var(--color-text-primary)' }}>
       <div className="relative z-10">
       {/* Header */}
-      <div className="sticky top-0 border-b border-gray-800 bg-black/95 backdrop-blur-xl px-2 sm:px-4 h-14 flex items-center justify-center z-40">
+      <div className="sticky top-0 border-b backdrop-blur-xl px-2 sm:px-4 h-14 flex items-center justify-center z-40" style={{ backgroundColor: 'var(--color-bg-elevated)', borderColor: 'var(--color-border)' }}>
         <Logo size="sm" />
       </div>
 
@@ -1429,11 +1429,11 @@ export default function Feed() {
         </div>
 
         <aside className="hidden lg:block sticky top-20 space-y-4">
-          <div className="rounded-2xl border border-gray-700/50 bg-gray-900/60 backdrop-blur-sm p-4">
+          <div className="rounded-2xl border p-4" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-bg-card)' }}>
             <div className="flex items-start justify-between gap-3">
               <div>
-                <h3 className="text-sm font-semibold text-slate-200">WolloDate Playbook</h3>
-                <p className="text-xs text-slate-400 mt-2 leading-relaxed">
+                <h3 className="text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>WolloDate Playbook</h3>
+                <p className="text-xs mt-2 leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
                   Build your profile energy in 3 moves: post something real, mention a friend, and start one fresh chat.
                 </p>
               </div>
@@ -1442,18 +1442,18 @@ export default function Feed() {
               </div>
             </div>
 
-            <div className="mt-3 space-y-2 text-xs text-slate-300">
-              <div className="rounded-lg bg-gray-800/70 px-3 py-2">1. Post a photo with a short caption</div>
-              <div className="rounded-lg bg-gray-800/70 px-3 py-2">2. Mention someone with @username</div>
-              <div className="rounded-lg bg-gray-800/70 px-3 py-2">3. Reply to a story to start a conversation</div>
+            <div className="mt-3 space-y-2 text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+              <div className="rounded-lg px-3 py-2" style={{ backgroundColor: 'var(--color-bg-elevated)' }}>1. Post a photo with a short caption</div>
+              <div className="rounded-lg px-3 py-2" style={{ backgroundColor: 'var(--color-bg-elevated)' }}>2. Mention someone with @username</div>
+              <div className="rounded-lg px-3 py-2" style={{ backgroundColor: 'var(--color-bg-elevated)' }}>3. Reply to a story to start a conversation</div>
             </div>
           </div>
 
-          <div className="rounded-2xl border border-gray-700/50 bg-gray-900/60 backdrop-blur-sm p-4">
+          <div className="rounded-2xl border p-4" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-bg-card)' }}>
             <div className="flex items-start justify-between gap-3">
               <div>
-                <h3 className="text-sm font-semibold text-slate-200">Daily Discovery</h3>
-                <p className="text-xs text-slate-400 mt-2 leading-relaxed">
+                <h3 className="text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>Daily Discovery</h3>
+                <p className="text-xs mt-2 leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
                   Your feed refreshes with recent posts only and now mixes in public discovery photos from other students.
                 </p>
               </div>
@@ -1463,13 +1463,13 @@ export default function Feed() {
             </div>
 
             <div className="mt-3 grid grid-cols-2 gap-2 text-center text-xs">
-              <div className="rounded-lg bg-gray-800/70 py-2">
-                <p className="text-white font-semibold">48h</p>
-                <p className="text-slate-400">Feed window</p>
+              <div className="rounded-lg py-2" style={{ backgroundColor: 'var(--color-bg-elevated)' }}>
+                <p className="font-semibold" style={{ color: 'var(--color-text-primary)' }}>48h</p>
+                <p style={{ color: 'var(--color-text-secondary)' }}>Feed window</p>
               </div>
-              <div className="rounded-lg bg-gray-800/70 py-2">
-                <p className="text-white font-semibold">{suggestions.length}</p>
-                <p className="text-slate-400">People to explore</p>
+              <div className="rounded-lg py-2" style={{ backgroundColor: 'var(--color-bg-elevated)' }}>
+                <p className="font-semibold" style={{ color: 'var(--color-text-primary)' }}>{suggestions.length}</p>
+                <p style={{ color: 'var(--color-text-secondary)' }}>People to explore</p>
               </div>
             </div>
 
@@ -1484,7 +1484,7 @@ export default function Feed() {
             </button>
           </div>
 
-          <div className="px-2 text-center text-[12px] leading-relaxed text-slate-400">
+          <div className="px-2 text-center text-[12px] leading-relaxed" style={{ color: 'var(--color-text-tertiary)' }}>
             <p className="whitespace-nowrap">Copyright © 2026 WolloDate. All rights reserved.</p>
             <p className="whitespace-nowrap">
               Developed by{' '}
@@ -1492,7 +1492,8 @@ export default function Feed() {
                 href="https://t.me/M0nst3r1"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="font-semibold text-slate-200 underline decoration-slate-500/70 underline-offset-2 hover:text-white"
+                className="font-semibold underline underline-offset-2 hover:opacity-80"
+                style={{ color: 'var(--color-text-primary)' }}
               >
                 Abel Tewodros
               </a>
