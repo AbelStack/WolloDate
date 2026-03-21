@@ -6,7 +6,7 @@ import { conversations as convApi, follows, messages as msgApi } from '../api'
 
 // Helper: compute global unread count from conversation list
 function sumUnread(convs) {
-  return (convs || []).reduce((sum, c) => sum + (c.unread_count || 0), 0)
+  return (convs || []).reduce((sum, c) => sum + Number(c.unread_count || 0), 0)
 }
 
 export function SocketProvider({ children }) {

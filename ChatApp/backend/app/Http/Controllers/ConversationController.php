@@ -61,6 +61,8 @@ class ConversationController extends Controller
         $payload = $conversations->map(function ($conv) {
             $conv->last_message = $conv->latestMessage;
             unset($conv->latestMessage);
+            // Ensure unread_count is an integer
+            $conv->unread_count = (int) ($conv->unread_count ?? 0);
             return $conv;
         })->values();
 

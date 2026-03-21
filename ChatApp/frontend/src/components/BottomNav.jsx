@@ -51,7 +51,7 @@ export default function BottomNav() {
               <Icon size={24} strokeWidth={1.5} />
               {Number(badge) > 0 && (
                 <span className="absolute -top-1.5 -right-2.5 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                  {badge > 9 ? '9+' : badge}
+                  {Number(badge) > 9 ? '9+' : Number(badge)}
                 </span>
               )}
             </div>
