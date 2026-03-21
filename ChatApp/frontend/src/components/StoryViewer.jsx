@@ -4,6 +4,7 @@ import { useSocket } from '../context/useSocket'
 import { stories, users, conversations, messages } from '../api'
 import ConfirmDialog from './ConfirmDialog'
 import { SHARED_STORY_MESSAGE } from '../utils/chatShares'
+import { getAvatarUrl } from '../utils/avatar'
 import { X, ChevronLeft, ChevronRight, Eye, Trash2, Loader2, Heart, Send, Repeat2, Share2, Link as LinkIcon, MoreVertical, Pencil } from 'lucide-react'
 import VerifiedBadge from './VerifiedBadge'
 
@@ -102,10 +103,7 @@ export default function StoryViewer({
     }
   }, [userStories, currentUserIndex, currentStoryIndex])
 
-  const getAvatarUrl = (u) => {
-    if (u?.avatar_url) return u.avatar_url
-    return `https://ui-avatars.com/api/?name=${encodeURIComponent(u?.name || 'U')}&background=374151&color=fff`
-  }
+
 
   // Mark story as viewed
   useEffect(() => {
@@ -719,7 +717,8 @@ export default function StoryViewer({
               <img
                 src={getAvatarUrl(currentUserStory.user)}
                 alt={currentUserStory.user.name}
-                className="w-8 h-8 rounded-full object-cover border border-white/20"
+                className="w-8 h-8 rounded-full object-cover border border-white/20 flex-shrink-0"
+                style={{ aspectRatio: '1 / 1' }}
               />
               <div className="flex items-center gap-1">
                 <span className="text-white text-sm font-medium">
@@ -1065,7 +1064,8 @@ export default function StoryViewer({
                       <img
                         src={getAvatarUrl(view.user)}
                         alt={view.user.name}
-                        className="w-11 h-11 rounded-full object-cover"
+                        className="w-11 h-11 rounded-full object-cover flex-shrink-0"
+                        style={{ aspectRatio: '1 / 1' }}
                       />
                       {view.has_liked && (
                         <span className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-pink-500 flex items-center justify-center">
