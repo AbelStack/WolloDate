@@ -425,7 +425,20 @@ class StoryController extends Controller
         $story = Story::findOrFail($storyId);
         $currentUser = $request->user();
 
+        // Debug logging for troubleshooting unauthorized error
+        \Log::info('Story delete attempt', [
+            'story_id' => $story->id,
+            'story_user_id' => $story->user_id,
+            'current_user_id' => $currentUser ? $currentUser->id : null,
+            'current_user' => $currentUser ? $currentUser->toArray() : null,
+        ]);
+
         if ($story->user_id !== $currentUser->id) {
+            \Log::warning('Unauthorized story delete', [
+                'story_id' => $story->id,
+                'story_user_id' => $story->user_id,
+                'current_user_id' => $currentUser ? $currentUser->id : null,
+            ]);
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
