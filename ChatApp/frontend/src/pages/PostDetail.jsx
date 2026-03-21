@@ -373,7 +373,68 @@ export default function PostDetail() {
                 <p className="text-xs text-gray-500">{formatTime(post.created_at)}</p>
               </div>
             </div>
-            {/* ...rest of the component... */}
+            {/* Comments Section */}
+            <div className="border-t border-gray-800 px-4 py-3">
+              <h3 className="text-sm text-gray-400 mb-2">{post.comments.length} Comments</h3>
+              {post.comments.map((comment) => (
+                <div key={comment.id} className="flex gap-2 mb-3">
+                  <img
+                    src={getAvatarUrl(comment.user)}
+                    alt={comment.user?.name}
+                    className="w-8 h-8 rounded-full object-cover"
+                  />
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-xs text-white">{comment.user?.name}</span>
+                      {comment.user?.is_approved && <VerifiedBadge size="xs" />}
+                      <span className="text-xs text-gray-500">{formatTime(comment.created_at)}</span>
+                      {comment.user?.id === user?.id && (
+                        <>
+                          <button
+                            onClick={() => handleEditComment(comment)}
+                            className="ml-2 text-gray-400 hover:text-white"
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteComment(comment)}
+                            className="ml-1 text-gray-400 hover:text-red-400"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </>
+                      )}
+                    </div>
+                    {editingCommentId === comment.id ? (
+                      <div className="mt-1 flex gap-2">
+                        <input
+                          type="text"
+                          value={editingCommentContent}
+                          onChange={(e) => setEditingCommentContent(e.target.value)}
+                          className="flex-1 px-2 py-1 rounded bg-gray-800 text-white"
+                          disabled={savingComment}
+                        />
+                        <button
+                          onClick={() => handleSaveComment(comment)}
+                          disabled={savingComment}
+                          className="px-2 py-1 bg-blue-600 text-white rounded"
+                        >
+                          Save
+                        </button>
+                        <button
+                          onClick={handleCancelEditComment}
+                          className="px-2 py-1 bg-gray-700 text-white rounded"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-gray-200 mt-1">{comment.content}</p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         ) : null}
       </div>
