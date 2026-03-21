@@ -23,6 +23,55 @@ const formatTime = (dateStr) => {
 }
 
 export default function PostDetail() {
+    // --- Comment edit/delete state ---
+    const [editingCommentId, setEditingCommentId] = useState(null);
+    const [editingCommentContent, setEditingCommentContent] = useState('');
+    const [savingComment, setSavingComment] = useState(false);
+    // --- Edit comment handlers ---
+    const handleEditComment = (comment) => {
+      setEditingCommentId(comment.id);
+      setEditingCommentContent(comment.content);
+    };
+
+    const handleCancelEditComment = () => {
+      setEditingCommentId(null);
+      setEditingCommentContent('');
+    };
+
+    const handleSaveComment = async (comment) => {
+      if (!editingCommentContent.trim()) return;
+      setSavingComment(true);
+      try {
+        await comments.update(comment.id, { content: editingCommentContent.trim() });
+        setPost((prev) => ({
+          ...prev,
+          comments: prev.comments.map((c) =>
+            c.id === comment.id ? { ...c, content: editingCommentContent.trim() } : c
+          ),
+        }));
+        setEditingCommentId(null);
+        setEditingCommentContent('');
+      } catch {
+        // Optionally show error
+      } finally {
+        setSavingComment(false);
+      }
+    };
+
+    // --- Delete comment handler ---
+    const handleDeleteComment = async (comment) => {
+      if (!window.confirm('Delete this comment?')) return;
+      try {
+        await comments.delete(comment.id);
+        setPost((prev) => ({
+          ...prev,
+          comments: prev.comments.filter((c) => c.id !== comment.id),
+          comments_count: Math.max(0, (prev.comments_count || 1) - 1),
+        }));
+      } catch {
+        // Optionally show error
+      }
+    };
   const navigate = useNavigate()
   const { postId } = useParams()
   const { user } = useAuth()
