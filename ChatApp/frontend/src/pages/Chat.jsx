@@ -1411,8 +1411,7 @@ export default function Chat() {
 
     // Story reply — show story thumbnail with reply text (Instagram-style)
     if (msg.story_id) {
-      const token = localStorage.getItem('token')
-      const mediaUrl = msg.story_media_url ? `${msg.story_media_url}${token ? `?token=${token}` : ''}` : null
+      const mediaUrl = stories.getMediaUrl(msg.story_id)
       return (
         <div>
           <button
@@ -1431,7 +1430,21 @@ export default function Chat() {
               msg.story_media_type === 'video' ? (
                 <video src={mediaUrl} className="w-full max-h-32 object-cover" muted />
               ) : (
-                <img src={mediaUrl} alt="Story" className="w-full max-h-32 object-cover" />
+                <>
+                  <img
+                    src={mediaUrl}
+                    alt="Story"
+                    className="w-full max-h-32 object-cover"
+                    style={{ display: 'block' }}
+                    onError={e => {
+                      e.target.style.display = 'none';
+                      const fallback = document.createElement('div');
+                      fallback.className = 'px-3 py-4 text-xs text-gray-500 italic text-center w-full max-h-32 flex items-center justify-center bg-gray-900 border border-gray-700';
+                      fallback.innerText = 'Story unavailable';
+                      e.target.parentNode.appendChild(fallback);
+                    }}
+                  />
+                </>
               )
             ) : (
               <div className="px-3 py-4 text-xs text-gray-500 italic text-center">Story unavailable</div>
