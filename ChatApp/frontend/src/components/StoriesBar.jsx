@@ -4,6 +4,7 @@ import { stories } from '../api'
 import { Plus, Loader2 } from 'lucide-react'
 import StoryViewer from './StoryViewer'
 import StoryUpload from './StoryUpload'
+import { getAvatarUrl } from '../utils/avatar'
 
 export default function StoriesBar() {
   const { user } = useAuth()
@@ -128,11 +129,6 @@ export default function StoriesBar() {
 
       return aOrder - bOrder
     })
-
-  const getAvatarUrl = (u) => {
-    if (u?.avatar_url) return u.avatar_url
-    return `https://ui-avatars.com/api/?name=${encodeURIComponent(u?.name || 'U')}&background=374151&color=fff`
-  }
 
   if (loading) {
     return (

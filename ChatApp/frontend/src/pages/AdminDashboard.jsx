@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { admin } from '../api'
 import { useAdminAuth } from '../context/AdminAuthContext'
 import { resolveMediaUrl } from '../utils/media'
+import { getAvatarUrl } from '../utils/avatar'
 import { 
   Shield, Users, UserCheck, Clock, CheckCircle, XCircle, Ban, Eye, Loader2, Search,
   Trash2, ShieldOff, UserX, AlertTriangle, RefreshCw, ChevronLeft, ChevronRight, LogOut,
@@ -370,7 +371,7 @@ function VerificationTab({ pendingUsers, actionLoading, onApprove, onReject, onV
           <div key={user.id} className="bg-gray-900/80 border border-gray-800 rounded-xl p-3 sm:p-4 hover:border-gray-700 transition">
             <div className="flex flex-col gap-3 sm:gap-4">
               <div className="flex items-center gap-3 sm:gap-4">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-linear-to-br from-gray-700 to-gray-800 flex items-center justify-center text-white font-semibold text-base sm:text-lg shrink-0">{user.name.charAt(0).toUpperCase()}</div>
+                <img src={getAvatarUrl(user)} alt={user.name} className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover shrink-0" />
                 <div className="min-w-0 flex-1">
                   <h3 className="font-semibold text-white text-sm sm:text-base truncate">{user.name}</h3>
                   <p className="text-xs sm:text-sm text-gray-400 truncate">{user.email}</p>
@@ -454,7 +455,7 @@ function UsersTab({ users, loading, pagination, searchQuery, showBanned, actionL
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex items-center gap-3 min-w-0">
                       <div className="relative shrink-0">
-                        {user.avatar_url ? <img src={user.avatar_url} alt="" className="w-10 h-10 rounded-full object-cover" /> : <div className="w-10 h-10 rounded-full bg-linear-to-br from-gray-600 to-gray-700 flex items-center justify-center text-white font-medium text-sm">{user.name.charAt(0).toUpperCase()}</div>}
+                        <img src={getAvatarUrl(user)} alt={user.name} className="w-10 h-10 rounded-full object-cover" />
                         {user.is_online && <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 rounded-full border-2 border-gray-900"></div>}
                       </div>
                       <div className="min-w-0">
