@@ -4,12 +4,7 @@ import { useSocket } from '../context/useSocket'
 import { follows, notifications } from '../api'
 import { ArrowLeft, Bell, Loader2 } from 'lucide-react'
 import VerifiedBadge from '../components/VerifiedBadge'
-
-// Helper function to get avatar URL consistently
-const getAvatarUrl = (u) => {
-  if (u?.avatar_url) return u.avatar_url
-  return `https://ui-avatars.com/api/?name=${encodeURIComponent(u?.name || 'U')}&background=374151&color=fff`
-}
+import { getAvatarUrl } from '../utils/avatar'
 
 export default function Notifications() {
   const navigate = useNavigate()

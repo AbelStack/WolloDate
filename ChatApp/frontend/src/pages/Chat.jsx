@@ -6,6 +6,7 @@ import { conversations, messages, users, media, stories } from '../api'
 import StoryViewer from '../components/StoryViewer'
 import { SHARED_POST_MESSAGE, SHARED_STORY_MESSAGE } from '../utils/chatShares'
 import { resolveMediaUrl } from '../utils/media'
+import { getAvatarUrl } from '../utils/avatar'
 import { 
   Send, Info, Heart, Smile, PenSquare, 
   ChevronDown, X, Check, CheckCheck, Edit2, 
@@ -921,11 +922,6 @@ export default function Chat() {
     const currentUserId = String(user.id)
     const otherMember = conv.members?.find(m => String(m.id) !== currentUserId)
     return otherMember || { name: conv.name || 'Chat', avatar_url: null }
-  }
-
-  const getAvatarUrl = (u) => {
-    if (u?.avatar_url) return u.avatar_url
-    return `https://ui-avatars.com/api/?name=${encodeURIComponent(u?.name || 'U')}&background=374151&color=fff`
   }
 
   const isConversationUserOnline = (conv) => {

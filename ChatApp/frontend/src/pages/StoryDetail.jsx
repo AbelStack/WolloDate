@@ -3,11 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, Loader2 } from 'lucide-react'
 import VerifiedBadge from '../components/VerifiedBadge'
 import { stories } from '../api'
-
-const getAvatarUrl = (u) => {
-  if (u?.avatar_url) return u.avatar_url
-  return `https://ui-avatars.com/api/?name=${encodeURIComponent(u?.name || 'U')}&background=374151&color=fff`
-}
+import { getAvatarUrl } from '../utils/avatar'
 
 export default function StoryDetail() {
   const navigate = useNavigate()

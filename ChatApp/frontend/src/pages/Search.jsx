@@ -6,12 +6,7 @@ import { ArrowLeft, Search as SearchIcon, UserPlus } from 'lucide-react'
 import VerifiedBadge from '../components/VerifiedBadge'
 import CreatorBadge from '../components/CreatorBadge'
 import { isCreatorUser } from '../utils/creator'
-
-// Helper function to get avatar URL consistently
-const getAvatarUrl = (u) => {
-  if (u?.avatar_url) return u.avatar_url
-  return `https://ui-avatars.com/api/?name=${encodeURIComponent(u?.name || 'U')}&background=374151&color=fff`
-}
+import { getAvatarUrl } from '../utils/avatar'
 
 export default function SearchPage() {
   const navigate = useNavigate()

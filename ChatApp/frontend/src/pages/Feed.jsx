@@ -9,6 +9,7 @@ import Logo from '../components/Logo'
 import StoriesBar from '../components/StoriesBar'
 import ConfirmDialog from '../components/ConfirmDialog'
 import { resolveMediaUrl } from '../utils/media'
+import { getAvatarUrl } from '../utils/avatar'
 import { SHARED_POST_MESSAGE } from '../utils/chatShares'
 import { isCreatorUser } from '../utils/creator'
 import { 
@@ -16,12 +17,6 @@ import {
   Image as ImageIcon, X, Send, Loader2, Bookmark,
   BookmarkCheck, Trash2, Link as LinkIcon, Flag, UserPlus, Users, Pencil, Check, Sparkles, Compass
 } from 'lucide-react'
-
-// Helper function to get avatar URL consistently
-const getAvatarUrl = (u) => {
-  if (u?.avatar_url) return u.avatar_url
-  return `https://ui-avatars.com/api/?name=${encodeURIComponent(u?.name || 'U')}&background=374151&color=fff`
-}
 
 const getPostMediaUrls = (post) => {
   const list = Array.isArray(post?.media_urls) && post.media_urls.length > 0

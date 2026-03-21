@@ -6,12 +6,8 @@ import { comments, conversations, messages, posts } from '../api'
 import { useSocket } from '../context/useSocket'
 import { SHARED_POST_MESSAGE } from '../utils/chatShares'
 import { resolveMediaUrl } from '../utils/media'
+import { getAvatarUrl } from '../utils/avatar'
 import { useAuth } from '../context/AuthContext'
-
-const getAvatarUrl = (u) => {
-  if (u?.avatar_url) return u.avatar_url
-  return `https://ui-avatars.com/api/?name=${encodeURIComponent(u?.name || 'U')}&background=374151&color=fff`
-}
 
 const formatTime = (dateStr) => {
   const date = new Date(dateStr)
