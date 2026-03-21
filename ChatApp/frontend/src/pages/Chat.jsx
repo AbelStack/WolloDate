@@ -1412,10 +1412,7 @@ export default function Chat() {
     // Story reply — show story thumbnail with reply text (Instagram-style)
     if (msg.story_id) {
       const token = localStorage.getItem('token')
-      // Use resolveMediaUrl to ensure absolute URL
-      const mediaUrl = msg.story_media_url
-        ? resolveMediaUrl(`${msg.story_media_url}${token ? `?token=${token}` : ''}`)
-        : null
+      const mediaUrl = msg.story_media_url ? `${msg.story_media_url}${token ? `?token=${token}` : ''}` : null
       return (
         <div>
           <button

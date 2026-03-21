@@ -1,6 +1,45 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, Heart, Loader2, MessageCircle, Send, Share2, X, Link as LinkIcon, Pencil } from 'lucide-react'
+import { ArrowLeft, Heart, Loader2, MessageCircle, Send, Share2, X, Link as LinkIcon, Pencil, Trash2 } from 'lucide-react'
+  const [editingCommentId, setEditingCommentId] = useState(null)
+  const [editingCommentContent, setEditingCommentContent] = useState('')
+  const [savingComment, setSavingComment] = useState(false)
+  const handleEditComment = (comment) => {
+    setEditingCommentId(comment.id)
+    setEditingCommentContent(comment.content)
+  }
+
+  const handleCancelEditComment = () => {
+    setEditingCommentId(null)
+    setEditingCommentContent('')
+  }
+
+  const handleSaveComment = async (comment) => {
+    if (!editingCommentContent.trim()) return
+    setSavingComment(true)
+    try {
+      const res = await comments.update(comment.id, { content: editingCommentContent.trim() })
+      setPost(prev => ({
+        ...prev,
+        comments: prev.comments.map(c => c.id === comment.id ? { ...c, content: res.data.content } : c)
+      }))
+      setEditingCommentId(null)
+      setEditingCommentContent('')
+    } catch {}
+    setSavingComment(false)
+  }
+
+  const handleDeleteComment = async (comment) => {
+    if (!window.confirm('Delete this comment?')) return
+    try {
+      await comments.delete(comment.id)
+      setPost(prev => ({
+        ...prev,
+        comments: prev.comments.filter(c => c.id !== comment.id),
+        comments_count: Math.max(0, Number(prev.comments_count || 0) - 1),
+      }))
+    } catch {}
+  }
 import VerifiedBadge from '../components/VerifiedBadge'
 import { comments, conversations, messages, posts } from '../api'
 import { useSocket } from '../context/useSocket'
@@ -457,17 +496,64 @@ export default function PostDetail() {
 
               <div className="space-y-3 mb-4">
                 {(post.comments || []).map((comment) => (
-                  <div key={comment.id} className="flex gap-2">
+                  <div key={comment.id} className="flex gap-2 group">
                     <img
                       src={getAvatarUrl(comment.user)}
                       alt={comment.user?.name}
                       className="w-7 h-7 rounded-full object-cover mt-0.5"
                     />
-                    <div className="min-w-0">
-                      <p className="text-sm text-gray-200 whitespace-pre-wrap">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1">
                         <span className="font-semibold text-white mr-1">{comment.user?.name}</span>
-                        {comment.content}
-                      </p>
+                        {editingCommentId === comment.id ? (
+                          <>
+                            <input
+                              className="bg-gray-800 border border-gray-700 text-white rounded px-2 py-1 text-sm w-full"
+                              value={editingCommentContent}
+                              onChange={e => setEditingCommentContent(e.target.value)}
+                              disabled={savingComment}
+                            />
+                          </>
+                        ) : (
+                          <span className="text-sm text-gray-200 whitespace-pre-wrap">{comment.content}</span>
+                        )}
+                        {comment.user?.id === user?.id && editingCommentId !== comment.id && (
+                          <>
+                            <button
+                              className="ml-1 p-1 rounded hover:bg-gray-800 text-gray-400 group-hover:text-blue-400"
+                              onClick={() => handleEditComment(comment)}
+                              title="Edit comment"
+                            >
+                              <Pencil size={14} />
+                            </button>
+                            <button
+                              className="ml-1 p-1 rounded hover:bg-gray-800 text-gray-400 group-hover:text-red-400"
+                              onClick={() => handleDeleteComment(comment)}
+                              title="Delete comment"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </>
+                        )}
+                      </div>
+                      {editingCommentId === comment.id && (
+                        <div className="flex gap-2 mt-1">
+                          <button
+                            className="px-2 py-1 rounded bg-blue-600 text-white text-xs disabled:opacity-50"
+                            onClick={() => handleSaveComment(comment)}
+                            disabled={savingComment || !editingCommentContent.trim()}
+                          >
+                            {savingComment ? 'Saving...' : 'Save'}
+                          </button>
+                          <button
+                            className="px-2 py-1 rounded bg-gray-700 text-white text-xs"
+                            onClick={handleCancelEditComment}
+                            disabled={savingComment}
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
