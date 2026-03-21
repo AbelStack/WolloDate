@@ -697,7 +697,8 @@ export default function Profile() {
                   type="password"
                   value={currentPassword}
                   onChange={(e) => setCurrentPassword(e.target.value)}
-                  className="w-full px-3 py-2 bg-gray-800 border border-gray-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 bg-gray-800 border border-gray-700 text-white rounded-lg focus:ring-2 focus:border-transparent"
+                  style={{ '--tw-ring-color': '#5DADE2' }}
                   required
                 />
                 {passwordErrors.current_password && <p className="text-red-400 text-xs mt-1">{passwordErrors.current_password}</p>}
@@ -708,7 +709,8 @@ export default function Profile() {
                   type="password"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
-                  className="w-full px-3 py-2 bg-gray-800 border border-gray-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 bg-gray-800 border border-gray-700 text-white rounded-lg focus:ring-2 focus:border-transparent"
+                  style={{ '--tw-ring-color': '#5DADE2' }}
                   required
                 />
                 {passwordErrors.password && <p className="text-red-400 text-xs mt-1">{passwordErrors.password}</p>}
@@ -719,7 +721,8 @@ export default function Profile() {
                   type="password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full px-3 py-2 bg-gray-800 border border-gray-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 bg-gray-800 border border-gray-700 text-white rounded-lg focus:ring-2 focus:border-transparent"
+                  style={{ '--tw-ring-color': '#5DADE2' }}
                   required
                 />
                 {passwordErrors.password_confirmation && <p className="text-red-400 text-xs mt-1">{passwordErrors.password_confirmation}</p>}

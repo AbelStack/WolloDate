@@ -27,6 +27,7 @@ export const getDefaultAvatar = (name) => {
     .toUpperCase()
     .slice(0, 2)
   
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect fill="#4f46e5" width="100" height="100"/><text x="50" y="55" font-size="40" font-weight="bold" fill="white" text-anchor="middle" font-family="Arial, sans-serif">${initials}</text></svg>`
+  // Use logo blue color for default avatars
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect fill="#5DADE2" width="100" height="100"/><text x="50" y="55" font-size="40" font-weight="bold" fill="white" text-anchor="middle" font-family="Arial, sans-serif">${initials}</text></svg>`
   return `data:image/svg+xml;base64,${btoa(svg)}`
 }

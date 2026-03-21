@@ -27,7 +27,7 @@ export default function VerifiedBadge({ size = 'md', className = '' }) {
       style={{ 
         width: container, 
         height: container,
-        backgroundColor: '#5DADE2' // Logo blue
+        backgroundColor: '#0ea5e9' // Sky blue for verification badge
       }}
       aria-label="Verified account"
     >

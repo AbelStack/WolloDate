@@ -19,7 +19,7 @@ import BottomNav from './components/BottomNav'
 import GlobalAlertBridge from './components/GlobalAlertBridge'
 
 function FullScreenLoader() {
-  return <div className="h-screen bg-black flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div></div>
+  return <div className="h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--color-bg-base)' }}><div className="animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: 'var(--color-text-primary)' }}></div></div>
 }
 
 function PrivateRoute({ children }) {

@@ -27,7 +27,7 @@ export default function BottomNav() {
   }
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-black border-t border-gray-800 z-50 safe-area-bottom h-16">
+    <nav className="fixed bottom-0 left-0 right-0 border-t z-50 safe-area-bottom h-16" style={{ backgroundColor: 'var(--color-bg-base)', borderColor: 'var(--color-border)' }}>
       <div className="max-w-xl mx-auto flex items-center justify-around h-full">
         {navItems.map(({ to, icon: Icon, label, badge }) => (
           <NavLink
@@ -37,10 +37,11 @@ export default function BottomNav() {
               flex flex-col items-center justify-center py-2 px-4 min-w-15 relative
               transition-colors duration-200
               ${isActive 
-                ? 'text-white' 
+                ? '' 
                 : 'text-gray-500 hover:text-gray-300'
               }
             `}
+            style={({ isActive }) => isActive ? { color: 'var(--color-text-primary)' } : {}}
           >
             <div className="relative">
               <Icon size={24} strokeWidth={1.5} />

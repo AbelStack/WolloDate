@@ -1,6 +1,13 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
 @import "tailwindcss";
 
+@layer base {
+  /* Ensure dark mode is class-based */
+  :root {
+    color-scheme: light dark;
+  }
+}
+
 /* Theme colors - Dark (default) */
 :root.dark {
   color-scheme: dark;
@@ -141,27 +148,38 @@ html, body {
   padding: 0;
   overflow-x: hidden;
   width: 100%;
-  background-color: var(--app-bg-base);
+  background-color: var(--color-bg-base);
   color: var(--color-text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 #root {
   min-height: 100vh;
-  background-color: var(--app-bg-base);
+  background-color: var(--color-bg-base);
   color: var(--color-text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 body {
   font-family: 'Poppins', var(--font-sans);
   background-color: var(--color-bg-base);
-  background-image:
-    radial-gradient(circle_at_20%_20%, var(--app-bg-glow-a), transparent 42%),
-    radial-gradient(circle_at_80%_10%, var(--app-bg-glow-b), transparent 38%),
-    radial-gradient(circle_at_50%_100%, var(--app-bg-glow-c), transparent 55%);
   color: var(--color-text-primary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Light theme specific body styling */
+.light body {
+  background-image: none;
+}
+
+/* Dark theme specific body styling */
+.dark body {
+  background-image:
+    radial-gradient(circle_at_20%_20%, var(--app-bg-glow-a), transparent 42%),
+    radial-gradient(circle_at_80%_10%, var(--app-bg-glow-b), transparent 38%),
+    radial-gradient(circle_at_50%_100%, var(--app-bg-glow-c), transparent 55%);
 }
 
 /* Scrollbar styling */
@@ -326,4 +344,155 @@ body {
     position: relative;
     z-index: 1;
   }
+}
+
+/* Theme-aware utility classes */
+.bg-theme-base {
+  background-color: var(--color-bg-base);
+}
+
+.bg-theme-elevated {
+  background-color: var(--color-bg-elevated);
+}
+
+.bg-theme-card {
+  background-color: var(--color-bg-card);
+}
+
+.text-theme-primary {
+  color: var(--color-text-primary);
+}
+
+.text-theme-secondary {
+  color: var(--color-text-secondary);
+}
+
+.text-theme-tertiary {
+  color: var(--color-text-tertiary);
+}
+
+.border-theme {
+  border-color: var(--color-border);
+}
+
+.border-theme-light {
+  border-color: var(--color-border-light);
+}
+
+/* Override Tailwind's hardcoded colors for theme support */
+.dark .bg-black {
+  background-color: #000000 !important;
+}
+
+.light .bg-black {
+  background-color: #ffffff !important;
+}
+
+.dark .bg-gray-900 {
+  background-color: #1a1a1a !important;
+}
+
+.light .bg-gray-900 {
+  background-color: #f9fafb !important;
+}
+
+.dark .bg-gray-950 {
+  background-color: #0a0a0a !important;
+}
+
+.light .bg-gray-950 {
+  background-color: #ffffff !important;
+}
+
+.dark .bg-gray-800 {
+  background-color: #2a2a2a !important;
+}
+
+.light .bg-gray-800 {
+  background-color: #f3f4f6 !important;
+}
+
+.dark .bg-gray-700 {
+  background-color: #3a3a3a !important;
+}
+
+.light .bg-gray-700 {
+  background-color: #e5e7eb !important;
+}
+
+.dark .text-white {
+  color: #ffffff !important;
+}
+
+.light .text-white {
+  color: #111827 !important;
+}
+
+.dark .text-gray-400 {
+  color: #9ca3af !important;
+}
+
+.light .text-gray-400 {
+  color: #6b7280 !important;
+}
+
+.dark .text-gray-500 {
+  color: #6b7280 !important;
+}
+
+.light .text-gray-500 {
+  color: #9ca3af !important;
+}
+
+.dark .text-gray-300 {
+  color: #d1d5db !important;
+}
+
+.light .text-gray-300 {
+  color: #4b5563 !important;
+}
+
+.dark .text-gray-200 {
+  color: #e5e7eb !important;
+}
+
+.light .text-gray-200 {
+  color: #374151 !important;
+}
+
+.dark .border-gray-800 {
+  border-color: #2a2a2a !important;
+}
+
+.light .border-gray-800 {
+  border-color: #e5e7eb !important;
+}
+
+.dark .border-gray-700 {
+  border-color: #3a3a3a !important;
+}
+
+.light .border-gray-700 {
+  border-color: #d1d5db !important;
+}
+
+.dark .border-gray-600 {
+  border-color: #4a4a4a !important;
+}
+
+.light .border-gray-600 {
+  border-color: #d1d5db !important;
+}
+
+/* Scrollbar theming */
+.light ::-webkit-scrollbar-track {
+  background: #ffffff;
+}
+
+.light ::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+}
+
+.light ::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
 }
