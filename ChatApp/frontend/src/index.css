@@ -1,13 +1,39 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
 @import "tailwindcss";
 
-/* Black theme colors */
-:root {
+/* Theme colors - Dark (default) */
+:root.dark {
   color-scheme: dark;
   --app-bg-base: #05070f;
   --app-bg-glow-a: rgba(34, 211, 238, 0.14);
   --app-bg-glow-b: rgba(59, 130, 246, 0.12);
   --app-bg-glow-c: rgba(15, 23, 42, 0.9);
+  
+  /* Logo Blue - Primary Brand Color */
+  --color-primary: #5DADE2;
+  --color-primary-hover: #4A9FD5;
+  --color-primary-light: #7EC8F0;
+  
+  /* Backgrounds */
+  --color-bg-base: #000000;
+  --color-bg-elevated: #1a1a1a;
+  --color-bg-card: #2a2a2a;
+  
+  /* Text */
+  --color-text-primary: #ffffff;
+  --color-text-secondary: #b0b0b0;
+  --color-text-tertiary: #8e8e8e;
+  
+  /* Borders */
+  --color-border: #3a3a3a;
+  --color-border-light: #4a4a4a;
+  
+  /* Semantic colors */
+  --color-success: #10B981;
+  --color-warning: #F59E0B;
+  --color-danger: #EF4444;
+  
+  /* Legacy Instagram colors (keep for compatibility) */
   --color-ig-blue: #000000;
   --color-ig-blue-hover: #1a1a1a;
   --color-ig-red: #ed4956;
@@ -26,6 +52,86 @@
   --color-ig-white: #ffffff;
 }
 
+/* Theme colors - Light */
+:root.light {
+  color-scheme: light;
+  --app-bg-base: #ffffff;
+  --app-bg-glow-a: rgba(93, 173, 226, 0.08);
+  --app-bg-glow-b: rgba(93, 173, 226, 0.06);
+  --app-bg-glow-c: rgba(249, 250, 251, 0.9);
+  
+  /* Logo Blue - Primary Brand Color (same in both themes) */
+  --color-primary: #5DADE2;
+  --color-primary-hover: #4A9FD5;
+  --color-primary-light: #7EC8F0;
+  
+  /* Backgrounds */
+  --color-bg-base: #ffffff;
+  --color-bg-elevated: #f9fafb;
+  --color-bg-card: #f3f4f6;
+  
+  /* Text */
+  --color-text-primary: #111827;
+  --color-text-secondary: #4b5563;
+  --color-text-tertiary: #6b7280;
+  
+  /* Borders */
+  --color-border: #e5e7eb;
+  --color-border-light: #f3f4f6;
+  
+  /* Semantic colors */
+  --color-success: #10B981;
+  --color-warning: #F59E0B;
+  --color-danger: #EF4444;
+  
+  /* Legacy Instagram colors (adapted for light theme) */
+  --color-ig-blue: #ffffff;
+  --color-ig-blue-hover: #f9fafb;
+  --color-ig-red: #ed4956;
+  --color-ig-green: #00a400;
+  --color-ig-gray-50: #f9fafb;
+  --color-ig-gray-100: #f3f4f6;
+  --color-ig-gray-200: #e5e7eb;
+  --color-ig-gray-300: #d1d5db;
+  --color-ig-gray-400: #9ca3af;
+  --color-ig-gray-500: #6b7280;
+  --color-ig-gray-600: #4b5563;
+  --color-ig-gray-700: #374151;
+  --color-ig-gray-800: #1f2937;
+  --color-ig-gray-900: #111827;
+  --color-ig-black: #000000;
+  --color-ig-white: #ffffff;
+}
+
+/* Default to dark theme if no class */
+:root {
+  color-scheme: dark;
+  --app-bg-base: #05070f;
+  --app-bg-glow-a: rgba(34, 211, 238, 0.14);
+  --app-bg-glow-b: rgba(59, 130, 246, 0.12);
+  --app-bg-glow-c: rgba(15, 23, 42, 0.9);
+  --color-primary: #5DADE2;
+  --color-primary-hover: #4A9FD5;
+  --color-primary-light: #7EC8F0;
+  --color-bg-base: #000000;
+  --color-bg-elevated: #1a1a1a;
+  --color-bg-card: #2a2a2a;
+  --color-text-primary: #ffffff;
+  --color-text-secondary: #b0b0b0;
+  --color-text-tertiary: #8e8e8e;
+  --color-border: #3a3a3a;
+  --color-border-light: #4a4a4a;
+  --color-success: #10B981;
+  --color-warning: #F59E0B;
+  --color-danger: #EF4444;
+  --color-ig-blue: #000000;
+  --color-ig-blue-hover: #1a1a1a;
+  --color-ig-red: #ed4956;
+  --color-ig-green: #00a400;
+  --color-ig-black: #000000;
+  --color-ig-white: #ffffff;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -36,25 +142,26 @@ html, body {
   overflow-x: hidden;
   width: 100%;
   background-color: var(--app-bg-base);
-  color: #ffffff;
+  color: var(--color-text-primary);
 }
 
 #root {
   min-height: 100vh;
   background-color: var(--app-bg-base);
-  color: #ffffff;
+  color: var(--color-text-primary);
 }
 
 body {
   font-family: 'Poppins', var(--font-sans);
-  background-color: var(--app-bg-base);
+  background-color: var(--color-bg-base);
   background-image:
     radial-gradient(circle_at_20%_20%, var(--app-bg-glow-a), transparent 42%),
     radial-gradient(circle_at_80%_10%, var(--app-bg-glow-b), transparent 38%),
     radial-gradient(circle_at_50%_100%, var(--app-bg-glow-c), transparent 55%);
-  color: #ffffff;
+  color: var(--color-text-primary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 /* Scrollbar styling */
@@ -74,8 +181,8 @@ body {
 
 /* Instagram button styles */
 .btn-primary {
-  background-color: #ffffff;
-  color: #000000;
+  background-color: #5DADE2;
+  color: #ffffff;
   font-weight: 600;
   padding: 8px 16px;
   border-radius: 8px;
@@ -85,7 +192,7 @@ body {
   transition: background-color 0.2s;
 }
 .btn-primary:hover {
-  background-color: #e0e0e0;
+  background-color: #4A9FD5;
 }
 .btn-primary:disabled {
   opacity: 0.5;

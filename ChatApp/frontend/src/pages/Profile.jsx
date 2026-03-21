@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useSocket } from '../context/useSocket'
+import { useTheme } from '../context/ThemeContext'
 import { users, posts, follows } from '../api'
 import VerifiedBadge from '../components/VerifiedBadge'
 import CreatorBadge from '../components/CreatorBadge'
@@ -13,7 +14,7 @@ import { isCreatorUser } from '../utils/creator'
 import { 
   ArrowLeft, LogOut, Camera, Settings, Grid3X3, 
   Heart, MessageCircle, X, AlertCircle, CheckCircle, 
-  UserPlus, Lock, Loader2
+  UserPlus, Lock, Loader2, Sun, Moon
 } from 'lucide-react'
 
 export default function Profile() {
@@ -23,6 +24,7 @@ export default function Profile() {
   const navigate = useNavigate()
   const { user, logout, refreshUser } = useAuth()
   const { emitFollowNotify } = useSocket()
+  const { theme, toggleTheme } = useTheme()
   
   const isOwnProfile = !userId || userId === String(user?.id)
   const profileId = isOwnProfile ? user?.id : parseInt(userId)
@@ -431,7 +433,10 @@ export default function Profile() {
                   <button
                     onClick={() => fileInputRef.current?.click()}
                     disabled={uploadingAvatar}
-                    className="absolute bottom-0 right-0 bg-blue-600 text-white p-1.5 rounded-full hover:bg-blue-700 transition"
+                    className="absolute bottom-0 right-0 text-white p-1.5 rounded-full transition"
+                    style={{ backgroundColor: '#5DADE2' }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#4A9FD5'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#5DADE2'}
                   >
                     {uploadingAvatar ? <Loader2 size={14} className="animate-spin" /> : <Camera size={14} />}
                   </button>
@@ -499,8 +504,11 @@ export default function Profile() {
                         ? 'bg-gray-800 text-white hover:bg-gray-700' 
                         : isPendingFollow
                         ? 'bg-gray-800 text-gray-400'
-                        : 'bg-blue-600 text-white hover:bg-blue-700'
+                        : 'text-white'
                     }`}
+                    style={!isFollowing && !isPendingFollow ? { backgroundColor: '#5DADE2' } : {}}
+                    onMouseEnter={(e) => { if (!isFollowing && !isPendingFollow) e.currentTarget.style.backgroundColor = '#4A9FD5' }}
+                    onMouseLeave={(e) => { if (!isFollowing && !isPendingFollow) e.currentTarget.style.backgroundColor = '#5DADE2' }}
                   >
                     {loadingFollow ? (
                       <Loader2 size={16} className="animate-spin" />
@@ -663,7 +671,8 @@ export default function Profile() {
                 <button
                   type="button"
                   onClick={() => setIsPrivate(!isPrivate)}
-                  className={`w-12 h-6 rounded-full transition ${isPrivate ? 'bg-blue-600' : 'bg-gray-700'}`}
+                  className="w-12 h-6 rounded-full transition"
+                  style={{ backgroundColor: isPrivate ? '#5DADE2' : '#374151' }}
                 >
                   <div className={`w-5 h-5 bg-white rounded-full shadow transition-transform ${isPrivate ? 'translate-x-6' : 'translate-x-0.5'}`} />
                 </button>
@@ -671,7 +680,10 @@ export default function Profile() {
               <button
                 type="submit"
                 disabled={saving}
-                className="w-full py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center"
+                className="w-full py-3 text-white font-semibold rounded-lg disabled:opacity-50 flex items-center justify-center transition"
+                style={{ backgroundColor: '#5DADE2' }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#4A9FD5'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#5DADE2'}
               >
                 {saving ? <Loader2 className="animate-spin" /> : 'Save Changes'}
               </button>
@@ -720,6 +732,31 @@ export default function Profile() {
                 {passwordSaving ? <Loader2 className="animate-spin" /> : 'Update Password'}
               </button>
             </form>
+
+            {/* Theme Settings */}
+            <div className="px-4 pb-4 border-t border-gray-800">
+              <p className="pt-4 text-sm font-semibold text-white mb-3">Appearance</p>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  {theme === 'dark' ? <Moon size={18} className="text-gray-400" /> : <Sun size={18} className="text-gray-400" />}
+                  <div>
+                    <p className="font-medium text-white text-sm">Theme</p>
+                    <p className="text-xs text-gray-400">{theme === 'dark' ? 'Dark mode' : 'Light mode'}</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={toggleTheme}
+                  className="w-12 h-6 rounded-full transition"
+                  style={{ backgroundColor: theme === 'dark' ? '#5DADE2' : '#d1d5db' }}
+                >
+                  <div 
+                    className="w-5 h-5 bg-white rounded-full shadow transition-transform"
+                    style={{ transform: theme === 'dark' ? 'translateX(1.5rem)' : 'translateX(0.125rem)' }}
+                  />
+                </button>
+              </div>
+            </div>
 
             <div className="px-4 pb-4 border-t border-gray-800">
               <p className="pt-4 text-sm font-semibold text-white">Blocked Users</p>
@@ -868,7 +905,8 @@ export default function Profile() {
             <button 
               onClick={handleCropSave}
               disabled={uploadingAvatar}
-              className="text-blue-500 font-semibold hover:text-blue-400 disabled:opacity-50"
+              className="font-semibold disabled:opacity-50"
+              style={{ color: '#5DADE2' }}
             >
               {uploadingAvatar ? 'Saving...' : 'Done'}
             </button>

@@ -435,7 +435,10 @@ export default function PostDetail() {
                     <button
                       onClick={saveCaption}
                       disabled={savingCaption}
-                      className="px-4 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
+                      className="px-4 py-1 text-white rounded transition"
+                      style={{ backgroundColor: '#5DADE2' }}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#4A9FD5'}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#5DADE2'}
                     >
                       {savingCaption ? 'Saving...' : 'Save'}
                     </button>
@@ -530,7 +533,8 @@ export default function PostDetail() {
                         <button
                           onClick={() => handleSaveComment(comment)}
                           disabled={savingComment}
-                          className="px-2 py-1 bg-blue-600 text-white rounded"
+                          className="px-2 py-1 text-white rounded"
+                          style={{ backgroundColor: '#5DADE2' }}
                         >
                           Save
                         </button>
@@ -557,13 +561,17 @@ export default function PostDetail() {
                 onChange={(e) => setCommentInput(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handleAddComment()}
                 placeholder="Write a comment..."
-                className="flex-1 px-3 py-2 rounded-full bg-gray-800 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="flex-1 px-3 py-2 rounded-full bg-gray-800 text-white placeholder-gray-500 focus:outline-none focus:ring-2"
+                style={{ '--tw-ring-color': '#5DADE2' }}
                 disabled={submittingComment}
               />
               <button
                 onClick={handleAddComment}
                 disabled={submittingComment || !commentInput.trim()}
-                className="p-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="p-2 rounded-full text-white disabled:opacity-50 disabled:cursor-not-allowed transition"
+                style={{ backgroundColor: '#5DADE2' }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#4A9FD5'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#5DADE2'}
               >
                 {submittingComment ? (
                   <Loader2 className="w-5 h-5 animate-spin" />

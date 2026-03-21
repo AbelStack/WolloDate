@@ -14,7 +14,7 @@ class NotificationController extends Controller
     public function markMentionsRead(Request $request)
     {
         $count = UserNotification::where('recipient_id', $request->user()->id)
-            ->whereIn('type', ['mention_post', 'mention_story'])
+            ->whereIn('type', ['mention_post', 'mention_story', 'comment'])
             ->where('is_read', false)
             ->update(['is_read' => true]);
 

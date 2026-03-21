@@ -245,7 +245,10 @@ export default function Notifications() {
                         <button
                           onClick={() => handleFollowRequest(item.id, 'accept')}
                           disabled={processing[item.id]}
-                          className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg transition disabled:opacity-50"
+                          className="px-4 py-1.5 text-white text-xs font-semibold rounded-lg transition disabled:opacity-50"
+                          style={{ backgroundColor: '#5DADE2' }}
+                          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#4A9FD5'}
+                          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#5DADE2'}
                         >
                           {processing[item.id] ? <Loader2 size={14} className="animate-spin" /> : 'Confirm'}
                         </button>
@@ -301,7 +304,10 @@ export default function Notifications() {
                           <button
                             onClick={() => handleFollowBack(item.follower?.id)}
                             disabled={processing[`fb-${item.follower?.id}`]}
-                            className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg transition disabled:opacity-50 min-w-22.5"
+                            className="px-4 py-1.5 text-white text-xs font-semibold rounded-lg transition disabled:opacity-50 min-w-22.5"
+                            style={{ backgroundColor: '#5DADE2' }}
+                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#4A9FD5'}
+                            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#5DADE2'}
                           >
                             {processing[`fb-${item.follower?.id}`] ? <Loader2 size={14} className="animate-spin mx-auto" /> : 'Follow Back'}
                           </button>

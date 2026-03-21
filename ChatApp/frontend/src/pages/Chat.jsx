@@ -369,7 +369,6 @@ export default function Chat() {
       setConvList(convs)
       // Global unread = sum of all per-conv unread_count (already DB-driven from backend)
       const totalUnread = convs.reduce((sum, c) => sum + Number(c.unread_count || 0), 0)
-      console.log('Chat loadConversations - conversations:', convs.length, 'totalUnread:', totalUnread, 'unread_counts:', convs.map(c => ({ id: c.id, unread: c.unread_count })))
       setUnreadChatCount(totalUnread)
     } catch (err) {
       console.error('Failed to load conversations', err)
@@ -2288,7 +2287,7 @@ export default function Chat() {
             {selectedUsers.length > 0 && (
               <div className="px-4 py-2 flex flex-wrap gap-2 border-b border-gray-800">
                 {selectedUsers.map(u => (
-                  <div key={u.id} className="flex items-center gap-1 bg-blue-500/20 text-blue-400 px-2 py-1 rounded-full text-sm">
+                  <div key={u.id} className="flex items-center gap-1 px-2 py-1 rounded-full text-sm" style={{ backgroundColor: 'rgba(93, 173, 226, 0.2)', color: '#7EC8F0' }}>
                     {u.name}
                     <button onClick={() => toggleUserSelection(u)} className="hover:opacity-60">
                       <X size={14} />
@@ -2322,7 +2321,10 @@ export default function Chat() {
                       <p className="font-semibold text-sm text-white">{u.name}</p>
                       <p className="text-gray-500 text-xs">{u.email}</p>
                     </div>
-                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${selected ? 'bg-blue-500 border-blue-500' : 'border-gray-600'}`}>
+                    <div 
+                      className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${selected ? 'border-gray-600' : 'border-gray-600'}`}
+                      style={selected ? { backgroundColor: '#5DADE2', borderColor: '#5DADE2' } : {}}
+                    >
                       {selected && <Check size={12} className="text-white" />}
                     </div>
                   </div>
@@ -2542,7 +2544,22 @@ export default function Chat() {
                 type="button"
                 onClick={submitStyledConfirm}
                 disabled={confirmLoading}
-                className={`px-4 py-2 rounded-lg text-sm font-semibold disabled:opacity-50 ${confirmModal.tone === 'danger' ? 'bg-red-600 text-white hover:bg-red-500' : 'bg-blue-600 text-white hover:bg-blue-500'}`}
+                className="px-4 py-2 rounded-lg text-sm font-semibold disabled:opacity-50 text-white transition"
+                style={confirmModal.tone === 'danger' ? { backgroundColor: '#EF4444' } : { backgroundColor: '#5DADE2' }}
+                onMouseEnter={(e) => {
+                  if (confirmModal.tone === 'danger') {
+                    e.currentTarget.style.backgroundColor = '#DC2626'
+                  } else {
+                    e.currentTarget.style.backgroundColor = '#4A9FD5'
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (confirmModal.tone === 'danger') {
+                    e.currentTarget.style.backgroundColor = '#EF4444'
+                  } else {
+                    e.currentTarget.style.backgroundColor = '#5DADE2'
+                  }
+                }}
               >
                 {confirmLoading ? 'Please wait...' : confirmModal.confirmLabel}
               </button>

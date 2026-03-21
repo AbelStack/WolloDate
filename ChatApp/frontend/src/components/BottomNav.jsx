@@ -21,11 +21,6 @@ export default function BottomNav() {
     { to: '/profile', icon: User, label: 'Profile' },
   ]
 
-  // Debug logging
-  if (unreadChatCount > 0) {
-    console.log('BottomNav unreadChatCount:', unreadChatCount, 'type:', typeof unreadChatCount)
-  }
-
   // Add admin link if user is admin
   if (user?.role === 'admin') {
     navItems.splice(4, 0, { to: '/admin', icon: Shield, label: 'Admin' })

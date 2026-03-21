@@ -23,8 +23,12 @@ export default function VerifiedBadge({ size = 'md', className = '' }) {
 
   return (
     <span 
-      className={`inline-flex items-center justify-center rounded-full bg-blue-500 shrink-0 ${className}`}
-      style={{ width: container, height: container }}
+      className={`inline-flex items-center justify-center rounded-full shrink-0 ${className}`}
+      style={{ 
+        width: container, 
+        height: container,
+        backgroundColor: '#5DADE2' // Logo blue
+      }}
       aria-label="Verified account"
     >
       <Check 

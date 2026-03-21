@@ -129,7 +129,10 @@ export default function SearchPage() {
                         e.stopPropagation()
                         navigate(`/profile/${u.id}`)
                       }}
-                      className="flex items-center gap-1 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition"
+                      className="flex items-center gap-1 px-3 py-1.5 text-white text-sm font-medium rounded-lg transition"
+                      style={{ backgroundColor: '#5DADE2' }}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#4A9FD5'}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#5DADE2'}
                     >
                       <UserPlus size={14} />
                       View

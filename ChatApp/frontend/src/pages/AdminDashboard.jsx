@@ -226,7 +226,7 @@ export default function AdminDashboard() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-        <Loader2 size={40} className="text-blue-500 animate-spin" />
+        <Loader2 size={40} className="animate-spin" style={{ color: '#5DADE2' }} />
       </div>
     )
   }
@@ -245,7 +245,7 @@ export default function AdminDashboard() {
         <div className="max-w-6xl mx-auto px-3 sm:px-4">
           <div className="h-14 sm:h-16 flex items-center justify-between">
             <div className="flex items-center gap-2 sm:gap-3">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-blue-600 flex items-center justify-center">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#5DADE2' }}>
                 <Shield size={18} className="sm:hidden text-white" />
                 <Shield size={22} className="hidden sm:block text-white" />
               </div>
@@ -291,8 +291,10 @@ export default function AdminDashboard() {
             {tabs.map(tab => (
               <button key={tab.id} onClick={() => setActiveTab(tab.id)}
                 className={`flex-1 sm:flex-none px-2 sm:px-5 py-3 sm:py-4 text-xs sm:text-sm font-medium border-b-2 transition flex items-center justify-center sm:justify-start gap-1 sm:gap-2 ${
-                  activeTab === tab.id ? 'border-blue-500 text-blue-500' : 'border-transparent text-gray-400 hover:text-white'
-                }`}>
+                  activeTab === tab.id ? 'border-transparent text-gray-400 hover:text-white' : 'border-transparent text-gray-400 hover:text-white'
+                }`}
+                style={activeTab === tab.id ? { borderBottomColor: '#5DADE2', color: '#5DADE2' } : {}}
+              >
                 <tab.icon size={16} className="sm:w-4.5 sm:h-4.5" />
                 <span>{tab.label}</span>
                 {tab.badge > 0 && <span className="bg-red-500 text-white text-[10px] sm:text-xs font-bold px-1.5 py-0.5 rounded-full min-w-4 text-center">{tab.badge}</span>}

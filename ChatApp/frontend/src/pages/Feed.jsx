@@ -974,7 +974,10 @@ export default function Feed() {
                   <button
                     onClick={() => handleFollow(s.id)}
                     disabled={followedIds.has(s.id)}
-                    className="w-full py-1.5 text-xs font-semibold rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:bg-gray-700 disabled:text-gray-400 transition"
+                    className="w-full py-1.5 text-xs font-semibold rounded-lg text-white disabled:bg-gray-700 disabled:text-gray-400 transition"
+                    style={!followedIds.has(s.id) ? { backgroundColor: '#5DADE2' } : {}}
+                    onMouseEnter={(e) => { if (!followedIds.has(s.id)) e.currentTarget.style.backgroundColor = '#4A9FD5' }}
+                    onMouseLeave={(e) => { if (!followedIds.has(s.id)) e.currentTarget.style.backgroundColor = '#5DADE2' }}
                   >
                     {followedIds.has(s.id) ? 'Followed' : 'Follow'}
                   </button>
@@ -1148,7 +1151,10 @@ export default function Feed() {
                           type="button"
                           onClick={savePostCaption}
                           disabled={savingPostCaption}
-                          className="px-3 py-1.5 rounded-lg bg-blue-600 text-white text-sm hover:bg-blue-500 disabled:opacity-50"
+                          className="px-3 py-1.5 rounded-lg text-white text-sm disabled:opacity-50 transition"
+                          style={{ backgroundColor: '#5DADE2' }}
+                          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#4A9FD5'}
+                          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#5DADE2'}
                         >
                           {savingPostCaption ? 'Saving...' : 'Save'}
                         </button>
@@ -1431,8 +1437,8 @@ export default function Feed() {
                   Build your profile energy in 3 moves: post something real, mention a friend, and start one fresh chat.
                 </p>
               </div>
-              <div className="shrink-0 rounded-lg bg-blue-500/15 p-2">
-                <Sparkles className="w-4 h-4 text-blue-300" />
+              <div className="shrink-0 rounded-lg p-2" style={{ backgroundColor: 'rgba(93, 173, 226, 0.15)' }}>
+                <Sparkles className="w-4 h-4" style={{ color: '#7EC8F0' }} />
               </div>
             </div>
 
@@ -1469,7 +1475,10 @@ export default function Feed() {
 
             <button
               onClick={() => navigate('/search')}
-              className="mt-3 w-full rounded-lg bg-blue-600/90 hover:bg-blue-600 text-white text-xs font-semibold py-2 transition"
+              className="mt-3 w-full rounded-lg text-white text-xs font-semibold py-2 transition"
+              style={{ backgroundColor: 'rgba(93, 173, 226, 0.9)' }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#5DADE2'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(93, 173, 226, 0.9)'}
             >
               Explore More Profiles
             </button>

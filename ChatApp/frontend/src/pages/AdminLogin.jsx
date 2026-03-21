@@ -32,7 +32,7 @@ export default function AdminLogin() {
         <div className="bg-gray-900 border border-gray-800 p-10 rounded-lg">
           {/* Logo */}
           <div className="flex flex-col items-center mb-8 gap-3">
-            <div className="w-16 h-16 rounded-full bg-blue-600 flex items-center justify-center">
+            <div className="w-16 h-16 rounded-full flex items-center justify-center" style={{ backgroundColor: '#5DADE2' }}>
               <Shield className="w-8 h-8 text-white" />
             </div>
             <h1 className="text-center text-2xl font-semibold text-white">Admin Panel</h1>
@@ -45,7 +45,8 @@ export default function AdminLogin() {
               placeholder="Admin Email"
               value={email}
               onChange={e => setEmail(e.target.value)}
-              className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:border-transparent"
+              style={{ '--tw-ring-color': '#5DADE2' }}
               required
             />
             <input
@@ -53,7 +54,8 @@ export default function AdminLogin() {
               placeholder="Password"
               value={password}
               onChange={e => setPassword(e.target.value)}
-              className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:border-transparent"
+              style={{ '--tw-ring-color': '#5DADE2' }}
               required
             />
             
@@ -64,7 +66,10 @@ export default function AdminLogin() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg flex items-center justify-center gap-2 disabled:opacity-50 transition"
+              className="w-full py-3 text-white font-semibold rounded-lg flex items-center justify-center gap-2 disabled:opacity-50 transition"
+              style={{ backgroundColor: '#5DADE2' }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#4A9FD5'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#5DADE2'}
             >
               {loading ? (
                 <>

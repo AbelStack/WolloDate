@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('recipient_id')->constrained('users')->cascadeOnDelete();
             $table->foreignId('actor_id')->constrained('users')->cascadeOnDelete();
-            $table->enum('type', ['mention_post', 'mention_story']);
+            $table->enum('type', ['mention_post', 'mention_story', 'comment']);
             $table->foreignId('post_id')->nullable()->constrained('posts')->cascadeOnDelete();
             $table->foreignId('story_id')->nullable()->constrained('stories')->cascadeOnDelete();
             $table->string('message', 500);
