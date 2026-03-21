@@ -161,6 +161,9 @@ class MessageController extends Controller
                 'post_id' => $post?->id,
             ]);
 
+            // Update conversation timestamp to reflect new message activity
+            $conversation->touch();
+
             if (!empty($validated['media_id'])) {
                 MediaAttachment::where('id', $validated['media_id'])
                     ->whereNull('message_id')

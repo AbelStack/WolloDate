@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Comment;
 use App\Models\CommentLike;
 use App\Models\Post;
+use App\Models\UserNotification;
 use Illuminate\Http\Request;
 
 class CommentController extends Controller
@@ -85,6 +86,18 @@ class CommentController extends Controller
         ]);
 
         $post->increment('comments_count');
+
+        // Create notification for post owner (if commenter is not the owner)
+        if ($currentUser->id !== $post->user_id) {
+            UserNotification::create([
+                'recipient_id' => $post->user_id,
+                'actor_id' => $currentUser->id,
+                'type' => 'comment',
+                'post_id' => $post->id,
+                'message' => 'commented on your post',
+                'is_read' => false,
+            ]);
+        }
 
         $comment->load('user:id,name,username,avatar_url,is_approved');
 

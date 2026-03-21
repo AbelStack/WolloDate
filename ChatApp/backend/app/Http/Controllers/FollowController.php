@@ -238,15 +238,43 @@ class FollowController extends Controller
                 ];
             });
 
+        // Get comment notifications
+        $commentItems = UserNotification::where('recipient_id', $currentUser->id)
+            ->where('type', 'comment')
+            ->with([
+                'actor:id,name,username,avatar_url,is_approved',
+                'post:id,caption,image_url,media_urls'
+            ])
+            ->orderBy('created_at', 'desc')
+            ->take(50)
+            ->get()
+            ->map(function ($notification) {
+                return [
+                    'id' => 'comment-' . $notification->id,
+                    'type' => 'comment',
+                    'status' => 'comment',
+                    'notification_type' => $notification->type,
+                    'is_read' => (bool) $notification->is_read,
+                    'message' => $notification->message,
+                    'actor' => $notification->actor,
+                    'follower' => $notification->actor,
+                    'post_id' => $notification->post_id,
+                    'post' => $notification->post,
+                    'created_at' => $notification->created_at,
+                    'updated_at' => $notification->updated_at,
+                ];
+            });
+
         $result = $followItems
             ->concat($mentionItems)
+            ->concat($commentItems)
             ->sortByDesc('updated_at')
             ->values();
 
         // Count of pending requests (for badge)
         $pendingCount = $activity->where('status', 'pending')->count();
         $unreadActivityCount = UserNotification::where('recipient_id', $currentUser->id)
-            ->whereIn('type', ['mention_post', 'mention_story'])
+            ->whereIn('type', ['mention_post', 'mention_story', 'comment'])
             ->where('is_read', false)
             ->count();
 

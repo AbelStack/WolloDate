@@ -103,6 +103,7 @@ export default function Notifications() {
   }
 
   const mentionItems = activity.filter(item => item.type === 'mention')
+  const commentItems = activity.filter(item => item.type === 'comment')
 
   const openActivityTarget = (item) => {
     if ((item.content_type || item.mention_type) === 'story' && item.story_id) {
@@ -143,6 +144,43 @@ export default function Notifications() {
           </div>
         ) : (
           <>
+            {/* Comments */}
+            {commentItems.length > 0 && (
+              <div>
+                <div className="px-4 py-3 border-b border-gray-800">
+                  <h2 className="text-sm font-semibold text-white">Comments</h2>
+                </div>
+                <div className="divide-y divide-gray-800">
+                  {commentItems.map(item => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => navigate(`/post/${item.post_id}`)}
+                      className="w-full text-left p-4 flex items-center gap-3 hover:bg-gray-850"
+                    >
+                      <img
+                        src={getAvatarUrl(item.actor)}
+                        alt={item.actor?.name}
+                        className="w-11 h-11 rounded-full object-cover cursor-pointer"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          navigate(`/profile/${item.actor?.id}`)
+                        }}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-white">
+                          <span className="font-semibold">{item.actor?.username || item.actor?.name}</span>
+                          {item.actor?.is_approved && <VerifiedBadge size="xs" className="inline ml-0.5" />}
+                          {' '}commented on your post.{' '}
+                          <span className="text-gray-500">{formatTime(item.created_at)}</span>
+                        </p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Mentions */}
             {mentionItems.length > 0 && (
               <div>
