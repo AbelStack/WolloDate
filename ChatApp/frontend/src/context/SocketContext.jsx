@@ -189,7 +189,9 @@ export function SocketProvider({ children }) {
       const convs = Array.isArray(convRes.data)
         ? convRes.data
         : (convRes.data?.data || [])
-      setUnreadChatCount(sumUnread(convs))
+      const totalUnread = sumUnread(convs)
+      console.log('SocketContext refreshNotificationCounts - conversations:', convs.length, 'totalUnread:', totalUnread, 'unread_counts:', convs.map(c => ({ id: c.id, unread: c.unread_count })))
+      setUnreadChatCount(totalUnread)
       
       const actRes = await follows.getActivity()
       if (Date.now() > alertSuppressedUntilRef.current) {

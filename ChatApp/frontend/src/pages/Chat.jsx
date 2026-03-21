@@ -368,7 +368,9 @@ export default function Chat() {
         : (res.data?.data || [])
       setConvList(convs)
       // Global unread = sum of all per-conv unread_count (already DB-driven from backend)
-      setUnreadChatCount(convs.reduce((sum, c) => sum + (c.unread_count || 0), 0))
+      const totalUnread = convs.reduce((sum, c) => sum + (c.unread_count || 0), 0)
+      console.log('Chat loadConversations - conversations:', convs.length, 'totalUnread:', totalUnread, 'unread_counts:', convs.map(c => ({ id: c.id, unread: c.unread_count })))
+      setUnreadChatCount(totalUnread)
     } catch (err) {
       console.error('Failed to load conversations', err)
     } finally {
