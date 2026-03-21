@@ -1999,20 +1999,15 @@ export default function Chat() {
                               >
                                 <Reply size={14} /> Reply
                               </button>
-                              {/* React */}
-                              <button
-                                onClick={() => { setShowEmojiPicker(msg.id); setShowMessageMenu(null); setActiveActionMessageId(msg.id) }}
-                                className="flex items-center gap-2 px-3 py-2 hover:bg-gray-800 w-full text-left text-sm text-white"
-                              >
-                                <Smile size={14} /> React
-                              </button>
-                              {/* Copy */}
-                              <button
-                                onClick={() => { copyMessage(msg); setShowMessageMenu(null); setActiveActionMessageId(null) }}
-                                className="flex items-center gap-2 px-3 py-2 hover:bg-gray-800 w-full text-left text-sm text-white"
-                              >
-                                <Copy size={14} /> Copy
-                              </button>
+                              {/* Edit (only for own messages) */}
+                              {isMine && !msg.deleted && (
+                                <button
+                                  onClick={() => { setEditingMessage(msg.id); setEditContent(msg.content); setShowMessageMenu(null); setActiveActionMessageId(null) }}
+                                  className="flex items-center gap-2 px-3 py-2 hover:bg-gray-800 w-full text-left text-sm text-white"
+                                >
+                                  <Edit2 size={14} /> Edit
+                                </button>
+                              )}
                               {/* Forward */}
                               <button
                                 onClick={() => { forwardMessage(msg); setShowMessageMenu(null) }}
@@ -2020,6 +2015,15 @@ export default function Chat() {
                               >
                                 <Forward size={14} /> Forward
                               </button>
+                              {/* Delete (only for own messages) */}
+                              {isMine && !msg.deleted && (
+                                <button
+                                  onClick={() => { deleteMessage(msg.id); setShowMessageMenu(null); setActiveActionMessageId(null) }}
+                                  className="flex items-center gap-2 px-3 py-2 hover:bg-gray-800 w-full text-left text-sm text-red-400"
+                                >
+                                  <Trash2 size={14} /> Delete
+                                </button>
+                              )}
                             </div>
                           )}
                         </div>
