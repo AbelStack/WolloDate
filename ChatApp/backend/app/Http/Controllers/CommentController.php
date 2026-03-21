@@ -96,9 +96,22 @@ class CommentController extends Controller
      * PUT /api/comments/{commentId}
      */
     public function update(Request $request, $commentId)
+            \Log::info('Comment action', [
+                'action' => 'update',
+                'commentId' => $commentId,
+                'user' => $request->user() ? $request->user()->id : null,
+                'token' => $request->bearerToken(),
+            ]);
     {
         $comment = Comment::findOrFail($commentId);
         $currentUser = $request->user();
+
+        // Debug log for troubleshooting
+        \Log::info('Comment update debug', [
+            'currentUserId' => $currentUser ? $currentUser->id : null,
+            'commentUserId' => $comment->user_id,
+            'requestToken' => $request->bearerToken(),
+        ]);
 
         if ($comment->user_id !== $currentUser->id) {
             return response()->json(['message' => 'Unauthorized'], 403);
@@ -122,6 +135,12 @@ class CommentController extends Controller
      * DELETE /api/comments/{commentId}
      */
     public function destroy(Request $request, $commentId)
+            \Log::info('Comment action', [
+                'action' => 'destroy',
+                'commentId' => $commentId,
+                'user' => $request->user() ? $request->user()->id : null,
+                'token' => $request->bearerToken(),
+            ]);
     {
         $comment = Comment::findOrFail($commentId);
         $currentUser = $request->user();
