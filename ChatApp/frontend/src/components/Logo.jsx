@@ -24,7 +24,7 @@ export default function Logo({ size = 'md', showName = true }) {
         style={{ borderRadius: '20%' }}
       />
       {showName && (
-        <span className={`${textSizeMap[size]} font-bold text-white tracking-tight`}>
+        <span className={`${textSizeMap[size]} font-bold tracking-tight`} style={{ color: 'var(--color-text-primary)' }}>
           WolloDate
         </span>
       )}

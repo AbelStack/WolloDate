@@ -420,12 +420,37 @@ body {
   background-color: #e5e7eb !important;
 }
 
+/* Text colors - CRITICAL for light theme visibility */
 .dark .text-white {
   color: #ffffff !important;
 }
 
 .light .text-white {
-  color: #111827 !important;
+  color: #000000 !important;
+}
+
+.dark .text-gray-100 {
+  color: #f3f4f6 !important;
+}
+
+.light .text-gray-100 {
+  color: #1f2937 !important;
+}
+
+.dark .text-gray-200 {
+  color: #e5e7eb !important;
+}
+
+.light .text-gray-200 {
+  color: #374151 !important;
+}
+
+.dark .text-gray-300 {
+  color: #d1d5db !important;
+}
+
+.light .text-gray-300 {
+  color: #4b5563 !important;
 }
 
 .dark .text-gray-400 {
@@ -444,20 +469,36 @@ body {
   color: #9ca3af !important;
 }
 
-.dark .text-gray-300 {
-  color: #d1d5db !important;
-}
-
-.light .text-gray-300 {
+.dark .text-gray-600 {
   color: #4b5563 !important;
 }
 
-.dark .text-gray-200 {
-  color: #e5e7eb !important;
+.light .text-gray-600 {
+  color: #4b5563 !important;
 }
 
-.light .text-gray-200 {
-  color: #374151 !important;
+.dark .text-slate-200 {
+  color: #e2e8f0 !important;
+}
+
+.light .text-slate-200 {
+  color: #1e293b !important;
+}
+
+.dark .text-slate-300 {
+  color: #cbd5e1 !important;
+}
+
+.light .text-slate-300 {
+  color: #334155 !important;
+}
+
+.dark .text-slate-400 {
+  color: #94a3b8 !important;
+}
+
+.light .text-slate-400 {
+  color: #64748b !important;
 }
 
 .dark .border-gray-800 {
@@ -482,6 +523,14 @@ body {
 
 .light .border-gray-600 {
   border-color: #d1d5db !important;
+}
+
+.dark .border-gray-500 {
+  border-color: #6b7280 !important;
+}
+
+.light .border-gray-500 {
+  border-color: #9ca3af !important;
 }
 
 /* Scrollbar theming */
@@ -520,4 +569,47 @@ body {
 
 .dark .light\:text-white {
   color: #fcd34d !important;
+}
+
+/* Placeholder text colors */
+.dark .placeholder-gray-500::placeholder {
+  color: #6b7280 !important;
+}
+
+.light .placeholder-gray-500::placeholder {
+  color: #9ca3af !important;
+}
+
+.dark .placeholder-gray-400::placeholder {
+  color: #9ca3af !important;
+}
+
+.light .placeholder-gray-400::placeholder {
+  color: #9ca3af !important;
+}
+
+/* Hover states for text */
+.dark .hover\:text-white:hover {
+  color: #ffffff !important;
+}
+
+.light .hover\:text-white:hover {
+  color: #000000 !important;
+}
+
+.dark .hover\:text-gray-300:hover {
+  color: #d1d5db !important;
+}
+
+.light .hover\:text-gray-300:hover {
+  color: #4b5563 !important;
+}
+
+/* Focus states */
+.dark .focus\:ring-2:focus {
+  --tw-ring-color: #5DADE2;
+}
+
+.light .focus\:ring-2:focus {
+  --tw-ring-color: #5DADE2;
 }
