@@ -1858,7 +1858,7 @@ export default function Chat() {
                   return acc
                 }, {}))
                 const showDate = idx === 0 || formatDate(msg.created_at) !== formatDate(filteredMessages[idx - 1]?.created_at)
-                
+
                 return (
                   <div key={msg.id || idx}>
                     {showDate && (
@@ -1892,12 +1892,12 @@ export default function Chat() {
                           {msg.user?.name?.[0]?.toUpperCase() || '?'}
                         </button>
                       )}
-                      
+
                       <div className={`flex flex-col max-w-[80%] sm:max-w-[65%] ${isMine ? 'items-end' : 'items-start'}`}>
                         {!isMine && activeConv.type === 'group' && (
                           <span className="text-xs text-ig-gray-500 mb-1">{msg.user?.name}</span>
                         )}
-                        
+
                         {editingMessage === msg.id ? (
                           <div className="flex gap-2 items-center">
                             <input
@@ -1942,9 +1942,33 @@ export default function Chat() {
                             })}
                           </div>
                         )}
+
+                        {/* Always-visible Edit/Delete for own messages */}
+                        {isMine && !msg.deleted && (
+                          <div className="flex gap-1 mt-1">
+                            {canEdit(msg) && (
+                              <button
+                                onClick={() => { setEditingMessage(msg.id); setEditContent(msg.content); setShowMessageMenu(null); setActiveActionMessageId(null) }}
+                                className="flex items-center gap-1 px-2 py-1 rounded text-xs text-white bg-gray-700 hover:bg-gray-600"
+                                title="Edit"
+                              >
+                                <Edit2 size={14} /> Edit
+                              </button>
+                            )}
+                            {canDelete(msg) && (
+                              <button
+                                onClick={() => { deleteMessage(msg.id); setShowMessageMenu(null); setActiveActionMessageId(null) }}
+                                className="flex items-center gap-1 px-2 py-1 rounded text-xs text-red-400 bg-gray-700 hover:bg-gray-600"
+                                title="Delete"
+                              >
+                                <Trash2 size={14} /> Delete
+                              </button>
+                            )}
+                          </div>
+                        )}
                       </div>
 
-                      {/* Message actions */}
+                      {/* Message actions menu (Reply, React, Copy, Forward) */}
                       <div className={`${hoveredMessageId === msg.id || showEmojiPicker === msg.id || showMessageMenu === msg.id || activeActionMessageId === msg.id ? 'opacity-100' : 'opacity-0'} flex items-center gap-1 shrink-0 relative z-40 ${isMine ? 'order-first mr-1' : 'ml-1'}`}>
                         <button
                           onClick={() => {
@@ -1955,7 +1979,7 @@ export default function Chat() {
                         >
                           <Smile size={16} />
                         </button>
-                        
+
                         <div className="relative">
                           <button
                             onClick={() => {
@@ -1996,28 +2020,10 @@ export default function Chat() {
                               >
                                 <Forward size={14} /> Forward
                               </button>
-                              {/* Edit - only for own messages */}
-                              {isMine && canEdit(msg) && (
-                                <button
-                                  onClick={() => { setEditingMessage(msg.id); setEditContent(msg.content); setShowMessageMenu(null); setActiveActionMessageId(null) }}
-                                  className="flex items-center gap-2 px-3 py-2 hover:bg-gray-800 w-full text-left text-sm text-white"
-                                >
-                                  <Edit2 size={14} /> Edit
-                                </button>
-                              )}
-                              {/* Delete - only for own messages */}
-                              {isMine && canDelete(msg) && (
-                                <button
-                                  onClick={() => { deleteMessage(msg.id); setShowMessageMenu(null); setActiveActionMessageId(null) }}
-                                  className="flex items-center gap-2 px-3 py-2 hover:bg-gray-800 w-full text-left text-sm text-red-400"
-                                >
-                                  <Trash2 size={14} /> Delete
-                                </button>
-                              )}
                             </div>
                           )}
                         </div>
-                        
+
                         {showEmojiPicker === msg.id && (
                           <>
                             <div className="fixed inset-0 z-40" onClick={() => setShowEmojiPicker(null)} />
