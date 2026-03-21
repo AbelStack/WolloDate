@@ -717,7 +717,7 @@ export default function StoryViewer({
               <img
                 src={getAvatarUrl(currentUserStory.user)}
                 alt={currentUserStory.user.name}
-                className="w-8 h-8 rounded-full object-cover border border-white/20 flex-shrink-0"
+                className="w-8 h-8 rounded-full object-cover border border-white/20 shrink-0"
                 style={{ aspectRatio: '1 / 1' }}
               />
               <div className="flex items-center gap-1">
@@ -1064,7 +1064,7 @@ export default function StoryViewer({
                       <img
                         src={getAvatarUrl(view.user)}
                         alt={view.user.name}
-                        className="w-11 h-11 rounded-full object-cover flex-shrink-0"
+                        className="w-11 h-11 rounded-full object-cover shrink-0"
                         style={{ aspectRatio: '1 / 1' }}
                       />
                       {view.has_liked && (
