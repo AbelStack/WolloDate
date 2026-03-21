@@ -42,6 +42,7 @@ export default function PostDetail() {
       if (!editingCommentContent.trim()) return;
       setSavingComment(true);
       try {
+        // Always use user endpoint for comment update
         await comments.update(comment.id, { content: editingCommentContent.trim() });
         setPost((prev) => ({
           ...prev,
@@ -51,8 +52,8 @@ export default function PostDetail() {
         }));
         setEditingCommentId(null);
         setEditingCommentContent('');
-      } catch {
-        // Optionally show error
+      } catch (err) {
+        alert(err?.response?.data?.message || 'Failed to update comment');
       } finally {
         setSavingComment(false);
       }
@@ -62,14 +63,15 @@ export default function PostDetail() {
     const handleDeleteComment = async (comment) => {
       if (!window.confirm('Delete this comment?')) return;
       try {
+        // Always use user endpoint for comment delete
         await comments.delete(comment.id);
         setPost((prev) => ({
           ...prev,
           comments: prev.comments.filter((c) => c.id !== comment.id),
           comments_count: Math.max(0, (prev.comments_count || 1) - 1),
         }));
-      } catch {
-        // Optionally show error
+      } catch (err) {
+        alert(err?.response?.data?.message || 'Failed to delete comment');
       }
     };
   const navigate = useNavigate()

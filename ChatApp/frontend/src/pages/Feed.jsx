@@ -498,6 +498,7 @@ export default function Feed() {
 
     try {
       setCommentActionLoading(prev => ({ ...prev, [key]: true }))
+      // Always use user endpoint for comment update
       const res = await comments.update(commentId, { content: nextContent })
       setPostComments(prev => ({
         ...prev,
@@ -513,8 +514,7 @@ export default function Feed() {
       setEditingComments(prev => ({ ...prev, [key]: false }))
       setEditingCommentText(prev => ({ ...prev, [key]: '' }))
     } catch (err) {
-      console.error('Failed to update comment:', err)
-      alert('Failed to update comment')
+      alert(err?.response?.data?.message || 'Failed to update comment')
     } finally {
       setCommentActionLoading(prev => ({ ...prev, [key]: false }))
     }
@@ -526,6 +526,7 @@ export default function Feed() {
     confirmActionRef.current = async () => {
       try {
         setCommentActionLoading(prev => ({ ...prev, [key]: true }))
+        // Always use user endpoint for comment delete
         await comments.delete(commentId)
         setPostComments(prev => ({
           ...prev,
@@ -543,8 +544,7 @@ export default function Feed() {
         }))
         setFeed(prev => prev.map(p => p.id === postId ? { ...p, comments_count: Math.max(0, p.comments_count - 1) } : p))
       } catch (err) {
-        console.error('Failed to delete comment:', err)
-        alert('Failed to delete comment')
+        alert(err?.response?.data?.message || 'Failed to delete comment')
       } finally {
         setCommentActionLoading(prev => ({ ...prev, [key]: false }))
       }
