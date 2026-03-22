@@ -1344,13 +1344,13 @@ export default function Chat() {
           <button
             type="button"
             onClick={(event) => seekVoiceMessage(msg.id, event)}
-            className="flex flex-1 items-end gap-0.5 sm:gap-1 rounded-xl px-0.5 sm:px-1 py-1 min-w-0 overflow-hidden"
+            className="flex flex-1 items-end gap-0.5 sm:gap-1 rounded-xl px-0.5 sm:px-1 py-1 min-w-0"
             aria-label="Seek voice message"
           >
             {bars.map((height, index) => (
               <span
                 key={`${msg.id}-bar-${index}`}
-                className={`w-0.5 sm:w-1 rounded-full transition-all ${index < activeBars ? 'bg-white' : 'bg-white/25'}`}
+                className={`w-0.5 sm:w-1 rounded-full transition-all shrink-0 ${index < activeBars ? 'bg-white' : 'bg-white/25'}`}
                 style={{ height }}
               />
             ))}
@@ -1741,11 +1741,11 @@ export default function Chat() {
       </div>
 
       {/* Chat area - hidden on mobile when no conversation */}
-      <div className={`${!conversationId ? 'hidden md:flex' : 'flex'} flex-1 flex-col bg-black min-w-0 overflow-hidden`}>
+      <div className={`${!conversationId ? 'hidden md:flex' : 'flex'} flex-1 flex-col bg-black min-w-0`}>
         {conversationId && activeConv ? (
-          <div className="flex flex-col h-full overflow-hidden">
+          <div className="flex flex-col h-full">
             {/* Chat header - STICKY */}
-            <div className="sticky top-0 h-12 sm:h-14 px-2 sm:px-3 md:px-4 flex items-center justify-between border-b border-gray-800 bg-black shrink-0 z-10">
+            <div className="sticky top-0 h-12 sm:h-14 px-2 sm:px-3 md:px-4 flex items-center justify-between border-b border-gray-800 bg-black shrink-0 z-20">
               {/* Back button - mobile only */}
               <button 
                 onClick={() => navigate('/c')}
