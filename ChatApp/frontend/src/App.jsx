@@ -17,6 +17,7 @@ import AdminLogin from './pages/AdminLogin'
 import AdminDashboard from './pages/AdminDashboard'
 import BottomNav from './components/BottomNav'
 import GlobalAlertBridge from './components/GlobalAlertBridge'
+import NotificationPrompt from './components/NotificationPrompt'
 
 function FullScreenLoader() {
   return <div className="h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--color-bg-base)' }}><div className="animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: 'var(--color-text-primary)' }}></div></div>
@@ -103,6 +104,7 @@ export default function App() {
         </div>
       </div>
       {!isAdminRoute && <BottomNav />}
+      {!isAdminRoute && <NotificationPrompt />}
       <GlobalAlertBridge />
     </>
   )
