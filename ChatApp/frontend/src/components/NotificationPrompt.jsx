@@ -42,14 +42,19 @@ export default function NotificationPrompt() {
   const handleSubscribe = async () => {
     try {
       setLoading(true)
+      console.log('Starting subscription...')
       await subscribeToPushNotifications()
+      console.log('Subscription successful!')
       setPermission('granted')
       setIsSubscribed(true)
       setShowPrompt(false)
     } catch (error) {
       console.error('Failed to subscribe:', error)
+      console.error('Error details:', error.message, error.response?.data)
+      alert(`Failed to enable notifications: ${error.message}`)
       if (error.message.includes('denied')) {
         setPermission('denied')
+        setShowPrompt(false)
       }
     } finally {
       setLoading(false)

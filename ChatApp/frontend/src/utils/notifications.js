@@ -19,13 +19,16 @@ export const subscribeToPushNotifications = async () => {
       throw new Error('Push notifications are not supported in this browser')
     }
 
+    console.log('Step 1: Registering service worker...')
     // Register service worker
     const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js')
     console.log('Service Worker registered:', registration)
 
+    console.log('Step 2: Waiting for service worker to be ready...')
     // Wait for service worker to be ready
     await navigator.serviceWorker.ready
 
+    console.log('Step 3: Requesting notification permission and getting FCM token...')
     // Request permission and get FCM token
     const token = await requestNotificationPermission()
     
@@ -33,13 +36,20 @@ export const subscribeToPushNotifications = async () => {
       throw new Error('Failed to get FCM token')
     }
 
+    console.log('Step 4: Saving token to backend...', token.substring(0, 20) + '...')
     // Save token to backend
-    await api.post('/push-subscriptions', { token })
+    const response = await api.post('/push-subscriptions', { token })
+    console.log('Backend response:', response.data)
 
     console.log('Successfully subscribed to push notifications')
     return token
   } catch (error) {
     console.error('Error subscribing to push notifications:', error)
+    console.error('Error details:', {
+      message: error.message,
+      response: error.response?.data,
+      status: error.response?.status
+    })
     throw error
   }
 }
