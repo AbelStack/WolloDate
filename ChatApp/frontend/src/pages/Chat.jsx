@@ -1755,7 +1755,7 @@ export default function Chat() {
             <div className="h-12 sm:h-14 px-2 sm:px-3 md:px-4 flex items-center justify-between border-b border-gray-800 bg-black shrink-0 z-20">
               {/* Back button - mobile only */}
               <button 
-                onClick={() => navigate('/c')}
+                onClick={() => navigate('/chat')}
                 className="md:hidden mr-1 sm:mr-2 p-1 hover:bg-gray-800 rounded-full shrink-0"
               >
                 <ArrowLeft size={20} className="text-white" />
