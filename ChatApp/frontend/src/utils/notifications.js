@@ -1,5 +1,5 @@
 import { requestNotificationPermission, onMessageListener } from '../firebase'
-import { api } from '../api'
+import api from '../api'
 
 // Check if notifications are supported
 export const isNotificationSupported = () => {
