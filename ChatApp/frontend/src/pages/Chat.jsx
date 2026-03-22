@@ -1333,7 +1333,7 @@ export default function Chat() {
             setVoiceProgress(prev => ({ ...prev, [msg.id]: 0 }))
           }}
         />
-        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+        <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
           <button
             type="button"
             onClick={() => toggleVoicePlayback(msg.id)}
@@ -1344,18 +1344,18 @@ export default function Chat() {
           <button
             type="button"
             onClick={(event) => seekVoiceMessage(msg.id, event)}
-            className="flex flex-1 items-end gap-0.5 sm:gap-1 rounded-xl px-0.5 sm:px-1 py-1 min-w-0"
+            className="flex flex-1 items-end gap-[3px] sm:gap-1 rounded-xl px-0.5 sm:px-1 py-1 min-w-0 max-w-[120px] sm:max-w-[160px]"
             aria-label="Seek voice message"
           >
             {bars.map((height, index) => (
               <span
                 key={`${msg.id}-bar-${index}`}
-                className={`w-0.5 sm:w-1 rounded-full transition-all shrink-0 ${index < activeBars ? 'bg-white' : 'bg-white/25'}`}
+                className={`w-[3px] sm:w-1 rounded-full transition-all shrink-0 ${index < activeBars ? 'bg-white' : 'bg-white/25'}`}
                 style={{ height }}
               />
             ))}
           </button>
-          <div className="shrink-0 text-[10px] sm:text-[11px] font-medium text-white/75 tabular-nums min-w-[32px] sm:min-w-[36px] text-right">
+          <div className="shrink-0 text-[10px] sm:text-[11px] font-medium text-white/75 tabular-nums min-w-[36px] sm:min-w-[40px] text-right">
             {formatDuration(displayTime)}
           </div>
         </div>
@@ -1741,11 +1741,11 @@ export default function Chat() {
       </div>
 
       {/* Chat area - hidden on mobile when no conversation */}
-      <div className={`${!conversationId ? 'hidden md:flex' : 'flex'} flex-1 flex-col bg-black min-w-0`}>
+      <div className={`${!conversationId ? 'hidden md:flex' : 'flex'} flex-1 flex-col bg-black min-w-0 h-full overflow-hidden`}>
         {conversationId && activeConv ? (
-          <div className="flex flex-col h-full">
-            {/* Chat header - STICKY */}
-            <div className="sticky top-0 h-12 sm:h-14 px-2 sm:px-3 md:px-4 flex items-center justify-between border-b border-gray-800 bg-black shrink-0 z-20">
+          <>
+            {/* Chat header - FIXED at top */}
+            <div className="h-12 sm:h-14 px-2 sm:px-3 md:px-4 flex items-center justify-between border-b border-gray-800 bg-black shrink-0 z-20">
               {/* Back button - mobile only */}
               <button 
                 onClick={() => navigate('/c')}
@@ -1860,7 +1860,7 @@ export default function Chat() {
             </div>
 
             {activeConv.type === 'private' && showSearch && (
-              <div className="px-4 py-2 border-b border-gray-800 bg-black">
+              <div className="px-4 py-2 border-b border-gray-800 bg-black shrink-0">
                 <input
                   type="text"
                   placeholder="Search in this chat..."
@@ -1871,8 +1871,8 @@ export default function Chat() {
               </div>
             )}
 
-            {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-1 bg-black">
+            {/* Messages - scrollable area */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-1 bg-black min-h-0">
               {showConvActionsMenu && (
                 <div className="fixed inset-0 z-40" onClick={() => setShowConvActionsMenu(false)} />
               )}
@@ -2095,7 +2095,7 @@ export default function Chat() {
               <div ref={messagesEndRef} />
             </div>
 
-            {/* Message input */}
+            {/* Message input - fixed at bottom */}
             <div className="p-2 sm:p-3 border-t border-gray-800 bg-black safe-area-bottom shrink-0">
               {showRealtimeWarning && !connected && (
                 <div className="mb-2 rounded-lg border border-yellow-700/40 bg-yellow-900/30 px-3 py-1.5 text-xs text-yellow-200">
@@ -2256,7 +2256,7 @@ export default function Chat() {
                 </div>
               )}
             </div>
-          </div>
+          </>
         ) : (
           /* Empty state - hidden on mobile since sidebar is shown */
           <div className="flex-1 hidden md:flex items-center justify-center flex-col">
