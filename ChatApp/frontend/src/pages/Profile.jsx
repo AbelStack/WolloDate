@@ -63,6 +63,7 @@ export default function Profile() {
   const [loadingBlockedUsers, setLoadingBlockedUsers] = useState(false)
   const [unblockingUserId, setUnblockingUserId] = useState(null)
   const [pendingUnblockUser, setPendingUnblockUser] = useState(null)
+  const [settingsSection, setSettingsSection] = useState(null) // null = menu, 'profile', 'password', 'blocked'
   
   // Image cropper state
   const [cropperImage, setCropperImage] = useState(null)
@@ -84,10 +85,7 @@ export default function Profile() {
     loadProfile()
   }, [profileId])
 
-  useEffect(() => {
-    if (!editing || !isOwnProfile || !user?.id) return
-    loadBlockedUsers()
-  }, [editing, isOwnProfile, user?.id])
+
 
   const loadProfile = async () => {
     try {
@@ -405,7 +403,10 @@ export default function Profile() {
         </button>
         {isOwnProfile ? (
           <button
-            onClick={() => setEditing(true)}
+            onClick={() => {
+              setEditing(true)
+              setSettingsSection(null)
+            }}
             className="p-2 rounded-full bg-black/55 border border-gray-800 hover:bg-black/75 pointer-events-auto"
           >
             <Settings size={20} className="text-white" />
@@ -615,17 +616,93 @@ export default function Profile() {
 
       </div>
 
-      {/* Edit Profile Modal */}
+      {/* Settings Modal */}
       {editing && (
         <div className="fixed inset-0 bg-black/80 z-60 flex items-center justify-center p-4">
           <div className="bg-gray-900 rounded-xl w-full max-w-md max-h-[90vh] overflow-y-auto border border-gray-800">
             <div className="flex items-center justify-between p-4 border-b border-gray-800">
-              <h2 className="font-semibold text-lg text-white">Edit Profile</h2>
-              <button onClick={() => setEditing(false)} className="p-2 hover:bg-gray-800 rounded-full">
-                <X size={20} className="text-white" />
+              <button 
+                onClick={() => {
+                  if (settingsSection) {
+                    setSettingsSection(null)
+                  } else {
+                    setEditing(false)
+                  }
+                }}
+                className="p-2 hover:bg-gray-800 rounded-full"
+              >
+                {settingsSection ? <ArrowLeft size={20} className="text-white" /> : <X size={20} className="text-white" />}
               </button>
+              <h2 className="font-semibold text-lg text-white">
+                {!settingsSection ? 'Settings' : settingsSection === 'profile' ? 'Edit Profile' : settingsSection === 'password' ? 'Change Password' : 'Blocked Users'}
+              </h2>
+              <div className="w-10" />
             </div>
-            <form onSubmit={handleSave} className="p-4 space-y-4">
+            {/* Settings Menu */}
+            {!settingsSection && (
+              <div className="divide-y divide-gray-800">
+                <button
+                  onClick={() => setSettingsSection('profile')}
+                  className="w-full flex items-center justify-between p-4 hover:bg-gray-800/50 transition text-left"
+                >
+                  <span className="text-white font-medium">Profile</span>
+                  <ArrowLeft size={18} className="text-gray-400 rotate-180" />
+                </button>
+                
+                <button
+                  onClick={() => setSettingsSection('password')}
+                  className="w-full flex items-center justify-between p-4 hover:bg-gray-800/50 transition text-left"
+                >
+                  <span className="text-white font-medium">Password</span>
+                  <ArrowLeft size={18} className="text-gray-400 rotate-180" />
+                </button>
+                
+                <button
+                  onClick={() => {
+                    setSettingsSection('blocked')
+                    loadBlockedUsers()
+                  }}
+                  className="w-full flex items-center justify-between p-4 hover:bg-gray-800/50 transition text-left"
+                >
+                  <span className="text-white font-medium">Blocked Users</span>
+                  <ArrowLeft size={18} className="text-gray-400 rotate-180" />
+                </button>
+                
+                <div className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      {theme === 'dark' ? <Moon size={18} className="text-gray-400" /> : <Sun size={18} className="text-gray-400" />}
+                      <div>
+                        <p className="font-medium text-white text-sm">Theme</p>
+                        <p className="text-xs text-gray-400">{theme === 'dark' ? 'Dark mode' : 'Light mode'}</p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={toggleTheme}
+                      className="w-12 h-6 rounded-full transition"
+                      style={{ backgroundColor: theme === 'dark' ? '#5DADE2' : '#d1d5db' }}
+                    >
+                      <div 
+                        className="w-5 h-5 bg-white rounded-full shadow transition-transform"
+                        style={{ transform: theme === 'dark' ? 'translateX(1.5rem)' : 'translateX(0.125rem)' }}
+                      />
+                    </button>
+                  </div>
+                </div>
+                
+                <button
+                  onClick={async () => { await logout(); navigate('/login') }}
+                  className="w-full py-4 text-red-500 font-semibold flex items-center justify-center gap-2 hover:bg-red-900/20 transition"
+                >
+                  <LogOut size={18} /> Log Out
+                </button>
+              </div>
+            )}
+
+            {/* Profile Edit Section */}
+            {settingsSection === 'profile' && (
+              <form onSubmit={handleSave} className="p-4 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-1">Name</label>
                 <input
@@ -687,10 +764,12 @@ export default function Profile() {
               >
                 {saving ? <Loader2 className="animate-spin" /> : 'Save Changes'}
               </button>
-            </form>
+              </form>
+            )}
 
-            <form onSubmit={handleChangePassword} className="px-4 pb-4 space-y-3 border-t border-gray-800">
-              <p className="pt-4 text-sm font-semibold text-white">Change Password</p>
+            {/* Password Change Section */}
+            {settingsSection === 'password' && (
+              <form onSubmit={handleChangePassword} className="p-4 space-y-3">
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-1">Current password</label>
                 <input
@@ -730,47 +809,27 @@ export default function Profile() {
               <button
                 type="submit"
                 disabled={passwordSaving || !currentPassword || !newPassword || !confirmPassword}
-                className="w-full py-3 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-600 disabled:opacity-50 flex items-center justify-center"
+                className="w-full py-3 text-white font-semibold rounded-lg disabled:opacity-50 flex items-center justify-center transition"
+                style={{ backgroundColor: '#5DADE2' }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#4A9FD5'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#5DADE2'}
               >
                 {passwordSaving ? <Loader2 className="animate-spin" /> : 'Update Password'}
               </button>
-            </form>
+              </form>
+            )}
 
-            {/* Theme Settings */}
-            <div className="px-4 pb-4 border-t border-gray-800">
-              <p className="pt-4 text-sm font-semibold text-white mb-3">Appearance</p>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  {theme === 'dark' ? <Moon size={18} className="text-gray-400" /> : <Sun size={18} className="text-gray-400" />}
-                  <div>
-                    <p className="font-medium text-white text-sm">Theme</p>
-                    <p className="text-xs text-gray-400">{theme === 'dark' ? 'Dark mode' : 'Light mode'}</p>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={toggleTheme}
-                  className="w-12 h-6 rounded-full transition"
-                  style={{ backgroundColor: theme === 'dark' ? '#5DADE2' : '#d1d5db' }}
-                >
-                  <div 
-                    className="w-5 h-5 bg-white rounded-full shadow transition-transform"
-                    style={{ transform: theme === 'dark' ? 'translateX(1.5rem)' : 'translateX(0.125rem)' }}
-                  />
-                </button>
-              </div>
-            </div>
-
-            <div className="px-4 pb-4 border-t border-gray-800">
-              <p className="pt-4 text-sm font-semibold text-white">Blocked Users</p>
+            {/* Blocked Users Section */}
+            {settingsSection === 'blocked' && (
+              <div className="p-4">
               {loadingBlockedUsers ? (
-                <div className="py-4 flex justify-center">
-                  <Loader2 className="animate-spin text-gray-400" size={20} />
+                <div className="py-8 flex justify-center">
+                  <Loader2 className="animate-spin text-gray-400" size={24} />
                 </div>
               ) : blockedUsers.length === 0 ? (
-                <p className="py-3 text-sm text-gray-500">You have not blocked anyone.</p>
+                <p className="py-8 text-center text-sm text-gray-500">You have not blocked anyone.</p>
               ) : (
-                <div className="mt-2 space-y-2">
+                <div className="space-y-2">
                   {blockedUsers.map((blockedUser) => (
                     <div key={blockedUser.id} className="flex items-center justify-between rounded-lg border border-gray-800 bg-gray-900 px-3 py-2">
                       <button
@@ -796,17 +855,8 @@ export default function Profile() {
                   ))}
                 </div>
               )}
-            </div>
-            
-            {/* Logout Button */}
-            <div className="p-4 border-t border-gray-800">
-              <button
-                onClick={async () => { await logout(); navigate('/login') }}
-                className="w-full py-3 text-red-500 font-semibold flex items-center justify-center gap-2 hover:bg-red-900/20 rounded-lg transition"
-              >
-                <LogOut size={18} /> Log Out
-              </button>
-            </div>
+              </div>
+            )}
           </div>
         </div>
       )}
