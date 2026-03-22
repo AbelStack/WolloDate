@@ -1323,6 +1323,13 @@ export default function Chat() {
               setVoiceDuration(prev => ({ ...prev, [msg.id]: nextDuration }))
             }
           }}
+          onCanPlay={(event) => {
+            // Additional fallback - fires when audio is ready to play
+            const nextDuration = event.currentTarget.duration
+            if (isFinite(nextDuration) && nextDuration > 0 && !voiceDuration[msg.id]) {
+              setVoiceDuration(prev => ({ ...prev, [msg.id]: nextDuration }))
+            }
+          }}
           onTimeUpdate={(event) => {
             const { currentTime, duration: totalDuration } = event.currentTarget
             const nextProgress = (isFinite(totalDuration) && totalDuration > 0) ? currentTime / totalDuration : 0
@@ -1333,7 +1340,7 @@ export default function Chat() {
             setVoiceProgress(prev => ({ ...prev, [msg.id]: 0 }))
           }}
         />
-        <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+        <div className="flex items-center gap-1 sm:gap-1.5 min-w-0">
           <button
             type="button"
             onClick={() => toggleVoicePlayback(msg.id)}
@@ -1344,18 +1351,18 @@ export default function Chat() {
           <button
             type="button"
             onClick={(event) => seekVoiceMessage(msg.id, event)}
-            className="flex flex-1 items-end gap-[3px] sm:gap-1 rounded-xl px-0.5 sm:px-1 py-1 min-w-0 max-w-[120px] sm:max-w-[160px]"
+            className="flex flex-1 items-end gap-[2px] sm:gap-[3px] rounded-xl px-0.5 sm:px-1 py-1 min-w-0 max-w-[100px] sm:max-w-[140px]"
             aria-label="Seek voice message"
           >
             {bars.map((height, index) => (
               <span
                 key={`${msg.id}-bar-${index}`}
-                className={`w-[3px] sm:w-1 rounded-full transition-all shrink-0 ${index < activeBars ? 'bg-white' : 'bg-white/25'}`}
+                className={`w-[2px] sm:w-[3px] rounded-full transition-all shrink-0 ${index < activeBars ? 'bg-white' : 'bg-white/25'}`}
                 style={{ height }}
               />
             ))}
           </button>
-          <div className="shrink-0 text-[10px] sm:text-[11px] font-medium text-white/75 tabular-nums min-w-[36px] sm:min-w-[40px] text-right">
+          <div className="shrink-0 text-[10px] sm:text-[11px] font-medium text-white/75 tabular-nums min-w-[38px] sm:min-w-[42px] text-right">
             {formatDuration(displayTime)}
           </div>
         </div>
@@ -1948,7 +1955,7 @@ export default function Chat() {
                           </div>
                         ) : (
                           <div className={`relative ${isMine ? 'message-sent' : 'message-received'} ${isMediaOnlyMessage(msg) ? 'px-2 py-2' : ''}`}>
-                            <div className="text-sm">{renderMessageContent(msg)}</div>
+                            <div className="text-sm break-words">{renderMessageContent(msg)}</div>
                             <div className={`flex items-center gap-1 mt-1 ${isMine ? 'justify-end' : 'justify-start'}`}>
                               <span className={`text-xs ${isMine ? 'text-gray-300' : 'text-gray-400'}`}>
                                 {formatTime(msg.created_at)}
