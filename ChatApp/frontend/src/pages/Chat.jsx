@@ -1955,7 +1955,7 @@ export default function Chat() {
                           </div>
                         ) : (
                           <div className={`relative ${isMine ? 'message-sent' : 'message-received'} ${isMediaOnlyMessage(msg) ? 'px-2 py-2' : ''}`}>
-                            <div className="text-sm" style={{ overflowWrap: 'break-word', wordBreak: 'normal' }}>{renderMessageContent(msg)}</div>
+                            <div className="text-sm">{renderMessageContent(msg)}</div>
                             <div className={`flex items-center gap-1 mt-1 ${isMine ? 'justify-end' : 'justify-start'}`}>
                               <span className={`text-xs ${isMine ? 'text-gray-300' : 'text-gray-400'}`}>
                                 {formatTime(msg.created_at)}

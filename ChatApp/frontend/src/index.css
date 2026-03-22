@@ -287,6 +287,7 @@ body {
   padding: 12px 16px;
   word-wrap: break-word;
   overflow-wrap: break-word;
+  word-break: keep-all;
   border: 1px solid #3a3a3a;
 }
 .message-received {
@@ -296,6 +297,7 @@ body {
   padding: 12px 16px;
   word-wrap: break-word;
   overflow-wrap: break-word;
+  word-break: keep-all;
   border: 1px solid #3a3a3a;
 }
 
@@ -318,7 +320,6 @@ body {
   .message-received {
     padding: 10px 14px;
     font-size: 14px;
-    max-width: 85%;
   }
   
   .avatar {
@@ -333,7 +334,6 @@ body {
   .message-received {
     padding: 8px 12px;
     font-size: 13px;
-    max-width: 80%;
   }
 }
 
