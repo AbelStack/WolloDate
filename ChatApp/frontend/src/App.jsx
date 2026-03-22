@@ -64,11 +64,12 @@ export default function App() {
   const location = useLocation()
   const isAdminRoute = location.pathname.startsWith('/admin')
   const isAuthRoute = location.pathname === '/login' || location.pathname === '/signup' || location.pathname === '/forgot-password' || location.pathname === '/reset-password'
+  const isChatRoute = location.pathname === '/chat' || location.pathname.startsWith('/c/')
   const useDesktopShell = !isAdminRoute && !isAuthRoute
 
   return (
     <>
-      <div className={isAdminRoute ? '' : 'pb-14 sm:pb-16 pb-[calc(3.5rem+env(safe-area-inset-bottom))] sm:pb-[calc(4rem+env(safe-area-inset-bottom))]'}>
+      <div className={isAdminRoute || isChatRoute ? '' : 'pb-14 sm:pb-16 pb-[calc(3.5rem+env(safe-area-inset-bottom))] sm:pb-[calc(4rem+env(safe-area-inset-bottom))]'}>
         <div className={useDesktopShell ? 'desktop-app-shell' : ''}>
           <div className={useDesktopShell ? 'desktop-app-content' : ''}>
             <Routes>
