@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, Heart, Loader2, MessageCircle, Send, Share2, X, Link as LinkIcon, Pencil, Trash2 } from 'lucide-react'
 // ...existing code...
 import VerifiedBadge from '../components/VerifiedBadge'
+import { PostSkeleton, CommentSkeleton } from '../components/Skeleton'
 import { comments, conversations, messages, posts } from '../api'
 import { useSocket } from '../context/useSocket'
 import { SHARED_POST_MESSAGE } from '../utils/chatShares'

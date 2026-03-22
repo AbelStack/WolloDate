@@ -68,7 +68,7 @@ export default function App() {
 
   return (
     <>
-      <div className={isAdminRoute ? '' : 'pb-[calc(4rem+env(safe-area-inset-bottom))]'}>
+      <div className={isAdminRoute ? '' : 'pb-14 sm:pb-16 pb-[calc(3.5rem+env(safe-area-inset-bottom))] sm:pb-[calc(4rem+env(safe-area-inset-bottom))]'}>
         <div className={useDesktopShell ? 'desktop-app-shell' : ''}>
           <div className={useDesktopShell ? 'desktop-app-content' : ''}>
             <Routes>

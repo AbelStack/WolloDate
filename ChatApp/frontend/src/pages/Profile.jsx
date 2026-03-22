@@ -7,6 +7,7 @@ import { users, posts, follows } from '../api'
 import VerifiedBadge from '../components/VerifiedBadge'
 import CreatorBadge from '../components/CreatorBadge'
 import ConfirmDialog from '../components/ConfirmDialog'
+import { ProfileSkeleton } from '../components/Skeleton'
 import { resolveMediaUrl } from '../utils/media'
 import { getAvatarUrl } from '../utils/avatar'
 import { readImageFileAsDataUrl } from '../utils/image'
@@ -377,8 +378,26 @@ export default function Profile() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh] bg-black">
-        <Loader2 className="w-8 h-8 animate-spin text-white" />
+      <div className="min-h-screen bg-black">
+        <div className="fixed top-0 left-0 right-0 flex items-center justify-between p-3 sm:p-4 z-30">
+          <button onClick={() => navigate(-1)} className="p-1.5 sm:p-2 rounded-full bg-black/55 border border-gray-800">
+            <ArrowLeft size={20} className="sm:w-[22px] sm:h-[22px] text-white" />
+          </button>
+        </div>
+        <div className="max-w-xl mx-auto px-safe">
+          <ProfileSkeleton />
+          <div className="border-t border-b border-gray-800 flex">
+            <div className="flex-1 py-2.5 sm:py-3 flex items-center justify-center gap-2 text-xs sm:text-sm font-semibold border-b-2 border-white">
+              <Grid3X3 size={16} className="sm:w-[18px] sm:h-[18px]" />
+              Posts
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-0.5 sm:gap-1 p-4">
+            {[1, 2, 3, 4, 5, 6].map(i => (
+              <div key={i} className="aspect-square bg-gray-800 animate-pulse rounded" />
+            ))}
+          </div>
+        </div>
       </div>
     )
   }
@@ -394,12 +413,12 @@ export default function Profile() {
         </div>
       )}
 
-      <div className="fixed top-0 left-0 right-0 flex items-center justify-between p-4 z-30 pointer-events-none">
+      <div className="fixed top-0 left-0 right-0 flex items-center justify-between p-3 sm:p-4 z-30 pointer-events-none">
         <button
           onClick={() => navigate(-1)}
-          className="p-2 rounded-full bg-black/55 border border-gray-800 hover:bg-black/75 pointer-events-auto"
+          className="p-1.5 sm:p-2 rounded-full bg-black/55 border border-gray-800 hover:bg-black/75 pointer-events-auto"
         >
-          <ArrowLeft size={22} className="text-white" />
+          <ArrowLeft size={20} className="sm:w-[22px] sm:h-[22px] text-white" />
         </button>
         {isOwnProfile ? (
           <button
@@ -407,19 +426,19 @@ export default function Profile() {
               setEditing(true)
               setSettingsSection(null)
             }}
-            className="p-2 rounded-full bg-black/55 border border-gray-800 hover:bg-black/75 pointer-events-auto"
+            className="p-1.5 sm:p-2 rounded-full bg-black/55 border border-gray-800 hover:bg-black/75 pointer-events-auto"
           >
-            <Settings size={20} className="text-white" />
+            <Settings size={18} className="sm:w-5 sm:h-5 text-white" />
           </button>
         ) : (
           <div className="w-10" />
         )}
       </div>
 
-      <div className="max-w-xl mx-auto">
+      <div className="max-w-xl mx-auto px-safe">
         {/* Profile Header */}
-        <div className="p-6 pt-14 relative">
-          <div className="flex items-start gap-6">
+        <div className="p-4 sm:p-6 pt-12 sm:pt-14 relative">
+          <div className="flex items-start gap-4 sm:gap-6">
             {/* Avatar */}
             <div className="relative shrink-0">
               <img
@@ -469,17 +488,17 @@ export default function Profile() {
             </div>
 
             {/* Stats */}
-            <div className="flex-1">
+            <div className="flex-1 min-w-0">
               <div className="flex items-center gap-1 mb-0.5 min-w-0">
-                <h1 className="text-lg sm:text-xl font-semibold text-white truncate">{profile?.name}</h1>
+                <h1 className="text-base sm:text-lg md:text-xl font-semibold text-white truncate">{profile?.name}</h1>
                 {profile?.is_approved ? <VerifiedBadge size="md" /> : <Lock size={16} className="text-yellow-500" title="Pending verification" />}
                 {isCreatorUser(profile) && <CreatorBadge size="xxs" />}
               </div>
               {profile?.username && (
-                <p className="text-gray-400 text-sm mb-2">@{profile.username}</p>
+                <p className="text-gray-400 text-xs sm:text-sm mb-2 truncate">@{profile.username}</p>
               )}
               
-              <div className="flex gap-6 text-sm mb-3">
+              <div className="flex gap-4 sm:gap-6 text-xs sm:text-sm mb-3">
                 <div className="text-center">
                   <span className="font-semibold text-white">{profile?.posts_count || userPosts.length}</span>
                   <span className="text-gray-400 ml-1">posts</span>
@@ -500,7 +519,7 @@ export default function Profile() {
                   <button
                     onClick={handleFollow}
                     disabled={loadingFollow}
-                    className={`flex-1 py-2 px-4 rounded-lg font-semibold text-sm flex items-center justify-center gap-2 transition ${
+                    className={`flex-1 py-1.5 sm:py-2 px-3 sm:px-4 rounded-lg font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 transition ${
                       isFollowing 
                         ? 'bg-gray-800 text-white hover:bg-gray-700' 
                         : isPendingFollow
@@ -523,7 +542,7 @@ export default function Profile() {
                   </button>
                   <button
                     onClick={() => navigate('/chat', { state: { startChatUserId: profile?.id } })}
-                    className="py-2 px-4 bg-gray-800 text-white rounded-lg font-semibold text-sm hover:bg-gray-700 transition"
+                    className="py-1.5 sm:py-2 px-3 sm:px-4 bg-gray-800 text-white rounded-lg font-semibold text-xs sm:text-sm hover:bg-gray-700 transition"
                   >
                     Message
                   </button>
@@ -534,7 +553,7 @@ export default function Profile() {
 
           {/* Bio */}
           {profile?.bio && (
-            <p className="mt-4 text-sm text-gray-300 whitespace-pre-wrap">{profile.bio}</p>
+            <p className="mt-3 sm:mt-4 text-xs sm:text-sm text-gray-300 whitespace-pre-wrap">{profile.bio}</p>
           )}
         </div>
 
@@ -542,11 +561,11 @@ export default function Profile() {
         <div className="border-t border-b border-gray-800 flex">
           <button
             onClick={() => setActiveTab('posts')}
-            className={`flex-1 py-3 flex items-center justify-center gap-2 text-sm font-semibold border-b-2 transition ${
+            className={`flex-1 py-2.5 sm:py-3 flex items-center justify-center gap-2 text-xs sm:text-sm font-semibold border-b-2 transition ${
               activeTab === 'posts' ? 'border-white text-white' : 'border-transparent text-gray-500'
             }`}
           >
-            <Grid3X3 size={18} />
+            <Grid3X3 size={16} className="sm:w-[18px] sm:h-[18px]" />
             Posts
           </button>
         </div>
@@ -555,12 +574,12 @@ export default function Profile() {
         {activeTab === 'posts' && (
           <div>
             {userPosts.length === 0 ? (
-              <div className="py-16 text-center">
-                <Grid3X3 size={48} className="mx-auto text-gray-600 mb-4" />
-                <p className="text-gray-500">No posts yet</p>
+              <div className="py-12 sm:py-16 text-center">
+                <Grid3X3 size={40} className="sm:w-12 sm:h-12 mx-auto text-gray-600 mb-4" />
+                <p className="text-gray-500 text-sm">No posts yet</p>
               </div>
             ) : (
-              <div className="grid grid-cols-3 gap-0.5">
+              <div className="grid grid-cols-3 gap-0.5 sm:gap-1">
                 {userPosts.map((post) => (
                   (() => {
                     const mediaList = Array.isArray(post.media_urls) && post.media_urls.length > 0
@@ -618,7 +637,7 @@ export default function Profile() {
 
       {/* Settings Modal */}
       {editing && (
-        <div className="fixed inset-0 bg-black/80 z-60 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/80 z-60 flex items-center justify-center p-3 sm:p-4">
           <div className="bg-gray-900 rounded-xl w-full max-w-md max-h-[90vh] overflow-y-auto border border-gray-800">
             <div className="flex items-center justify-between p-4 border-b border-gray-800">
               <button 

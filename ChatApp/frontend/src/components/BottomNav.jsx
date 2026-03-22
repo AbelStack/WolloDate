@@ -27,14 +27,14 @@ export default function BottomNav() {
   }
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 border-t z-50 safe-area-bottom h-16" style={{ backgroundColor: 'var(--color-bg-base)', borderColor: 'var(--color-border)' }}>
-      <div className="max-w-xl mx-auto flex items-center justify-around h-full">
+    <nav className="fixed bottom-0 left-0 right-0 border-t z-50 safe-area-bottom h-14 sm:h-16" style={{ backgroundColor: 'var(--color-bg-base)', borderColor: 'var(--color-border)' }}>
+      <div className="max-w-xl mx-auto flex items-center justify-around h-full px-1">
         {navItems.map(({ to, icon: Icon, label, badge }) => (
           <NavLink
             key={to}
             to={to}
             className={({ isActive }) => `
-              flex flex-col items-center justify-center py-2 px-4 min-w-15 relative
+              flex flex-col items-center justify-center py-1.5 sm:py-2 px-2 sm:px-4 min-w-12 sm:min-w-15 relative
               transition-colors duration-200
               ${isActive 
                 ? '' 
@@ -44,14 +44,14 @@ export default function BottomNav() {
             style={({ isActive }) => isActive ? { color: 'var(--color-text-primary)' } : {}}
           >
             <div className="relative">
-              <Icon size={24} strokeWidth={1.5} />
+              <Icon size={22} className="sm:w-6 sm:h-6" strokeWidth={1.5} />
               {Number(badge) > 0 && (
-                <span className="absolute -top-1.5 -right-2.5 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                <span className="absolute -top-1 sm:-top-1.5 -right-2 sm:-right-2.5 bg-red-500 text-white text-[10px] sm:text-xs font-bold rounded-full w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center">
                   {Number(badge) > 9 ? '9+' : Number(badge)}
                 </span>
               )}
             </div>
-            <span className="text-xs mt-1 font-medium">{label}</span>
+            <span className="text-[10px] sm:text-xs mt-0.5 sm:mt-1 font-medium">{label}</span>
           </NavLink>
         ))}
       </div>

@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { useSocket } from '../context/useSocket'
 import { conversations, messages, users, media, stories } from '../api'
 import StoryViewer from '../components/StoryViewer'
+import { Skeleton } from '../components/Skeleton'
 import { SHARED_POST_MESSAGE, SHARED_STORY_MESSAGE } from '../utils/chatShares'
 import { resolveMediaUrl } from '../utils/media'
 import { getAvatarUrl } from '../utils/avatar'
@@ -1611,31 +1612,47 @@ export default function Chat() {
 
   if (loading) {
     return (
-      <div className="h-[calc(100dvh-4rem)] flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-ig-blue"></div>
+      <div className="h-[100dvh] md:h-[calc(100dvh-4rem)] flex bg-black">
+        <div className="w-full md:w-80 lg:w-96 border-r border-gray-800 flex-col bg-black flex">
+          <div className="h-12 sm:h-14 px-3 sm:px-4 flex items-center justify-between border-b border-gray-800 shrink-0">
+            <Skeleton width="w-32" height="h-5" />
+            <Skeleton className="w-5 h-5 rounded" />
+          </div>
+          <div className="flex-1 overflow-y-auto p-2">
+            {[1, 2, 3, 4, 5].map(i => (
+              <div key={i} className="flex items-center gap-3 p-3 mb-2">
+                <Skeleton className="w-12 h-12 rounded-full shrink-0" />
+                <div className="flex-1">
+                  <Skeleton width="w-32" height="h-4" className="mb-2" />
+                  <Skeleton width="w-48" height="h-3" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="h-[calc(100dvh-4rem)] flex bg-black">
+    <div className="h-[100dvh] md:h-[calc(100dvh-4rem)] flex bg-black overflow-hidden">
       {/* Sidebar - hidden on mobile when conversation is selected */}
-      <div className={`${conversationId ? 'hidden md:flex' : 'flex'} w-full md:w-88 border-r border-gray-800 flex-col bg-black`}>
+      <div className={`${conversationId ? 'hidden md:flex' : 'flex'} w-full md:w-80 lg:w-96 border-r border-gray-800 flex-col bg-black`}>
         {/* Header */}
-        <div className="h-14 px-4 flex items-center justify-between border-b border-gray-800">
-          <div className="flex items-center gap-1 cursor-pointer hover:opacity-70" onClick={() => navigate('/profile')}>
-            <span className="font-semibold text-base truncate text-white">{user.name}</span>
-            <ChevronDown size={16} className="text-gray-400" />
+        <div className="h-12 sm:h-14 px-3 sm:px-4 flex items-center justify-between border-b border-gray-800 shrink-0">
+          <div className="flex items-center gap-1 cursor-pointer hover:opacity-70 min-w-0" onClick={() => navigate('/profile')}>
+            <span className="font-semibold text-sm sm:text-base truncate text-white">{user.name}</span>
+            <ChevronDown size={16} className="text-gray-400 shrink-0" />
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
             <button onClick={() => setShowNewChat(true)} className="hover:opacity-60 p-1 text-gray-400">
-              <PenSquare size={20} />
+              <PenSquare size={18} className="sm:w-5 sm:h-5" />
             </button>
           </div>
         </div>
 
-        <div className="px-4 py-3 flex items-center justify-between border-b border-gray-800">
-          <span className="font-semibold text-sm text-white">Messages</span>
+        <div className="px-3 sm:px-4 py-2 sm:py-3 flex items-center justify-between border-b border-gray-800 shrink-0">
+          <span className="font-semibold text-xs sm:text-sm text-white">Messages</span>
           <button 
             onClick={() => setShowGroupCreate(true)}
             className="text-white hover:opacity-70"
@@ -1710,16 +1727,16 @@ export default function Chat() {
         {conversationId && activeConv ? (
           <>
             {/* Chat header */}
-            <div className="h-14 px-4 flex items-center justify-between border-b border-gray-800 bg-black">
+            <div className="h-12 sm:h-14 px-3 sm:px-4 flex items-center justify-between border-b border-gray-800 bg-black shrink-0">
               {/* Back button - mobile only */}
               <button 
                 onClick={() => navigate('/c')}
-                className="md:hidden mr-3 p-1 hover:bg-gray-800 rounded-full"
+                className="md:hidden mr-2 sm:mr-3 p-1 hover:bg-gray-800 rounded-full shrink-0"
               >
-                <ArrowLeft size={24} className="text-white" />
+                <ArrowLeft size={20} className="sm:w-6 sm:h-6 text-white" />
               </button>
-              <div className="flex items-center gap-3 cursor-pointer hover:opacity-70 flex-1" onClick={openConversationInfo}>
-                <div className="relative">
+              <div className="flex items-center gap-2 sm:gap-3 cursor-pointer hover:opacity-70 flex-1 min-w-0" onClick={openConversationInfo}>
+                <div className="relative shrink-0">
                   {activeConv.type === 'private' ? (
                     <button
                       type="button"
@@ -1731,11 +1748,11 @@ export default function Chat() {
                       }}
                       className={`rounded-full p-0.5 ${hasUnviewedStory(getOtherUser(activeConv).id) ? 'bg-linear-to-tr from-blue-400 via-cyan-500 to-blue-600' : 'bg-transparent'}`}
                     >
-                      <img src={getAvatarUrl(getOtherUser(activeConv))} className="w-10 h-10 rounded-full object-cover border-2 border-black shrink-0" alt="" style={{ aspectRatio: '1 / 1' }} />
+                      <img src={getAvatarUrl(getOtherUser(activeConv))} className="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover border-2 border-black shrink-0" alt="" style={{ aspectRatio: '1 / 1' }} />
                     </button>
                   ) : (
-                    <div className="w-10 h-10 rounded-full bg-linear-to-br from-blue-500 to-cyan-600 flex items-center justify-center text-white text-sm font-semibold">
-                      <Users size={18} />
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-linear-to-br from-blue-500 to-cyan-600 flex items-center justify-center text-white text-xs sm:text-sm font-semibold shrink-0">
+                      <Users size={16} className="sm:w-[18px] sm:h-[18px]" />
                     </div>
                   )}
                   {activeConv.type === 'private' && isConversationUserOnline(activeConv) && (
@@ -2048,7 +2065,7 @@ export default function Chat() {
             </div>
 
             {/* Message input */}
-            <div className="p-3 md:p-4 border-t border-gray-800 bg-black safe-area-bottom">
+            <div className="p-2 sm:p-3 md:p-4 border-t border-gray-800 bg-black safe-area-bottom shrink-0">
               {showRealtimeWarning && !connected && (
                 <div className="mb-2 rounded-lg border border-yellow-700/40 bg-yellow-900/30 px-3 py-1.5 text-xs text-yellow-200">
                   Realtime reconnecting. Online status and typing may lag.
@@ -2092,14 +2109,14 @@ export default function Chat() {
                   Messaging is unavailable because one of you has blocked the other.
                 </div>
               )}
-              <form onSubmit={sendMessage} className="flex items-center gap-2 md:gap-3 bg-gray-900 border border-gray-800 rounded-full px-3 md:px-4 py-2">
+              <form onSubmit={sendMessage} className="flex items-center gap-1.5 sm:gap-2 md:gap-3 bg-gray-900 border border-gray-800 rounded-full px-2.5 sm:px-3 md:px-4 py-1.5 sm:py-2">
                 <button 
                   type="button"
                   disabled={isActivePrivateChatBlocked()}
                   onClick={() => setShowInputEmoji(!showInputEmoji)}
-                  className={`${showInputEmoji ? 'text-white' : 'text-gray-500'} cursor-pointer hover:opacity-60 disabled:cursor-not-allowed disabled:opacity-40`}
+                  className={`${showInputEmoji ? 'text-white' : 'text-gray-500'} cursor-pointer hover:opacity-60 disabled:cursor-not-allowed disabled:opacity-40 shrink-0`}
                 >
-                  <Smile size={24} />
+                  <Smile size={20} className="sm:w-6 sm:h-6" />
                 </button>
                 <textarea
                   placeholder="Message..."
@@ -2116,10 +2133,10 @@ export default function Chat() {
                   }}
                   disabled={isActivePrivateChatBlocked()}
                   rows={1}
-                  className="flex-1 bg-transparent outline-none text-sm text-white placeholder-gray-600 min-w-0 disabled:cursor-not-allowed disabled:text-gray-500 resize-none max-h-32 overflow-y-auto"
+                  className="flex-1 bg-transparent outline-none text-xs sm:text-sm text-white placeholder-gray-600 min-w-0 disabled:cursor-not-allowed disabled:text-gray-500 resize-none max-h-24 sm:max-h-32 overflow-y-auto"
                   style={{
                     height: 'auto',
-                    minHeight: '24px',
+                    minHeight: '20px',
                   }}
                   ref={(el) => {
                     if (el) {
@@ -2132,12 +2149,12 @@ export default function Chat() {
                   <button
                     type="submit"
                     disabled={isActivePrivateChatBlocked()}
-                    className="text-white font-semibold text-sm hover:opacity-60 shrink-0 disabled:cursor-not-allowed disabled:opacity-40"
+                    className="text-white font-semibold text-xs sm:text-sm hover:opacity-60 shrink-0 disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     Send
                   </button>
                 ) : (
-                  <div className="flex items-center gap-2 md:gap-3 shrink-0">
+                  <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3 shrink-0">
                     <button
                       type="button"
                       disabled={isActivePrivateChatBlocked()}
@@ -2145,10 +2162,10 @@ export default function Chat() {
                       className={`cursor-pointer hover:opacity-60 disabled:cursor-not-allowed disabled:opacity-40 ${recording ? 'text-red-500 animate-pulse' : 'text-gray-500'}`}
                       aria-label={recording ? 'Stop recording and send' : 'Start recording'}
                     >
-                      <Mic size={24} />
+                      <Mic size={20} className="sm:w-6 sm:h-6" />
                     </button>
                     <label className={`cursor-pointer ${isActivePrivateChatBlocked() ? 'pointer-events-none opacity-40' : ''}`}>
-                      <Paperclip size={24} className="text-gray-500 hover:opacity-60" />
+                      <Paperclip size={20} className="sm:w-6 sm:h-6 text-gray-500 hover:opacity-60" />
                       <input
                         type="file"
                         ref={fileInputRef}
@@ -2167,7 +2184,7 @@ export default function Chat() {
                       capture="user"
                       className="hidden"
                     />
-                    <Heart size={24} className={`text-gray-500 cursor-pointer hover:opacity-60 hidden md:block ${isActivePrivateChatBlocked() ? 'pointer-events-none opacity-40' : ''}`} onClick={() => {
+                    <Heart size={20} className={`sm:w-6 sm:h-6 text-gray-500 cursor-pointer hover:opacity-60 hidden sm:block ${isActivePrivateChatBlocked() ? 'pointer-events-none opacity-40' : ''}`} onClick={() => {
                       setNewMsg('❤️')
                       setTimeout(() => document.querySelector('form')?.requestSubmit(), 0)
                     }} />

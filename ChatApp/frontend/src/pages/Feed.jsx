@@ -8,6 +8,7 @@ import CreatorBadge from '../components/CreatorBadge'
 import Logo from '../components/Logo'
 import StoriesBar from '../components/StoriesBar'
 import ConfirmDialog from '../components/ConfirmDialog'
+import { PostSkeleton } from '../components/Skeleton'
 import { resolveMediaUrl } from '../utils/media'
 import { getAvatarUrl } from '../utils/avatar'
 import { SHARED_POST_MESSAGE } from '../utils/chatShares'
@@ -802,8 +803,18 @@ export default function Feed() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]" style={{ backgroundColor: 'var(--color-bg-base)' }}>
-        <Loader2 className="w-8 h-8 animate-spin" style={{ color: 'var(--color-text-primary)' }} />
+      <div className="min-h-screen text-white relative overflow-hidden" style={{ backgroundColor: 'var(--color-bg-base)', color: 'var(--color-text-primary)' }}>
+        <div className="relative z-10">
+          <div className="sticky top-0 border-b backdrop-blur-xl px-2 sm:px-4 h-14 flex items-center justify-center z-40" style={{ backgroundColor: 'var(--color-bg-elevated)', borderColor: 'var(--color-border)' }}>
+            <Logo size="sm" />
+          </div>
+          <StoriesBar />
+          <div className="w-full max-w-6xl mx-auto py-2 px-1 sm:py-4 sm:px-4">
+            <PostSkeleton />
+            <PostSkeleton />
+            <PostSkeleton />
+          </div>
+        </div>
       </div>
     )
   }

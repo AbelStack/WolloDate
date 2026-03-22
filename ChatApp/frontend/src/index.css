@@ -197,6 +197,27 @@ body {
   background: #5a5a5a;
 }
 
+/* Skeleton loading animations */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer 2s infinite;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.05) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+}
+
 /* Instagram button styles */
 .btn-primary {
   background-color: #5DADE2;
@@ -288,6 +309,45 @@ body {
   position: absolute;
   bottom: 2px;
   right: 2px;
+}
+
+/* Responsive improvements */
+@media (max-width: 640px) {
+  /* Small phones */
+  .message-sent,
+  .message-received {
+    padding: 10px 14px;
+    font-size: 14px;
+    max-width: 85%;
+  }
+  
+  .avatar {
+    width: 48px;
+    height: 48px;
+  }
+}
+
+@media (max-width: 375px) {
+  /* Very small phones */
+  .message-sent,
+  .message-received {
+    padding: 8px 12px;
+    font-size: 13px;
+    max-width: 80%;
+  }
+}
+
+/* Ensure proper viewport height on mobile */
+@supports (height: 100dvh) {
+  .h-screen-safe {
+    height: 100dvh;
+  }
+}
+
+@supports not (height: 100dvh) {
+  .h-screen-safe {
+    height: calc(100vh - env(safe-area-inset-bottom));
+  }
 }
 
 /* Safe area bottom for iOS */
