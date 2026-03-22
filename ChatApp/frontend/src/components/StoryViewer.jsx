@@ -822,16 +822,30 @@ export default function StoryViewer({
           <div className={`absolute left-0 right-0 z-20 px-4 ${isOwnStory ? 'bottom-[calc(6.75rem+env(safe-area-inset-bottom))]' : 'bottom-[calc(7.5rem+env(safe-area-inset-bottom))]'}`}>
             <div className="max-w-md mx-auto">
               <div className="rounded-xl bg-black/70 backdrop-blur-sm px-3 py-2 flex flex-col gap-2">
-                <input
-                  type="text"
-                  className="w-full bg-black/40 border border-white/30 rounded px-3 py-2 text-white text-sm placeholder-gray-400 outline-none focus:border-white/60"
+                <textarea
+                  className="w-full bg-black/40 border border-white/30 rounded px-3 py-2 text-white text-sm placeholder-gray-400 outline-none focus:border-white/60 resize-none max-h-32 overflow-y-auto"
                   value={editingCaptionValue}
                   onChange={e => setEditingCaptionValue(e.target.value)}
                   placeholder="Edit story caption (optional)"
                   maxLength={2200}
+                  rows={1}
                   autoFocus
                   disabled={editingCaptionLoading}
-                  onKeyDown={e => { if (e.key === 'Enter') handleEditCaptionSave() }}
+                  onKeyDown={e => { 
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault()
+                      handleEditCaptionSave()
+                    }
+                  }}
+                  style={{
+                    height: 'auto',
+                    minHeight: '40px',
+                  }}
+                  onInput={(e) => {
+                    e.target.style.height = 'auto'
+                    e.target.style.height = e.target.scrollHeight + 'px'
+                  }}
+                />
                 />
                 <div className="flex gap-2 justify-end">
                   <button
@@ -852,16 +866,30 @@ export default function StoryViewer({
           <div className={`absolute left-0 right-0 z-20 px-4 ${isOwnStory ? 'bottom-[calc(6.75rem+env(safe-area-inset-bottom))]' : 'bottom-[calc(7.5rem+env(safe-area-inset-bottom))]'}`}>
             <div className="max-w-md mx-auto">
               <div className="rounded-xl bg-black/70 backdrop-blur-sm px-3 py-2 flex flex-col gap-2">
-                <input
-                  type="text"
-                  className="w-full bg-black/40 border border-white/30 rounded px-3 py-2 text-white text-sm placeholder-gray-400 outline-none focus:border-white/60"
+                <textarea
+                  className="w-full bg-black/40 border border-white/30 rounded px-3 py-2 text-white text-sm placeholder-gray-400 outline-none focus:border-white/60 resize-none max-h-32 overflow-y-auto"
                   value={repostCaptionValue}
                   onChange={e => setRepostCaptionValue(e.target.value)}
                   placeholder="Add a caption to your repost (optional)"
                   maxLength={2200}
+                  rows={1}
                   autoFocus
                   disabled={repostCaptionLoading}
-                  onKeyDown={e => { if (e.key === 'Enter') handleRepostCaptionSave() }}
+                  onKeyDown={e => { 
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault()
+                      handleRepostCaptionSave()
+                    }
+                  }}
+                  style={{
+                    height: 'auto',
+                    minHeight: '40px',
+                  }}
+                  onInput={(e) => {
+                    e.target.style.height = 'auto'
+                    e.target.style.height = e.target.scrollHeight + 'px'
+                  }}
+                />
                 />
                 <div className="flex gap-2 justify-end">
                   <button
@@ -908,9 +936,8 @@ export default function StoryViewer({
         >
           <div className="flex items-center gap-3 max-w-md mx-auto">
             <form onSubmit={sendReply} className="flex-1 relative">
-              <input
+              <textarea
                 ref={replyInputRef}
-                type="text"
                 value={replyText}
                 onChange={(e) => setReplyText(e.target.value)}
                 onFocus={() => {
@@ -923,8 +950,25 @@ export default function StoryViewer({
                     setPaused(false)
                   }
                 }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault()
+                    if (replyText.trim()) {
+                      sendReply(e)
+                    }
+                  }
+                }}
                 placeholder={`Reply to ${currentUserStory.user.username || currentUserStory.user.name}...`}
-                className="w-full bg-black/60 backdrop-blur-sm border border-white/30 rounded-full px-4 py-2.5 pr-10 text-white text-sm placeholder-gray-400 outline-none focus:border-white/60"
+                rows={1}
+                className="w-full bg-black/60 backdrop-blur-sm border border-white/30 rounded-full px-4 py-2.5 pr-10 text-white text-sm placeholder-gray-400 outline-none focus:border-white/60 resize-none max-h-32 overflow-y-auto"
+                style={{
+                  height: 'auto',
+                  minHeight: '40px',
+                }}
+                onInput={(e) => {
+                  e.target.style.height = 'auto'
+                  e.target.style.height = e.target.scrollHeight + 'px'
+                }}
               />
               {replyText.trim() && (
                 <button

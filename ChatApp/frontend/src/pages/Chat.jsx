@@ -2101,14 +2101,32 @@ export default function Chat() {
                 >
                   <Smile size={24} />
                 </button>
-                <input
-                  type="text"
+                <textarea
                   placeholder="Message..."
                   value={newMsg}
                   onChange={e => { setNewMsg(e.target.value); handleTyping() }}
                   onInput={handleTyping}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault()
+                      if (newMsg.trim()) {
+                        e.target.form.requestSubmit()
+                      }
+                    }
+                  }}
                   disabled={isActivePrivateChatBlocked()}
-                  className="flex-1 bg-transparent outline-none text-sm text-white placeholder-gray-600 min-w-0 disabled:cursor-not-allowed disabled:text-gray-500"
+                  rows={1}
+                  className="flex-1 bg-transparent outline-none text-sm text-white placeholder-gray-600 min-w-0 disabled:cursor-not-allowed disabled:text-gray-500 resize-none max-h-32 overflow-y-auto"
+                  style={{
+                    height: 'auto',
+                    minHeight: '24px',
+                  }}
+                  ref={(el) => {
+                    if (el) {
+                      el.style.height = 'auto'
+                      el.style.height = el.scrollHeight + 'px'
+                    }
+                  }}
                 />
                 {newMsg.trim() ? (
                   <button

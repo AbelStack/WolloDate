@@ -1368,13 +1368,26 @@ export default function Feed() {
                                           className="w-7 h-7 rounded-full object-cover"
                                         />
                                         <div className="flex-1 relative min-w-0">
-                                          <input
-                                            type="text"
+                                          <textarea
                                             value={replyInputs[getThreadKey(post.id, comment.id)] || ''}
                                             onChange={(e) => setReplyInputs(prev => ({ ...prev, [getThreadKey(post.id, comment.id)]: e.target.value }))}
-                                            onKeyDown={(e) => e.key === 'Enter' && handleAddReply(post.id, comment.id)}
+                                            onKeyDown={(e) => {
+                                              if (e.key === 'Enter' && !e.shiftKey) {
+                                                e.preventDefault()
+                                                handleAddReply(post.id, comment.id)
+                                              }
+                                            }}
                                             placeholder={`Reply to ${comment.user?.username || comment.user?.name}...`}
-                                            className="w-full bg-gray-800 border-0 rounded-full pl-3 pr-10 py-1.5 text-xs text-white placeholder-gray-500 focus:ring-2 focus:ring-gray-600"
+                                            rows={1}
+                                            className="w-full bg-gray-800 border-0 rounded-full pl-3 pr-10 py-1.5 text-xs text-white placeholder-gray-500 focus:ring-2 focus:ring-gray-600 resize-none max-h-32 overflow-y-auto"
+                                            style={{
+                                              height: 'auto',
+                                              minHeight: '32px',
+                                            }}
+                                            onInput={(e) => {
+                                              e.target.style.height = 'auto'
+                                              e.target.style.height = e.target.scrollHeight + 'px'
+                                            }}
                                           />
                                           <button
                                             onClick={() => handleAddReply(post.id, comment.id)}
@@ -1402,13 +1415,28 @@ export default function Feed() {
                           className="w-8 h-8 rounded-full object-cover"
                         />
                         <div className="flex-1 relative min-w-0">
-                          <input
-                            type="text"
+                          <textarea
                             value={commentInputs[post.id] || ''}
                             onChange={(e) => setCommentInputs({ ...commentInputs, [post.id]: e.target.value })}
-                            onKeyDown={(e) => e.key === 'Enter' && handleAddComment(post.id)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' && !e.shiftKey) {
+                                e.preventDefault()
+                                handleAddComment(post.id)
+                              }
+                            }}
                             placeholder="Add a comment..."
-                            className="w-full bg-gray-800 border-0 rounded-full pl-4 pr-12 py-2 text-sm text-white placeholder-gray-500 focus:ring-2 focus:ring-gray-600"
+                            rows={1}
+                            className="w-full bg-gray-800 border-0 rounded-full pl-4 pr-12 py-2 text-sm text-white placeholder-gray-500 focus:ring-2 focus:ring-gray-600 resize-none max-h-32 overflow-y-auto"
+                            style={{
+                              height: 'auto',
+                              minHeight: '40px',
+                            }}
+                            ref={(el) => {
+                              if (el) {
+                                el.style.height = 'auto'
+                                el.style.height = el.scrollHeight + 'px'
+                              }
+                            }}
                           />
                           <button
                             onClick={() => handleAddComment(post.id)}

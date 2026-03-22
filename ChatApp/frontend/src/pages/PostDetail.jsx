@@ -555,14 +555,25 @@ export default function PostDetail() {
 
             {/* Add Comment Input */}
             <div className="border-t border-gray-800 px-4 py-3 flex items-center gap-2">
-              <input
-                type="text"
+              <textarea
                 value={commentInput}
                 onChange={(e) => setCommentInput(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleAddComment()}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault()
+                    handleAddComment()
+                  }
+                }}
                 placeholder="Write a comment..."
-                className="flex-1 px-3 py-2 rounded-full bg-gray-800 text-white placeholder-gray-500 focus:outline-none focus:ring-2"
-                style={{ '--tw-ring-color': '#5DADE2' }}
+                rows={1}
+                className="flex-1 px-3 py-2 rounded-full bg-gray-800 text-white placeholder-gray-500 focus:outline-none focus:ring-2 resize-none max-h-32 overflow-y-auto"
+                style={{ '--tw-ring-color': '#5DADE2', height: 'auto', minHeight: '40px' }}
+                ref={(el) => {
+                  if (el) {
+                    el.style.height = 'auto'
+                    el.style.height = el.scrollHeight + 'px'
+                  }
+                }}
                 disabled={submittingComment}
               />
               <button
