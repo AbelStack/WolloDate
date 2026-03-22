@@ -9,7 +9,7 @@ firebase.initializeApp({
   projectId: "wollogram-feb31",
   storageBucket: "wollogram-feb31.firebasestorage.app",
   messagingSenderId: "702251461708",
-  appId: "1:702251461708:web:22b0ef5089700id537d8e9"
+  appId: "1:702251461708:web:22b0ef50897001d537d8e9"
 })
 
 const messaging = firebase.messaging()

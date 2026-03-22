@@ -128,4 +128,55 @@ class PushSubscriptionController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Send a test notification
+     * POST /api/push-subscriptions/test
+     */
+    public function test(Request $request)
+    {
+        try {
+            $user = auth()->user();
+            
+            // Check if user has subscriptions
+            $subscriptions = PushSubscription::where('user_id', $user->id)->get();
+            
+            if ($subscriptions->isEmpty()) {
+                return response()->json([
+                    'message' => 'No push subscriptions found. Please enable notifications first.',
+                ], 404);
+            }
+
+            // Send test notification
+            $pushService = app(\App\Services\PushNotificationService::class);
+            $result = $pushService->sendToUser(
+                $user,
+                'Test Notification',
+                'This is a test notification from WolloGram! 🎉',
+                [
+                    'type' => 'test',
+                    'timestamp' => now()->toIso8601String(),
+                ]
+            );
+
+            if ($result) {
+                return response()->json([
+                    'message' => 'Test notification sent successfully!',
+                    'subscriptions_count' => $subscriptions->count(),
+                ], 200);
+            } else {
+                return response()->json([
+                    'message' => 'Failed to send test notification. Check backend logs.',
+                ], 500);
+            }
+
+        } catch (\Exception $e) {
+            \Log::error('Failed to send test notification: ' . $e->getMessage());
+            \Log::error('Stack trace: ' . $e->getTraceAsString());
+            return response()->json([
+                'message' => 'Failed to send test notification',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
 }
