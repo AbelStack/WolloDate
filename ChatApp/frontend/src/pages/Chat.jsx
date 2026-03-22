@@ -1118,7 +1118,11 @@ export default function Chat() {
   }
 
   const formatDuration = totalSeconds => {
-    const safeSeconds = Math.max(0, Math.floor(totalSeconds || 0))
+    // Handle NaN, Infinity, null, undefined, and negative values
+    if (!isFinite(totalSeconds) || totalSeconds == null || totalSeconds < 0) {
+      return '00:00'
+    }
+    const safeSeconds = Math.floor(totalSeconds)
     const minutes = String(Math.floor(safeSeconds / 60)).padStart(2, '0')
     const seconds = String(safeSeconds % 60).padStart(2, '0')
     return `${minutes}:${seconds}`
@@ -1293,6 +1297,11 @@ export default function Chat() {
     const bars = [10, 16, 22, 14, 20, 12, 24, 15, 19, 11, 21, 13, 18, 12]
     const activeBars = Math.max(1, Math.round(progress * bars.length))
     const isPlaying = playingVoiceId === msg.id
+    
+    // Calculate display time - show current position if playing, otherwise show total duration
+    const displayTime = isFinite(duration) && duration > 0
+      ? (isPlaying && progress > 0 ? (progress * duration) : duration)
+      : 0
 
     return (
       <div className="min-w-55 max-w-70 rounded-2xl border border-white/10 bg-white/6 px-3 py-2.5">
@@ -1303,11 +1312,13 @@ export default function Chat() {
           className="hidden"
           onLoadedMetadata={(event) => {
             const nextDuration = event.currentTarget.duration || 0
-            setVoiceDuration(prev => ({ ...prev, [msg.id]: nextDuration }))
+            if (isFinite(nextDuration) && nextDuration > 0) {
+              setVoiceDuration(prev => ({ ...prev, [msg.id]: nextDuration }))
+            }
           }}
           onTimeUpdate={(event) => {
             const { currentTime, duration: totalDuration } = event.currentTarget
-            const nextProgress = totalDuration ? currentTime / totalDuration : 0
+            const nextProgress = (isFinite(totalDuration) && totalDuration > 0) ? currentTime / totalDuration : 0
             setVoiceProgress(prev => ({ ...prev, [msg.id]: nextProgress }))
           }}
           onEnded={() => {
@@ -1338,7 +1349,7 @@ export default function Chat() {
             ))}
           </button>
           <div className="shrink-0 text-[11px] font-medium text-white/75 tabular-nums">
-            {formatDuration((progress * duration) || duration)}
+            {formatDuration(displayTime)}
           </div>
         </div>
         {activeConv?.type === 'private' && (
@@ -1725,7 +1736,7 @@ export default function Chat() {
       {/* Chat area - hidden on mobile when no conversation */}
       <div className={`${!conversationId ? 'hidden md:flex' : 'flex'} flex-1 flex-col bg-black min-w-0 overflow-hidden`}>
         {conversationId && activeConv ? (
-          <div className="flex flex-col h-full min-h-0">
+          <div className="flex flex-col h-full overflow-hidden">
             {/* Chat header - STICKY */}
             <div className="sticky top-0 h-12 sm:h-14 px-2 sm:px-3 md:px-4 flex items-center justify-between border-b border-gray-800 bg-black shrink-0 z-10">
               {/* Back button - mobile only */}
