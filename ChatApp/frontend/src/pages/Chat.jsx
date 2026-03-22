@@ -1936,7 +1936,7 @@ export default function Chat() {
                         </button>
                       )}
 
-                      <div className={`flex flex-col max-w-[75%] sm:max-w-[70%] md:max-w-[65%] ${isMine ? 'items-end' : 'items-start'} min-w-0`}>
+                      <div className={`flex flex-col max-w-[85%] sm:max-w-[80%] md:max-w-[75%] ${isMine ? 'items-end' : 'items-start'} min-w-0`}>
                         {!isMine && activeConv.type === 'group' && (
                           <span className="text-xs text-ig-gray-500 mb-1">{msg.user?.name}</span>
                         )}
@@ -1955,7 +1955,7 @@ export default function Chat() {
                           </div>
                         ) : (
                           <div className={`relative ${isMine ? 'message-sent' : 'message-received'} ${isMediaOnlyMessage(msg) ? 'px-2 py-2' : ''}`}>
-                            <div className="text-sm break-words">{renderMessageContent(msg)}</div>
+                            <div className="text-sm" style={{ overflowWrap: 'break-word', wordBreak: 'normal' }}>{renderMessageContent(msg)}</div>
                             <div className={`flex items-center gap-1 mt-1 ${isMine ? 'justify-end' : 'justify-start'}`}>
                               <span className={`text-xs ${isMine ? 'text-gray-300' : 'text-gray-400'}`}>
                                 {formatTime(msg.created_at)}
