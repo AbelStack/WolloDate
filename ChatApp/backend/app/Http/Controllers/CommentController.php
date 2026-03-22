@@ -6,10 +6,17 @@ use App\Models\Comment;
 use App\Models\CommentLike;
 use App\Models\Post;
 use App\Models\UserNotification;
+use App\Services\PushNotificationService;
 use Illuminate\Http\Request;
 
 class CommentController extends Controller
 {
+    protected $pushNotificationService;
+
+    public function __construct(PushNotificationService $pushNotificationService)
+    {
+        $this->pushNotificationService = $pushNotificationService;
+    }
     /**
      * Get comments for a post
      * GET /api/posts/{postId}/comments
@@ -97,6 +104,18 @@ class CommentController extends Controller
                 'message' => 'commented on your post',
                 'is_read' => false,
             ]);
+
+            // Send push notification
+            $commentPreview = strlen($validated['content']) > 50 
+                ? substr($validated['content'], 0, 50) . '...' 
+                : $validated['content'];
+            
+            $this->pushNotificationService->sendCommentNotification(
+                $post->user,
+                $currentUser,
+                $commentPreview,
+                $post->id
+            );
         }
 
         $comment->load('user:id,name,username,avatar_url,is_approved');

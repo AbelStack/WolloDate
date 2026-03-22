@@ -6,6 +6,7 @@ use App\Models\Post;
 use App\Models\PostLike;
 use App\Models\UserNotification;
 use App\Models\User;
+use App\Services\PushNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -13,6 +14,12 @@ use Illuminate\Validation\ValidationException;
 
 class PostController extends Controller
 {
+    protected $pushNotificationService;
+
+    public function __construct(PushNotificationService $pushNotificationService)
+    {
+        $this->pushNotificationService = $pushNotificationService;
+    }
     /**
      * Get feed posts (from users the current user follows)
      * GET /api/feed
@@ -344,6 +351,15 @@ class PostController extends Controller
         ]);
 
         $post->increment('likes_count');
+
+        // Send push notification to post owner (if not liking own post)
+        if ($user->id !== $post->user_id) {
+            $this->pushNotificationService->sendLikeNotification(
+                $post->user,
+                $user,
+                $post->id
+            );
+        }
 
         return response()->json(['message' => 'Post liked', 'likes_count' => $post->fresh()->likes_count]);
     }

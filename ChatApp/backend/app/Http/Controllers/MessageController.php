@@ -12,12 +12,20 @@ use App\Models\Post;
 use App\Models\Story;
 use App\Models\StarredMessage;
 use App\Models\User;
+use App\Services\PushNotificationService;
 use Illuminate\Http\Request;
 
 class MessageController extends Controller
 {
     private const SHARED_STORY_CONTENT = '[Shared story]';
     private const SHARED_POST_CONTENT = '[Shared post]';
+
+    protected $pushNotificationService;
+
+    public function __construct(PushNotificationService $pushNotificationService)
+    {
+        $this->pushNotificationService = $pushNotificationService;
+    }
 
     /**
      * Get messages from conversation (paginated)
@@ -191,6 +199,27 @@ class MessageController extends Controller
             $participantIds = ConversationMember::where('conversation_id', $conversationId)
                 ->pluck('user_id')
                 ->all();
+
+            // Send push notifications to other participants
+            $otherParticipants = User::whereIn('id', $participantIds)
+                ->where('id', '!=', $user->id)
+                ->get();
+
+            foreach ($otherParticipants as $participant) {
+                // Create message preview
+                $preview = $message->content;
+                if (strlen($preview) > 100) {
+                    $preview = substr($preview, 0, 100) . '...';
+                }
+
+                // Send push notification
+                $this->pushNotificationService->sendMessageNotification(
+                    $participant,
+                    $user,
+                    $preview,
+                    $conversationId
+                );
+            }
 
             return response()->json([
                 'message' => 'Message sent',

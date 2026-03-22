@@ -8,12 +8,19 @@ use App\Models\StoryLike;
 use App\Models\UserNotification;
 use App\Models\StoryView;
 use App\Models\User;
+use App\Services\PushNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 class StoryController extends Controller
 {
+    protected $pushNotificationService;
+
+    public function __construct(PushNotificationService $pushNotificationService)
+    {
+        $this->pushNotificationService = $pushNotificationService;
+    }
     /**
      * Upload a new story
      * POST /api/stories
@@ -331,6 +338,21 @@ class StoryController extends Controller
             'user_id' => $currentUser->id,
         ]);
 
+        // Send push notification to story owner (if not liking own story)
+        if ($currentUser->id !== $story->user_id) {
+            $this->pushNotificationService->sendToUser(
+                $story->user,
+                'New Story Like',
+                $currentUser->name . ' liked your story',
+                [
+                    'type' => 'story_like',
+                    'storyId' => (string) $story->id,
+                    'likerId' => (string) $currentUser->id,
+                    'likerName' => $currentUser->name,
+                ]
+            );
+        }
+
         return response()->json([
             'message' => 'Story liked',
             'like_count' => $story->like_count,
@@ -408,6 +430,24 @@ class StoryController extends Controller
         $message->story_media_type = $story->media_type;
         $message->story_owner = $story->user->name;
         $message->story_expired = false;
+
+        // Send push notification for story reply
+        $replyPreview = strlen($validated['content']) > 50 
+            ? substr($validated['content'], 0, 50) . '...' 
+            : $validated['content'];
+
+        $this->pushNotificationService->sendToUser(
+            $story->user,
+            'Story Reply',
+            $currentUser->name . ' replied to your story: ' . $replyPreview,
+            [
+                'type' => 'story_reply',
+                'conversationId' => (string) $conversation->id,
+                'storyId' => (string) $story->id,
+                'senderId' => (string) $currentUser->id,
+                'senderName' => $currentUser->name,
+            ]
+        );
 
         return response()->json([
             'message' => 'Reply sent',

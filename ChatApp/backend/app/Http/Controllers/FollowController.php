@@ -5,10 +5,17 @@ namespace App\Http\Controllers;
 use App\Models\Follow;
 use App\Models\UserNotification;
 use App\Models\User;
+use App\Services\PushNotificationService;
 use Illuminate\Http\Request;
 
 class FollowController extends Controller
 {
+    protected $pushNotificationService;
+
+    public function __construct(PushNotificationService $pushNotificationService)
+    {
+        $this->pushNotificationService = $pushNotificationService;
+    }
     /**
      * Send a follow request
      * POST /api/follows/{userId}
@@ -47,6 +54,11 @@ class FollowController extends Controller
             'following_id' => $targetUser->id,
             'status' => $status,
         ]);
+
+        // Send push notification if accepted immediately
+        if ($status === 'accepted') {
+            $this->pushNotificationService->sendFollowNotification($targetUser, $user);
+        }
 
         return response()->json([
             'message' => $status === 'accepted' ? 'Now following' : 'Follow request sent',
@@ -109,6 +121,14 @@ class FollowController extends Controller
         $follow->update([
             'status' => $validated['action'] === 'accept' ? 'accepted' : 'rejected',
         ]);
+
+        // Send push notification if accepted
+        if ($validated['action'] === 'accept') {
+            $this->pushNotificationService->sendFollowNotification(
+                $follow->follower,
+                $request->user()
+            );
+        }
 
         return response()->json([
             'message' => $validated['action'] === 'accept' 
