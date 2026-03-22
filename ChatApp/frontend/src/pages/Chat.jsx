@@ -1304,14 +1304,21 @@ export default function Chat() {
       : 0
 
     return (
-      <div className="min-w-55 max-w-70 rounded-2xl border border-white/10 bg-white/6 px-3 py-2.5">
+      <div className="min-w-0 max-w-full rounded-2xl border border-white/10 bg-white/6 px-2 sm:px-3 py-2 sm:py-2.5">
         <audio
           ref={(element) => setAudioRef(msg.id, element)}
           src={attachment.url}
           preload="metadata"
           className="hidden"
           onLoadedMetadata={(event) => {
-            const nextDuration = event.currentTarget.duration || 0
+            const nextDuration = event.currentTarget.duration
+            if (isFinite(nextDuration) && nextDuration > 0) {
+              setVoiceDuration(prev => ({ ...prev, [msg.id]: nextDuration }))
+            }
+          }}
+          onDurationChange={(event) => {
+            // Fallback for when loadedmetadata doesn't fire
+            const nextDuration = event.currentTarget.duration
             if (isFinite(nextDuration) && nextDuration > 0) {
               setVoiceDuration(prev => ({ ...prev, [msg.id]: nextDuration }))
             }
@@ -1326,40 +1333,40 @@ export default function Chat() {
             setVoiceProgress(prev => ({ ...prev, [msg.id]: 0 }))
           }}
         />
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           <button
             type="button"
             onClick={() => toggleVoicePlayback(msg.id)}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-black transition hover:scale-[1.03]"
+            className="flex h-8 w-8 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-full bg-white text-black transition hover:scale-[1.03]"
           >
-            {isPlaying ? <Pause size={18} /> : <Play size={18} className="ml-0.5" />}
+            {isPlaying ? <Pause size={16} className="sm:w-[18px] sm:h-[18px]" /> : <Play size={16} className="sm:w-[18px] sm:h-[18px] ml-0.5" />}
           </button>
           <button
             type="button"
             onClick={(event) => seekVoiceMessage(msg.id, event)}
-            className="flex flex-1 items-end gap-1 rounded-xl px-1 py-1"
+            className="flex flex-1 items-end gap-0.5 sm:gap-1 rounded-xl px-0.5 sm:px-1 py-1 min-w-0 overflow-hidden"
             aria-label="Seek voice message"
           >
             {bars.map((height, index) => (
               <span
                 key={`${msg.id}-bar-${index}`}
-                className={`w-1 rounded-full transition-all ${index < activeBars ? 'bg-white' : 'bg-white/25'}`}
+                className={`w-0.5 sm:w-1 rounded-full transition-all ${index < activeBars ? 'bg-white' : 'bg-white/25'}`}
                 style={{ height }}
               />
             ))}
           </button>
-          <div className="shrink-0 text-[11px] font-medium text-white/75 tabular-nums">
+          <div className="shrink-0 text-[10px] sm:text-[11px] font-medium text-white/75 tabular-nums min-w-[32px] sm:min-w-[36px] text-right">
             {formatDuration(displayTime)}
           </div>
         </div>
         {activeConv?.type === 'private' && (
-          <div className="mt-2 flex justify-end">
+          <div className="mt-1.5 sm:mt-2 flex justify-end">
             <button
               type="button"
               onClick={() => downloadAttachment(msg, attachment)}
-              className="inline-flex items-center gap-1 rounded-lg border border-white/10 px-2 py-1 text-[11px] text-white/80 hover:bg-white/10"
+              className="inline-flex items-center gap-1 rounded-lg border border-white/10 px-2 py-1 text-[10px] sm:text-[11px] text-white/80 hover:bg-white/10"
             >
-              <Download size={12} /> Download
+              <Download size={11} className="sm:w-3 sm:h-3" /> Download
             </button>
           </div>
         )}
