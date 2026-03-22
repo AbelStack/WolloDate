@@ -2096,7 +2096,7 @@ export default function Chat() {
             </div>
 
             {/* Message input - fixed at bottom */}
-            <div className="p-2 sm:p-3 border-t border-gray-800 bg-black safe-area-bottom shrink-0">
+            <div className="p-2 sm:p-3 pb-16 sm:pb-18 border-t border-gray-800 bg-black shrink-0" style={{ paddingBottom: 'calc(3.5rem + env(safe-area-inset-bottom))' }}>
               {showRealtimeWarning && !connected && (
                 <div className="mb-2 rounded-lg border border-yellow-700/40 bg-yellow-900/30 px-3 py-1.5 text-xs text-yellow-200">
                   Realtime reconnecting. Online status and typing may lag.
