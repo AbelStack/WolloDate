@@ -285,9 +285,9 @@ body {
   color: #ffffff;
   border-radius: 22px;
   padding: 12px 16px;
-  word-wrap: break-word;
   overflow-wrap: break-word;
-  word-break: keep-all;
+  word-break: break-word;
+  hyphens: none;
   border: 1px solid #3a3a3a;
 }
 .message-received {
@@ -295,9 +295,9 @@ body {
   color: #ffffff;
   border-radius: 22px;
   padding: 12px 16px;
-  word-wrap: break-word;
   overflow-wrap: break-word;
-  word-break: keep-all;
+  word-break: break-word;
+  hyphens: none;
   border: 1px solid #3a3a3a;
 }
 
