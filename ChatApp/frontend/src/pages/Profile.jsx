@@ -380,7 +380,7 @@ export default function Profile() {
     return (
       <div className="min-h-screen bg-black">
         <div className="fixed top-0 left-0 right-0 flex items-center justify-between p-3 sm:p-4 z-30">
-          <button onClick={() => navigate(-1)} className="p-1.5 sm:p-2 rounded-full bg-black/55 border border-gray-800">
+          <button onClick={() => navigate('/')} className="p-1.5 sm:p-2 rounded-full bg-black/55 border border-gray-800">
             <ArrowLeft size={20} className="sm:w-[22px] sm:h-[22px] text-white" />
           </button>
         </div>
@@ -415,7 +415,7 @@ export default function Profile() {
 
       <div className="fixed top-0 left-0 right-0 flex items-center justify-between p-3 sm:p-4 z-30 pointer-events-none">
         <button
-          onClick={() => navigate(-1)}
+          onClick={() => navigate('/')}
           className="p-1.5 sm:p-2 rounded-full bg-black/55 border border-gray-800 hover:bg-black/75 pointer-events-auto"
         >
           <ArrowLeft size={20} className="sm:w-[22px] sm:h-[22px] text-white" />
