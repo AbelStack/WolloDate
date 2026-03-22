@@ -1741,9 +1741,9 @@ export default function Chat() {
       </div>
 
       {/* Chat area - hidden on mobile when no conversation */}
-      <div className={`${!conversationId ? 'hidden md:flex' : 'flex'} flex-1 flex-col bg-black min-w-0 h-full overflow-hidden`}>
+      <div className={`${!conversationId ? 'hidden md:flex' : 'flex'} flex-1 flex-col bg-black min-w-0 max-h-full overflow-hidden`}>
         {conversationId && activeConv ? (
-          <>
+          <div className="flex flex-col h-full">
             {/* Chat header - FIXED at top */}
             <div className="h-12 sm:h-14 px-2 sm:px-3 md:px-4 flex items-center justify-between border-b border-gray-800 bg-black shrink-0 z-20">
               {/* Back button - mobile only */}
@@ -2256,7 +2256,7 @@ export default function Chat() {
                 </div>
               )}
             </div>
-          </>
+          </div>
         ) : (
           /* Empty state - hidden on mobile since sidebar is shown */
           <div className="flex-1 hidden md:flex items-center justify-center flex-col">
