@@ -1911,7 +1911,7 @@ export default function Chat() {
                         </button>
                       )}
 
-                      <div className={`flex flex-col max-w-[80%] sm:max-w-[65%] ${isMine ? 'items-end' : 'items-start'}`}>
+                      <div className={`flex flex-col max-w-[75%] sm:max-w-[70%] md:max-w-[65%] ${isMine ? 'items-end' : 'items-start'} min-w-0`}>
                         {!isMine && activeConv.type === 'group' && (
                           <span className="text-xs text-ig-gray-500 mb-1">{msg.user?.name}</span>
                         )}
@@ -1964,7 +1964,9 @@ export default function Chat() {
                       </div>
 
                       {/* Message actions menu (Reply, React, Copy, Forward) */}
-                      <div className={`${hoveredMessageId === msg.id || showEmojiPicker === msg.id || showMessageMenu === msg.id || activeActionMessageId === msg.id ? 'opacity-100' : 'opacity-0'} flex items-center gap-1 shrink-0 relative z-40 ${isMine ? 'order-first mr-1' : 'ml-1'}`}>
+                      <div className={`${hoveredMessageId === msg.id || showEmojiPicker === msg.id || showMessageMenu === msg.id || activeActionMessageId === msg.id ? 'opacity-100' : 'opacity-0 sm:opacity-0'} flex items-center gap-0.5 sm:gap-1 shrink-0 relative ${isMine ? 'order-first mr-0.5 sm:mr-1' : 'ml-0.5 sm:ml-1'}`}
+                        style={{ zIndex: showEmojiPicker === msg.id || showMessageMenu === msg.id ? 45 : 40 }}
+                      >
                         <button
                           onClick={() => {
                             setActiveActionMessageId(msg.id)
@@ -1986,7 +1988,13 @@ export default function Chat() {
                             <MoreVertical size={16} />
                           </button>
                           {showMessageMenu === msg.id && (
-                            <div className={`absolute top-full mt-1 ${isMine ? 'right-0' : 'left-0'} bg-gray-900 border border-gray-700 rounded-lg shadow-lg py-1 z-50 min-w-32`}>
+                            <div className={`fixed sm:absolute top-auto sm:top-full mt-1 ${isMine ? 'right-2 sm:right-0' : 'left-2 sm:left-0'} bg-gray-900 border border-gray-700 rounded-lg shadow-xl py-1 z-50 min-w-[140px] max-w-[200px]`}
+                              style={{
+                                bottom: window.innerWidth < 640 ? 'auto' : undefined,
+                                top: window.innerWidth < 640 ? '50%' : undefined,
+                                transform: window.innerWidth < 640 ? 'translateY(-50%)' : undefined
+                              }}
+                            >
                               {/* Reply */}
                               <button
                                 onClick={() => { handleReply(msg); setShowMessageMenu(null); setActiveActionMessageId(null) }}
@@ -2026,7 +2034,12 @@ export default function Chat() {
                         {showEmojiPicker === msg.id && (
                           <>
                             <div className="fixed inset-0 z-40" onClick={() => setShowEmojiPicker(null)} />
-                            <div className={`absolute ${isMine ? 'right-0' : 'left-0'} bottom-full mb-2 bg-gray-900 border border-gray-700 rounded-lg p-2 flex flex-wrap gap-1 shadow-lg z-50 w-48`}>
+                            <div className={`fixed sm:absolute ${isMine ? 'right-2 sm:right-0' : 'left-2 sm:left-0'} bottom-auto sm:bottom-full mb-0 sm:mb-2 bg-gray-900 border border-gray-700 rounded-lg p-2 flex flex-wrap gap-1 shadow-xl z-50 w-[200px] sm:w-48 max-h-[200px] overflow-y-auto`}
+                              style={{
+                                top: window.innerWidth < 640 ? '50%' : undefined,
+                                transform: window.innerWidth < 640 ? 'translateY(-50%)' : undefined
+                              }}
+                            >
                               {commonEmojis.map(emoji => (
                                 <button
                                   key={emoji}
