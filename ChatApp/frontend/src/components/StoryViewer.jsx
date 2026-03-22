@@ -846,7 +846,6 @@ export default function StoryViewer({
                     e.target.style.height = e.target.scrollHeight + 'px'
                   }}
                 />
-                />
                 <div className="flex gap-2 justify-end">
                   <button
                     className="px-3 py-1 rounded bg-gray-600 text-white text-xs hover:bg-gray-500 disabled:opacity-50"
@@ -889,7 +888,6 @@ export default function StoryViewer({
                     e.target.style.height = 'auto'
                     e.target.style.height = e.target.scrollHeight + 'px'
                   }}
-                />
                 />
                 <div className="flex gap-2 justify-end">
                   <button

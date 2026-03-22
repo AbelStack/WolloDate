@@ -2239,7 +2239,6 @@ export default function Chat() {
               )}
             </div>
           </div>
-          </>
         ) : (
           /* Empty state - hidden on mobile since sidebar is shown */
           <div className="flex-1 hidden md:flex items-center justify-center flex-col">
