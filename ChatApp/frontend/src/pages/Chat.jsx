@@ -2027,6 +2027,13 @@ export default function Chat() {
                               >
                                 <Reply size={14} /> Reply
                               </button>
+                              {/* Copy */}
+                              <button
+                                onClick={() => { copyMessage(msg); setShowMessageMenu(null); setActiveActionMessageId(null) }}
+                                className="flex items-center gap-2 px-3 py-2 hover:bg-gray-800 w-full text-left text-sm text-white"
+                              >
+                                <Copy size={14} /> Copy
+                              </button>
                               {/* Edit (only for own messages) */}
                               {isMine && !msg.deleted && (
                                 <button
