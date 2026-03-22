@@ -81,7 +81,7 @@ export default function PendingVerification() {
 
           {/* Message */}
           <p className="text-gray-400 mb-6">
-            Hi <span className="text-white font-medium">{user?.name}</span>, your student ID is being reviewed by our admin team. Once verified, you'll get full access to WolloDate.
+            Hi <span className="text-white font-medium">{user?.name}</span>, your student ID is being reviewed by our admin team. Once verified, you'll get full access to WolloGram.
           </p>
 
           {/* Status Card */}

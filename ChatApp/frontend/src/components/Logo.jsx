@@ -19,13 +19,13 @@ export default function Logo({ size = 'md', showName = true }) {
     <div className="flex items-center gap-2">
       <img
         src={logoImg}
-        alt="WolloDate Logo"
+        alt="WolloGram Logo"
         className={`${sizeMap[size]} w-auto object-contain`}
         style={{ borderRadius: '20%' }}
       />
       {showName && (
         <span className={`${textSizeMap[size]} font-bold tracking-tight`} style={{ color: 'var(--color-text-primary)' }}>
-          WolloDate
+          WolloGram
         </span>
       )}
     </div>

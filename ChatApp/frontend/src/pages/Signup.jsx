@@ -132,7 +132,7 @@ export default function Signup() {
           </Link>
 
           <div className="mt-8 text-center text-[11px] text-slate-500 leading-relaxed">
-            <p>Copyright © 2026 WolloDate. All rights reserved.</p>
+            <p>Copyright © 2026 WolloGram. All rights reserved.</p>
             <p>
               Developed by{' '}
               <a
@@ -164,7 +164,7 @@ export default function Signup() {
                 Find your campus person, not just another profile.
               </p>
               <p className="mt-4 text-slate-300/85 text-base leading-relaxed max-w-md">
-                WolloDate mixes playful dating energy with verified student trust, so every match starts with confidence.
+                WolloGram mixes playful dating energy with verified student trust, so every match starts with confidence.
               </p>
             </div>
 
@@ -337,7 +337,7 @@ export default function Signup() {
               </div>
 
               <div className="mt-7 text-center text-[11px] text-slate-500 leading-relaxed">
-                <p>Copyright © 2026 WolloDate. All rights reserved.</p>
+                <p>Copyright © 2026 WolloGram. All rights reserved.</p>
                 <p>
                   Developed by{' '}
                   <a

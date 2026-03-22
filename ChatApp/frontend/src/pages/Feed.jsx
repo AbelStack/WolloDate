@@ -630,7 +630,7 @@ export default function Feed() {
     if (!shareModalPost) return
 
     const shareUrl = getShareUrl(shareModalPost.id)
-    const shareText = `Check out this post on WolloDate: ${shareUrl}`
+    const shareText = `Check out this post on WolloGram: ${shareUrl}`
 
     try {
       if (action === 'copy') {
@@ -644,7 +644,7 @@ export default function Feed() {
       }
 
       if (action === 'email') {
-        window.location.href = `mailto:?subject=${encodeURIComponent('Post from WolloDate')}&body=${encodeURIComponent(shareText)}`
+        window.location.href = `mailto:?subject=${encodeURIComponent('Post from WolloGram')}&body=${encodeURIComponent(shareText)}`
         return
       }
 
@@ -654,7 +654,7 @@ export default function Feed() {
       }
 
       if (navigator.share) {
-        await navigator.share({ title: 'WolloDate Post', text: shareText, url: shareUrl })
+        await navigator.share({ title: 'WolloGram Post', text: shareText, url: shareUrl })
         return
       }
 
@@ -1432,7 +1432,7 @@ export default function Feed() {
           <div className="rounded-2xl border p-4" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-bg-card)' }}>
             <div className="flex items-start justify-between gap-3">
               <div>
-                <h3 className="text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>WolloDate Playbook</h3>
+                <h3 className="text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>WolloGram Playbook</h3>
                 <p className="text-xs mt-2 leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
                   Build your profile energy in 3 moves: post something real, mention a friend, and start one fresh chat.
                 </p>
@@ -1485,7 +1485,7 @@ export default function Feed() {
           </div>
 
           <div className="px-2 text-center text-[12px] leading-relaxed" style={{ color: 'var(--color-text-tertiary)' }}>
-            <p className="whitespace-nowrap">Copyright © 2026 WolloDate. All rights reserved.</p>
+            <p className="whitespace-nowrap">Copyright © 2026 WolloGram. All rights reserved.</p>
             <p className="whitespace-nowrap">
               Developed by{' '}
               <a

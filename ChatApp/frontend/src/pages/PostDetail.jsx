@@ -253,7 +253,7 @@ export default function PostDetail() {
     if (!post) return
 
     const shareUrl = getShareUrl(post.id)
-    const shareText = `Check out this post on WolloDate: ${shareUrl}`
+    const shareText = `Check out this post on WolloGram: ${shareUrl}`
 
     try {
       if (action === 'copy') {
@@ -267,7 +267,7 @@ export default function PostDetail() {
       }
 
       if (action === 'email') {
-        window.location.href = `mailto:?subject=${encodeURIComponent('Post from WolloDate')}&body=${encodeURIComponent(shareText)}`
+        window.location.href = `mailto:?subject=${encodeURIComponent('Post from WolloGram')}&body=${encodeURIComponent(shareText)}`
         return
       }
 
@@ -277,7 +277,7 @@ export default function PostDetail() {
       }
 
       if (navigator.share) {
-        await navigator.share({ title: 'WolloDate Post', text: shareText, url: shareUrl })
+        await navigator.share({ title: 'WolloGram Post', text: shareText, url: shareUrl })
         return
       }
 

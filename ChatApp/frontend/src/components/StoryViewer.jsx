@@ -568,7 +568,7 @@ export default function StoryViewer({
 
     const shareUrl = `${window.location.origin}/story/${currentStory.id}`
     const shareTitle = `${currentUserStory?.user?.name || 'User'}'s story`
-    const shareText = `Check out this story on WolloDate: ${shareUrl}`
+    const shareText = `Check out this story on WolloGram: ${shareUrl}`
 
     try {
       if (action === 'copy') {
@@ -582,7 +582,7 @@ export default function StoryViewer({
       }
 
       if (action === 'email') {
-        window.location.href = `mailto:?subject=${encodeURIComponent('Story from WolloDate')}&body=${encodeURIComponent(shareText)}`
+        window.location.href = `mailto:?subject=${encodeURIComponent('Story from WolloGram')}&body=${encodeURIComponent(shareText)}`
         return
       }
 
@@ -594,7 +594,7 @@ export default function StoryViewer({
       if (navigator.share) {
         await navigator.share({
           title: shareTitle,
-          text: 'Check out this story on WolloDate',
+          text: 'Check out this story on WolloGram',
           url: shareUrl,
         })
         return

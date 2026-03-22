@@ -89,7 +89,7 @@ export default function Login() {
                 Campus sparks start here.
               </p>
               <p className="mt-4 text-slate-300/85 text-base leading-relaxed max-w-md">
-                WolloDate is your after-class vibe: verified students, flirty chats, and genuine connections that can turn into real stories.
+                WolloGram is your after-class vibe: verified students, flirty chats, and genuine connections that can turn into real stories.
               </p>
             </div>
 
@@ -194,7 +194,7 @@ export default function Login() {
               </div>
 
               <div className="mt-8 text-center text-[11px] text-slate-500 leading-relaxed">
-                <p>Copyright © 2026 WolloDate. All rights reserved.</p>
+                <p>Copyright © 2026 WolloGram. All rights reserved.</p>
                 <p>
                   Developed by{' '}
                   <a

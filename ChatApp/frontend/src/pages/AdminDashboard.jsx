@@ -251,7 +251,7 @@ export default function AdminDashboard() {
               </div>
               <div>
                 <h1 className="text-base sm:text-lg font-bold text-white">Admin</h1>
-                <p className="text-[10px] sm:text-xs text-gray-500 hidden sm:block">WolloDate Management</p>
+                <p className="text-[10px] sm:text-xs text-gray-500 hidden sm:block">WolloGram Management</p>
               </div>
             </div>
             <div className="flex items-center gap-2 sm:gap-4">

@@ -36,7 +36,7 @@ export default function AdminLogin() {
               <Shield className="w-8 h-8 text-white" />
             </div>
             <h1 className="text-center text-2xl font-semibold text-white">Admin Panel</h1>
-            <p className="text-gray-400 text-sm">WolloDate Management</p>
+            <p className="text-gray-400 text-sm">WolloGram Management</p>
           </div>
           
           <form onSubmit={handleSubmit} className="space-y-3">
