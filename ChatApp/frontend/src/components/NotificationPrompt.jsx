@@ -47,6 +47,9 @@ export default function NotificationPrompt() {
   }, [])
 
   const handleSubscribe = async () => {
+    // Prevent double-clicks
+    if (loading) return
+    
     try {
       setLoading(true)
       console.log('Starting subscription...')

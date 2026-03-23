@@ -383,6 +383,10 @@ export default function Chat() {
       const res = await stories.getAll()
       setStoriesByUser(Array.isArray(res.data) ? res.data : [])
     } catch (err) {
+      // Ignore abort errors (happens when component unmounts)
+      if (err.name === 'CanceledError' || err.code === 'ERR_CANCELED') {
+        return
+      }
       console.error('Failed to load stories in chat', err)
     }
   }
@@ -1256,6 +1260,19 @@ export default function Chat() {
     return null
   }
 
+  const getAllAttachments = (msg) => {
+    if (!msg.attachments || msg.attachments.length === 0) {
+      return []
+    }
+    return msg.attachments.map(attachment => ({
+      id: attachment.id,
+      type: attachment.type,
+      url: resolveMediaUrl(attachment.file_path),
+      name: attachment.original_filename,
+      mimeType: attachment.mime_type,
+    }))
+  }
+
   const downloadAttachment = async (msg, attachment) => {
     if (!attachment) return
 
@@ -1659,6 +1676,45 @@ export default function Chat() {
       )
     }
 
+    // Handle multiple images
+    const allAttachments = getAllAttachments(msg)
+    const images = allAttachments.filter(a => a.type === 'image')
+    
+    if (images.length > 0) {
+      return (
+        <div className="rounded-2xl border border-white/10 bg-white/6 p-2">
+          <div className={`grid gap-2 ${images.length === 1 ? 'grid-cols-1' : images.length === 2 ? 'grid-cols-2' : images.length === 3 ? 'grid-cols-3' : 'grid-cols-2'}`}>
+            {images.map((image, index) => (
+              <button
+                key={image.id || index}
+                type="button"
+                onClick={() => window.open(image.url, '_blank')}
+                className="block overflow-hidden rounded-2xl"
+              >
+                <img
+                  src={image.url}
+                  alt={image.name || `Image ${index + 1}`}
+                  className={`w-full object-cover transition hover:opacity-95 ${images.length === 1 ? 'max-h-88 max-w-sm rounded-2xl' : 'h-32 sm:h-40'}`}
+                />
+              </button>
+            ))}
+          </div>
+          {activeConv?.type === 'private' && images.length === 1 && (
+            <div className="mt-2 flex justify-end">
+              <button
+                type="button"
+                onClick={() => downloadAttachment(msg, images[0])}
+                className="inline-flex items-center gap-1 rounded-lg border border-white/10 px-2 py-1 text-[11px] text-white/80 hover:bg-white/10"
+              >
+                <Download size={12} /> Download
+              </button>
+            </div>
+          )}
+        </div>
+      )
+    }
+    
+    // Handle single attachment (voice/file) - fallback for old format
     if (attachment?.type === 'image') {
       return (
         <div className="rounded-2xl border border-white/10 bg-white/6 p-2">
@@ -2273,11 +2329,23 @@ export default function Chat() {
                   onChange={e => { setNewMsg(e.target.value); handleTyping() }}
                   onInput={handleTyping}
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault()
-                      if (newMsg.trim()) {
-                        e.target.form.requestSubmit()
+                    if (e.key === 'Enter') {
+                      const isMobile = window.innerWidth < 768
+                      
+                      if (isMobile) {
+                        // On mobile: Enter creates new line, user must click Send button
+                        // Don't prevent default - allow normal Enter behavior
+                        return
                       }
+                      
+                      // On desktop: Enter sends message (unless Shift is held)
+                      if (!e.shiftKey) {
+                        e.preventDefault()
+                        if (newMsg.trim()) {
+                          e.target.form.requestSubmit()
+                        }
+                      }
+                      // Shift+Enter on desktop creates new line (default behavior)
                     }
                   }}
                   disabled={isActivePrivateChatBlocked()}

@@ -57,14 +57,24 @@ export const isNotificationEnabled = () => {
 
 // Subscription lock to prevent duplicate subscriptions
 let subscriptionInProgress = false
+let lastSubscriptionAttempt = 0
+const SUBSCRIPTION_COOLDOWN = 5000 // 5 seconds cooldown between attempts
 
 // Request permission and subscribe to push notifications
 export const subscribeToPushNotifications = async () => {
-  // Prevent duplicate subscriptions
+  // Prevent duplicate subscriptions with cooldown
+  const now = Date.now()
   if (subscriptionInProgress) {
     console.log('Subscription already in progress, skipping...')
     return null
   }
+  
+  if (now - lastSubscriptionAttempt < SUBSCRIPTION_COOLDOWN) {
+    console.log('Subscription attempted too soon, please wait...')
+    return null
+  }
+  
+  lastSubscriptionAttempt = now
 
   // Check if already subscribed with a valid token
   const existingToken = localStorage.getItem('fcmToken')
