@@ -246,12 +246,14 @@ export const setupForegroundMessageListener = (onNotification) => {
       // Show browser notification
       if (Notification.permission === 'granted') {
         const notificationTitle = payload.notification?.title || 'WolloGram'
+        const timestamp = Date.now()
         const notificationOptions = {
           body: payload.notification?.body || 'You have a new notification',
-          icon: payload.notification?.icon || '/logo.png',
-          badge: '/logo.png',
+          icon: payload.notification?.icon || `/logo.png?v=${timestamp}`,
+          badge: `/logo.png?v=${timestamp}`,
           tag: payload.data?.type || 'default',
-          data: payload.data
+          data: payload.data,
+          renotify: false
         }
         
         new Notification(notificationTitle, notificationOptions)
@@ -268,10 +270,11 @@ export const setupForegroundMessageListener = (onNotification) => {
 // Show a test notification
 export const showTestNotification = () => {
   if (Notification.permission === 'granted') {
+    const timestamp = Date.now()
     new Notification('WolloGram', {
       body: 'Push notifications are working! 🎉',
-      icon: '/logo.png',
-      badge: '/logo.png'
+      icon: `/logo.png?v=${timestamp}`,
+      badge: `/logo.png?v=${timestamp}`
     })
   }
 }

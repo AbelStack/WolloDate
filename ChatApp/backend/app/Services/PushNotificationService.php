@@ -53,21 +53,32 @@ class PushNotificationService
 
         foreach ($subscriptions as $subscription) {
             try {
+                // Use absolute URL with cache busting for logo
+                $frontendUrl = config('app.frontend_url');
+                $timestamp = time();
+                $iconUrl = "{$frontendUrl}/logo.png?v={$timestamp}";
+                $badgeUrl = "{$frontendUrl}/logo.png?v={$timestamp}";
+                
                 $message = CloudMessage::fromArray([
                     'token' => $subscription->token,
                     'notification' => [
                         'title' => $title,
                         'body' => $body,
-                        'icon' => config('app.frontend_url') . '/logo.png',
+                        'icon' => $iconUrl,
                     ],
                     'data' => array_merge($data, [
                         'messageId' => $data['messageId'] ?? uniqid('msg_', true),
                     ]),
                     'webpush' => [
                         'notification' => [
-                            'icon' => config('app.frontend_url') . '/logo.png',
-                            'badge' => config('app.frontend_url') . '/logo.png',
+                            'icon' => $iconUrl,
+                            'badge' => $badgeUrl,
                             'tag' => $data['messageId'] ?? $data['type'] ?? 'notification',
+                            'renotify' => false,
+                            'requireInteraction' => false,
+                        ],
+                        'fcm_options' => [
+                            'link' => $frontendUrl,
                         ],
                     ],
                 ]);
