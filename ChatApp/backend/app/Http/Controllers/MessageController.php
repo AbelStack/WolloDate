@@ -111,6 +111,12 @@ class MessageController extends Controller
                 'post_id' => 'nullable|integer|exists:posts,id',
             ]);
 
+            \Log::info('Message store request', [
+                'media_id' => $validated['media_id'] ?? null,
+                'media_ids' => $validated['media_ids'] ?? null,
+                'content' => $validated['content'],
+            ]);
+
             $user = auth()->user();
 
             if (!empty($validated['story_id']) && !empty($validated['post_id'])) {

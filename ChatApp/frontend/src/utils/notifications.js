@@ -66,6 +66,15 @@ export const subscribeToPushNotifications = async () => {
     return null
   }
 
+  // Check if already subscribed with a valid token
+  const existingToken = localStorage.getItem('fcmToken')
+  const isEnabled = localStorage.getItem('notificationEnabled') === 'true'
+  
+  if (existingToken && isEnabled && Notification.permission === 'granted') {
+    console.log('Already subscribed with token:', existingToken.substring(0, 20) + '...')
+    return existingToken
+  }
+
   try {
     subscriptionInProgress = true
     
@@ -94,6 +103,12 @@ export const subscribeToPushNotifications = async () => {
     
     if (!token) {
       throw new Error('Failed to get FCM token')
+    }
+
+    // Check if this is the same token we already have
+    if (existingToken === token && isEnabled) {
+      console.log('Token unchanged, already subscribed')
+      return token
     }
 
     console.log('Step 4: Saving token to backend...', token.substring(0, 20) + '...')

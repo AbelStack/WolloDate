@@ -769,10 +769,15 @@ export default function Chat() {
         ? 'Shared an image' 
         : `Shared ${mediaIds.length} images`
 
+      console.log('Sending message with media_ids:', mediaIds)
+      console.log('Message content:', content)
+
       const res = await messages.send(conversationId, { 
         content, 
         media_ids: mediaIds 
       })
+      
+      console.log('Message sent response:', res.data)
       
       const newMessage = res.data.data
       appendMessageIfMissing(newMessage)
