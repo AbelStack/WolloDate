@@ -205,14 +205,14 @@ class MessageController extends Controller
                 ->where('id', '!=', $user->id)
                 ->get();
 
-            foreach ($otherParticipants as $participant) {
-                // Create message preview
-                $preview = $message->content;
-                if (strlen($preview) > 100) {
-                    $preview = substr($preview, 0, 100) . '...';
-                }
+            // Create message preview
+            $preview = $message->content;
+            if (strlen($preview) > 100) {
+                $preview = substr($preview, 0, 100) . '...';
+            }
 
-                // Send push notification
+            foreach ($otherParticipants as $participant) {
+                // Send push notification (service handles multiple devices per user)
                 $this->pushNotificationService->sendMessageNotification(
                     $participant,
                     $user,

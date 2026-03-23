@@ -34,6 +34,12 @@ api.interceptors.response.use(
     const status = err.response?.status
     const requestUrl = String(err.config?.url || '')
     const isAuthMeRequest = requestUrl.startsWith('/auth/me')
+    const isPushSubscriptionRequest = requestUrl.includes('/push-subscriptions')
+    
+    // Don't logout on push subscription failures - just let the error propagate
+    if (isPushSubscriptionRequest) {
+      return Promise.reject(err)
+    }
     
     if (isAdminRoute && (status === 401 || status === 403)) {
       localStorage.removeItem('adminToken')

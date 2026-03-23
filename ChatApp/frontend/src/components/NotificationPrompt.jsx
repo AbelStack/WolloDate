@@ -4,7 +4,11 @@ import {
   subscribeToPushNotifications, 
   unsubscribeFromPushNotifications,
   getNotificationPermission,
-  isNotificationSupported 
+  isNotificationSupported,
+  shouldShowNotificationPrompt,
+  dismissNotificationPrompt,
+  isNotificationEnabled,
+  setupPWANotificationAutoEnable
 } from '../utils/notifications'
 
 export default function NotificationPrompt() {
@@ -14,6 +18,9 @@ export default function NotificationPrompt() {
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
+    // Setup PWA auto-enable
+    setupPWANotificationAutoEnable()
+    
     // Check if notifications are supported
     if (!isNotificationSupported()) {
       return
@@ -23,19 +30,19 @@ export default function NotificationPrompt() {
     const currentPermission = getNotificationPermission()
     setPermission(currentPermission)
 
-    // Show prompt if permission is default and user hasn't dismissed it
-    const dismissed = localStorage.getItem('notification-prompt-dismissed')
-    if (currentPermission === 'default' && !dismissed) {
-      // Show prompt after 2 seconds (reduced from 3)
-      const timer = setTimeout(() => {
-        setShowPrompt(true)
-      }, 2000)
-      return () => clearTimeout(timer)
+    // Check if already subscribed
+    if (currentPermission === 'granted' && isNotificationEnabled()) {
+      setIsSubscribed(true)
+      return
     }
 
-    // Check if already subscribed
-    if (currentPermission === 'granted') {
-      setIsSubscribed(true)
+    // Show prompt based on reminder logic (2 days after dismissal)
+    if (shouldShowNotificationPrompt()) {
+      // Show prompt after 3 seconds
+      const timer = setTimeout(() => {
+        setShowPrompt(true)
+      }, 3000)
+      return () => clearTimeout(timer)
     }
   }, [])
 
@@ -51,7 +58,21 @@ export default function NotificationPrompt() {
     } catch (error) {
       console.error('Failed to subscribe:', error)
       console.error('Error details:', error.message, error.response?.data)
-      alert(`Failed to enable notifications: ${error.message}`)
+      
+      // Show user-friendly error message
+      let errorMessage = 'Failed to enable notifications'
+      if (error.message.includes('not supported')) {
+        errorMessage = 'Your browser does not support notifications'
+      } else if (error.message.includes('denied')) {
+        errorMessage = 'Notification permission was denied. Please enable it in your browser settings.'
+      } else if (error.message.includes('log in')) {
+        errorMessage = 'Please log in again to enable notifications'
+      } else if (error.message.includes('Server error')) {
+        errorMessage = 'Server error. Please try again later.'
+      }
+      
+      alert(errorMessage)
+      
       if (error.message.includes('denied')) {
         setPermission('denied')
         setShowPrompt(false)
@@ -75,7 +96,7 @@ export default function NotificationPrompt() {
 
   const handleDismiss = () => {
     setShowPrompt(false)
-    localStorage.setItem('notification-prompt-dismissed', 'true')
+    dismissNotificationPrompt()
   }
 
   // Don't render if not supported
