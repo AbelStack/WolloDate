@@ -511,7 +511,8 @@ export default function Chat() {
       // Build message content with reply reference if replying
       let content = newMsg
       if (replyingTo) {
-        content = `[Reply to: ${replyingTo.user?.name || 'message'}] ${replyingTo.content.substring(0, 50)}${replyingTo.content.length > 50 ? '...' : ''}\n---\n${newMsg}`
+        // Simplified reply format - only show who you're replying to, not the full message
+        content = `[Reply to: ${replyingTo.user?.name || 'message'}]\n---\n${newMsg}`
       }
       
       const res = await messages.send(conversationId, { content })
@@ -1660,18 +1661,34 @@ export default function Chat() {
       )
     }
     
-    // Check for reply format: [Reply to: name] original message\n---\nactual message
-    const replyMatch = msg.content.match(/^\[Reply to: (.*?)\] (.*?)\n---\n(.*)$/s)
+    // Check for reply format: [Reply to: name]\n---\nactual message
+    const replyMatch = msg.content.match(/^\[Reply to: (.*?)\]\n---\n(.*)$/s)
     if (replyMatch) {
-      const [, replyToName, originalMsg, actualMsg] = replyMatch
+      const [, replyToName, actualMsg] = replyMatch
       return (
         <div>
           <div className="mb-2 px-3 py-2 bg-gray-800/40 rounded-lg border-l-4 border-blue-500/50">
-            <div className="flex items-center gap-1.5 mb-1">
+            <div className="flex items-center gap-1.5">
               <Reply size={12} className="text-blue-400" />
-              <span className="text-xs font-medium text-blue-400">{replyToName}</span>
+              <span className="text-xs font-medium text-blue-400">Replying to {replyToName}</span>
             </div>
-            <p className="text-xs text-gray-400 line-clamp-2">{originalMsg}</p>
+          </div>
+          <span className="whitespace-pre-wrap">{actualMsg}</span>
+        </div>
+      )
+    }
+    
+    // Legacy format with message preview (old messages)
+    const legacyReplyMatch = msg.content.match(/^\[Reply to: (.*?)\] (.*?)\n---\n(.*)$/s)
+    if (legacyReplyMatch) {
+      const [, replyToName, , actualMsg] = legacyReplyMatch
+      return (
+        <div>
+          <div className="mb-2 px-3 py-2 bg-gray-800/40 rounded-lg border-l-4 border-blue-500/50">
+            <div className="flex items-center gap-1.5">
+              <Reply size={12} className="text-blue-400" />
+              <span className="text-xs font-medium text-blue-400">Replying to {replyToName}</span>
+            </div>
           </div>
           <span className="whitespace-pre-wrap">{actualMsg}</span>
         </div>
@@ -2284,13 +2301,11 @@ export default function Chat() {
               )}
               {/* Reply preview */}
               {replyingTo && (
-                <div className="mb-2 px-3 py-2 bg-gray-900 rounded-lg flex items-center justify-between">
+                <div className="mb-2 px-3 py-2 bg-gray-900/80 rounded-lg flex items-center justify-between border-l-4 border-blue-500">
                   <div className="flex items-center gap-2">
-                    <Reply size={16} className="text-gray-400" />
+                    <Reply size={16} className="text-blue-400" />
                     <div className="text-sm">
-                      <span className="text-gray-400">Replying to </span>
-                      <span className="text-white font-medium">{replyingTo.user?.name || 'message'}</span>
-                      <p className="text-gray-500 text-xs truncate max-w-48">{replyingTo.content}</p>
+                      <span className="text-blue-400 font-medium">Replying to {replyingTo.user?.name || 'message'}</span>
                     </div>
                   </div>
                   <button onClick={() => setReplyingTo(null)} className="text-gray-500 hover:text-white p-1">
@@ -2339,8 +2354,8 @@ export default function Chat() {
                       const isMobile = window.innerWidth < 768
                       
                       if (isMobile) {
-                        // On mobile: Enter creates new line, user must click Send button
-                        // Don't prevent default - allow normal Enter behavior
+                        // On mobile: Enter creates new line (default behavior)
+                        // User must click Send button to send
                         return
                       }
                       
