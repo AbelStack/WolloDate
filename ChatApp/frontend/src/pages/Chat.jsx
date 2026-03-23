@@ -124,30 +124,36 @@ export default function Chat() {
     if (content === SHARED_STORY_MESSAGE) return 'Shared a story'
     if (content === SHARED_POST_MESSAGE) return 'Shared a post'
     
-    // Handle reply messages - show the actual reply text, not the "Reply to:" part
-    // New format: [Reply to: Name|ID|Preview]\n---\nActual message
-    const replyMatch = content.match(/^\[Reply to: .*?\|.*?\|.*?\]\n---\n(.*)$/s)
-    if (replyMatch) {
-      const actualMessage = replyMatch[1]
-      return actualMessage.length > 35 ? actualMessage.substring(0, 35) + '...' : actualMessage
+    // Extract the actual message content, stripping all reply metadata
+    // This handles nested replies by always getting the last actual message
+    const extractActualMessage = (text) => {
+      // New format: [Reply to: Name|ID|Preview]\n---\nActual message
+      const newReplyMatch = text.match(/^\[Reply to: .*?\|.*?\|.*?\]\n---\n(.*)$/s)
+      if (newReplyMatch) {
+        // Recursively extract in case the actual message is also a reply
+        return extractActualMessage(newReplyMatch[1])
+      }
+      
+      // Legacy format: [Reply to: Name]\n---\nActual message
+      const legacyReplyMatch = text.match(/^\[Reply to: .*?\]\n---\n(.*)$/s)
+      if (legacyReplyMatch) {
+        return extractActualMessage(legacyReplyMatch[1])
+      }
+      
+      // Very old format: [Reply to: Name] Preview\n---\nActual message
+      const veryOldReplyMatch = text.match(/^\[Reply to: .*?\] .*?\n---\n(.*)$/s)
+      if (veryOldReplyMatch) {
+        return extractActualMessage(veryOldReplyMatch[1])
+      }
+      
+      // No reply format found, return as is
+      return text
     }
     
-    // Legacy format: [Reply to: Name]\n---\nActual message
-    const legacyReplyMatch = content.match(/^\[Reply to: .*?\]\n---\n(.*)$/s)
-    if (legacyReplyMatch) {
-      const actualMessage = legacyReplyMatch[1]
-      return actualMessage.length > 35 ? actualMessage.substring(0, 35) + '...' : actualMessage
-    }
+    const actualMessage = extractActualMessage(content)
     
-    // Very old format: [Reply to: Name] Preview\n---\nActual message
-    const veryOldReplyMatch = content.match(/^\[Reply to: .*?\] .*?\n---\n(.*)$/s)
-    if (veryOldReplyMatch) {
-      const actualMessage = veryOldReplyMatch[1]
-      return actualMessage.length > 35 ? actualMessage.substring(0, 35) + '...' : actualMessage
-    }
-    
-    // Regular message - add ellipsis if too long
-    return content.length > 35 ? content.substring(0, 35) + '...' : content
+    // Add ellipsis if too long
+    return actualMessage.length > 35 ? actualMessage.substring(0, 35) + '...' : actualMessage
   }
 
   const appendMessageIfMissing = useCallback((incomingMessage, extraFields = {}) => {
@@ -545,8 +551,25 @@ export default function Chat() {
       // Build message content with reply reference if replying
       let content = newMsg
       if (replyingTo) {
+        // Extract only the actual message content from replyingTo, not nested reply metadata
+        const extractActualMessage = (text) => {
+          const newReplyMatch = text.match(/^\[Reply to: .*?\|.*?\|.*?\]\n---\n(.*)$/s)
+          if (newReplyMatch) return extractActualMessage(newReplyMatch[1])
+          
+          const legacyReplyMatch = text.match(/^\[Reply to: .*?\]\n---\n(.*)$/s)
+          if (legacyReplyMatch) return extractActualMessage(legacyReplyMatch[1])
+          
+          const veryOldReplyMatch = text.match(/^\[Reply to: .*?\] .*?\n---\n(.*)$/s)
+          if (veryOldReplyMatch) return extractActualMessage(veryOldReplyMatch[1])
+          
+          return text
+        }
+        
+        // Get clean message content for preview
+        const cleanContent = extractActualMessage(replyingTo.content)
+        const replyPreview = cleanContent.substring(0, 100)
+        
         // Store reply metadata: message ID and preview
-        const replyPreview = replyingTo.content.substring(0, 100)
         content = `[Reply to: ${replyingTo.user?.name || 'message'}|${replyingTo.id}|${replyPreview}]\n---\n${newMsg}`
       }
       
