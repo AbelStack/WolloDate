@@ -17,19 +17,30 @@ git push
 
 ### 2️⃣ Unregister Service Worker (CRITICAL!)
 
-**Visit test page**: `https://wollogram.vercel.app/test-logo.html`
+**Method 1 - Use Settings Page (Easiest):**
 
-Click the **"Unregister Service Worker"** button, then:
+1. Go to Settings page in the app (`/settings`)
+2. Scroll down to "Notification Debug Tools"
+3. Click to expand the section
+4. Click **"Unregister Service Worker"** button
+5. Close browser completely
+6. Reopen browser
 
-- Close browser completely
-- Reopen browser
-- Done!
+**Method 2 - Manual DevTools:**
+
+- Press F12 → Application tab → Service Workers
+- Click "Unregister" next to `firebase-messaging-sw.js`
+- Close and reopen browser
 
 ### 3️⃣ Test It
 
-1. Visit: `https://wollogram.vercel.app/test-logo.html`
-2. Click "Show Test Notification"
-3. Check logo appears on BOTH sides ✅
+1. Go to Settings page (`/settings`)
+2. Open "Notification Debug Tools"
+3. Click "Run Diagnostics" to check status
+4. Click "Test Notification"
+5. Check logo appears on BOTH sides ✅
+6. Click "Show Test Notification"
+7. Check logo appears on BOTH sides ✅
 
 ## What Was Changed
 

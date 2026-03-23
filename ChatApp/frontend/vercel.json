@@ -1,6 +1,6 @@
 {
   "rewrites": [
-    { "source": "/(.*)", "destination": "/" }
+    { "source": "/((?!test-logo\\.html|logo\\.(png|jpg)|manifest\\.json|firebase-messaging-sw\\.js).*)", "destination": "/" }
   ],
   "headers": [
     {
