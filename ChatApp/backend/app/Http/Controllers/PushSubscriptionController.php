@@ -178,4 +178,49 @@ class PushSubscriptionController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Clean up duplicate subscriptions for current user
+     * POST /api/push-subscriptions/cleanup
+     */
+    public function cleanup(Request $request)
+    {
+        try {
+            $user = auth()->user();
+            
+            // Get all subscriptions for this user
+            $subscriptions = PushSubscription::where('user_id', $user->id)
+                ->orderBy('created_at', 'desc')
+                ->get();
+            
+            if ($subscriptions->count() <= 1) {
+                return response()->json([
+                    'message' => 'No duplicates found',
+                    'subscriptions_count' => $subscriptions->count(),
+                ], 200);
+            }
+
+            // Keep only the most recent subscription, delete the rest
+            $toKeep = $subscriptions->first();
+            $toDelete = $subscriptions->slice(1);
+            
+            $deletedCount = 0;
+            foreach ($toDelete as $subscription) {
+                $subscription->delete();
+                $deletedCount++;
+            }
+
+            return response()->json([
+                'message' => 'Duplicate subscriptions cleaned up',
+                'deleted_count' => $deletedCount,
+                'remaining_count' => 1,
+            ], 200);
+
+        } catch (\Exception $e) {
+            \Log::error('Failed to cleanup subscriptions: ' . $e->getMessage());
+            return response()->json([
+                'message' => 'Failed to cleanup subscriptions',
+            ], 500);
+        }
+    }
 }

@@ -105,6 +105,8 @@ class MessageController extends Controller
             $validated = $request->validate([
                 'content' => 'required|string|max:5000',
                 'media_id' => 'nullable|integer|exists:media_attachments,id',
+                'media_ids' => 'nullable|array|max:10',
+                'media_ids.*' => 'integer|exists:media_attachments,id',
                 'story_id' => 'nullable|integer|exists:stories,id',
                 'post_id' => 'nullable|integer|exists:posts,id',
             ]);
@@ -172,8 +174,16 @@ class MessageController extends Controller
             // Update conversation timestamp to reflect new message activity
             $conversation->touch();
 
+            // Handle single media_id (backward compatibility)
             if (!empty($validated['media_id'])) {
                 MediaAttachment::where('id', $validated['media_id'])
+                    ->whereNull('message_id')
+                    ->update(['message_id' => $message->id]);
+            }
+
+            // Handle multiple media_ids (new feature)
+            if (!empty($validated['media_ids']) && is_array($validated['media_ids'])) {
+                MediaAttachment::whereIn('id', $validated['media_ids'])
                     ->whereNull('message_id')
                     ->update(['message_id' => $message->id]);
             }

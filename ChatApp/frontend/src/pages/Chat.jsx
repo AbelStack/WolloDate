@@ -684,13 +684,112 @@ export default function Chat() {
   }
 
   const handleFileUpload = async (e) => {
-    const file = e.target.files?.[0]
-    if (!file || !conversationId) return
+    const files = Array.from(e.target.files || [])
+    if (files.length === 0 || !conversationId) return
     
-    // Reset file input so same file can be re-selected
+    // Reset file input so same files can be re-selected
     e.target.value = ''
 
-    await uploadAndSendMedia(file)
+    // If only 1 file, use existing single upload flow
+    if (files.length === 1) {
+      await uploadAndSendMedia(files[0])
+      return
+    }
+
+    // Multiple files - upload all and send as one message
+    await uploadAndSendMultipleMedia(files)
+  }
+
+  const uploadAndSendMultipleMedia = async (files) => {
+    if (!files || files.length === 0 || !conversationId) return
+    if (isActivePrivateChatBlocked()) return
+
+    // Filter and validate files
+    const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'heic', 'heif', 'avif', 'jfif']
+    const validFiles = []
+
+    for (const file of files) {
+      const extension = (file.name.split('.').pop() || '').toLowerCase()
+      const isImage = file.type.startsWith('image/') || imageExtensions.includes(extension)
+      
+      if (!isImage) {
+        alert(`${file.name} is not an image file and will be skipped`)
+        continue
+      }
+
+      const maxSizeBytes = 50 * 1024 * 1024 // 50MB per image
+      if (file.size > maxSizeBytes) {
+        alert(`${file.name} is too large (max 50MB)`)
+        continue
+      }
+
+      validFiles.push(file)
+    }
+
+    if (validFiles.length === 0) {
+      alert('No valid image files selected')
+      return
+    }
+
+    // Limit to 10 images per message
+    if (validFiles.length > 10) {
+      alert('You can only send up to 10 images at once')
+      validFiles.splice(10)
+    }
+
+    setUploadingMedia(true)
+    try {
+      // Compress and upload all images
+      const mediaIds = []
+      
+      for (const file of validFiles) {
+        try {
+          // Compress image
+          const compressedFile = await compressImageForUpload(file)
+          
+          // Upload to server
+          const uploadRes = await media.upload(compressedFile)
+          const mediaId = uploadRes.data.media?.id
+          
+          if (mediaId) {
+            mediaIds.push(mediaId)
+          }
+        } catch (err) {
+          console.error(`Failed to upload ${file.name}:`, err)
+          // Continue with other files
+        }
+      }
+
+      if (mediaIds.length === 0) {
+        throw new Error('Failed to upload any images')
+      }
+
+      // Send message with all media IDs
+      const content = mediaIds.length === 1 
+        ? 'Shared an image' 
+        : `Shared ${mediaIds.length} images`
+
+      const res = await messages.send(conversationId, { 
+        content, 
+        media_ids: mediaIds 
+      })
+      
+      const newMessage = res.data.data
+      appendMessageIfMissing(newMessage)
+      const memberIds = res.data?.member_ids || (activeConv?.members || []).map(m => m.id)
+      emitNewMessage(conversationId, newMessage, memberIds)
+      requestConversationsRefresh(120)
+      
+    } catch (err) {
+      console.error('Failed to upload files', err)
+      const status = err.response?.status
+      const msg = status === 413
+        ? 'Files are too large for server upload limit'
+        : (err.response?.data?.message || err.message || 'Failed to upload files')
+      alert(msg)
+    } finally {
+      setUploadingMedia(false)
+    }
   }
 
   const handleAudioCapture = async (e) => {
@@ -2217,6 +2316,7 @@ export default function Chat() {
                         onChange={handleFileUpload}
                         disabled={isActivePrivateChatBlocked()}
                         accept="image/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.csv,.zip,.rar,.7z"
+                        multiple
                         className="hidden"
                       />
                     </label>

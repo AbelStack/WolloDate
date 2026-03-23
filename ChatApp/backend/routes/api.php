@@ -132,6 +132,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/push-subscriptions', [\App\Http\Controllers\PushSubscriptionController::class, 'store']);
     Route::delete('/push-subscriptions', [\App\Http\Controllers\PushSubscriptionController::class, 'destroy']);
     Route::post('/push-subscriptions/test', [\App\Http\Controllers\PushSubscriptionController::class, 'test']);
+    Route::post('/push-subscriptions/cleanup', [\App\Http\Controllers\PushSubscriptionController::class, 'cleanup']);
 });
 
 // Admin Auth (no auth required)

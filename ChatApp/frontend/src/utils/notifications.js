@@ -48,12 +48,27 @@ export const dismissNotificationPrompt = () => {
 
 // Check if notifications are currently enabled
 export const isNotificationEnabled = () => {
-  return localStorage.getItem('notificationEnabled') === 'true' && Notification.permission === 'granted'
+  const hasToken = Boolean(localStorage.getItem('fcmToken'))
+  const isGranted = Notification.permission === 'granted'
+  const isMarkedEnabled = localStorage.getItem('notificationEnabled') === 'true'
+  
+  return hasToken && isGranted && isMarkedEnabled
 }
+
+// Subscription lock to prevent duplicate subscriptions
+let subscriptionInProgress = false
 
 // Request permission and subscribe to push notifications
 export const subscribeToPushNotifications = async () => {
+  // Prevent duplicate subscriptions
+  if (subscriptionInProgress) {
+    console.log('Subscription already in progress, skipping...')
+    return null
+  }
+
   try {
+    subscriptionInProgress = true
+    
     if (!isNotificationSupported()) {
       throw new Error('Push notifications are not supported in this browser')
     }
@@ -95,6 +110,7 @@ export const subscribeToPushNotifications = async () => {
         // Clear any dismissal flag on successful subscription
         localStorage.removeItem('notificationPromptDismissedAt')
         localStorage.setItem('notificationEnabled', 'true')
+        localStorage.setItem('fcmToken', token) // Store token to prevent duplicates
         
         console.log('Successfully subscribed to push notifications')
         return token
@@ -132,17 +148,28 @@ export const subscribeToPushNotifications = async () => {
     }
     
     throw error
+  } finally {
+    subscriptionInProgress = false
   }
 }
 
 // Unsubscribe from push notifications
 export const unsubscribeFromPushNotifications = async () => {
   try {
+    // Get the current token to delete specific subscription
+    const token = localStorage.getItem('fcmToken')
+    
     // Remove token from backend
-    await api.delete('/push-subscriptions')
+    if (token) {
+      await api.delete('/push-subscriptions', { data: { token } })
+    } else {
+      // If no token stored, delete all user's subscriptions
+      await api.delete('/push-subscriptions')
+    }
     
     // Clear local storage flags
     localStorage.removeItem('notificationEnabled')
+    localStorage.removeItem('fcmToken')
     
     console.log('Successfully unsubscribed from push notifications')
   } catch (error) {
