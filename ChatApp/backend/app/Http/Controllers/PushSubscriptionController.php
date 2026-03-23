@@ -32,10 +32,20 @@ class PushSubscriptionController extends Controller
                     'device_type' => $validated['device_type'] ?? $subscription->device_type,
                 ]);
 
+                \Log::info("Push subscription updated for user {$user->id}, token: " . substr($validated['token'], 0, 20) . '...');
+
                 return response()->json([
                     'message' => 'Push subscription updated',
                     'data' => $subscription,
                 ], 200);
+            }
+
+            // CRITICAL FIX: Before creating new subscription, delete all old subscriptions for this user
+            // This prevents accumulation of stale tokens when Firebase generates new ones
+            $oldSubscriptions = PushSubscription::where('user_id', $user->id)->get();
+            if ($oldSubscriptions->count() > 0) {
+                \Log::info("Deleting {$oldSubscriptions->count()} old subscription(s) for user {$user->id} before creating new one");
+                PushSubscription::where('user_id', $user->id)->delete();
             }
 
             // Create new subscription
@@ -44,6 +54,8 @@ class PushSubscriptionController extends Controller
                 'token' => $validated['token'],
                 'device_type' => $validated['device_type'] ?? null,
             ]);
+
+            \Log::info("Push subscription created for user {$user->id}, token: " . substr($validated['token'], 0, 20) . '...');
 
             return response()->json([
                 'message' => 'Push subscription created',
@@ -220,6 +232,46 @@ class PushSubscriptionController extends Controller
             \Log::error('Failed to cleanup subscriptions: ' . $e->getMessage());
             return response()->json([
                 'message' => 'Failed to cleanup subscriptions',
+            ], 500);
+        }
+    }
+
+    /**
+     * Get duplicate subscription statistics (for monitoring)
+     * GET /api/push-subscriptions/stats
+     */
+    public function stats()
+    {
+        try {
+            $user = auth()->user();
+            
+            // Get user's subscription count
+            $userSubscriptionCount = PushSubscription::where('user_id', $user->id)->count();
+            
+            // Get user's subscriptions with details
+            $userSubscriptions = PushSubscription::where('user_id', $user->id)
+                ->orderBy('created_at', 'desc')
+                ->get()
+                ->map(function ($sub) {
+                    return [
+                        'id' => $sub->id,
+                        'token_preview' => substr($sub->token, 0, 30) . '...',
+                        'device_type' => $sub->device_type,
+                        'created_at' => $sub->created_at,
+                    ];
+                });
+
+            return response()->json([
+                'user_id' => $user->id,
+                'subscription_count' => $userSubscriptionCount,
+                'has_duplicates' => $userSubscriptionCount > 1,
+                'subscriptions' => $userSubscriptions,
+            ], 200);
+
+        } catch (\Exception $e) {
+            \Log::error('Failed to get subscription stats: ' . $e->getMessage());
+            return response()->json([
+                'message' => 'Failed to get subscription stats',
             ], 500);
         }
     }

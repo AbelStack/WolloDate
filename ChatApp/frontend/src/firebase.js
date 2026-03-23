@@ -45,7 +45,36 @@ export const requestNotificationPermission = async () => {
       throw new Error('Notification permission not granted')
     }
 
-    // Get FCM token
+    // CRITICAL FIX: Check if we already have a valid token stored
+    // This prevents Firebase from generating new tokens unnecessarily
+    const existingToken = localStorage.getItem('fcmToken')
+    if (existingToken) {
+      console.log('Reusing existing FCM token:', existingToken.substring(0, 20) + '...')
+      
+      // Verify the token is still valid by attempting to get current token
+      // If service worker was updated, this will return a new token
+      try {
+        const currentToken = await getToken(messaging, {
+          vapidKey: 'BKvcB5lKthPWTy2_BxkUF98Nt43QjOVuBz92tP4v6NV-_ysgpstOcM2Yy_upi8ldB3-V_NQkronUUV95dKceETA'
+        })
+        
+        // If token hasn't changed, return existing one
+        if (currentToken === existingToken) {
+          console.log('Token verified and unchanged')
+          return existingToken
+        }
+        
+        // Token changed (service worker update or token refresh)
+        console.log('Token changed, old will be replaced')
+        return currentToken
+      } catch (err) {
+        console.log('Token verification failed, getting new token:', err.message)
+        // Fall through to get new token
+      }
+    }
+
+    // Get new FCM token (only if no existing token or verification failed)
+    console.log('Requesting new FCM token...')
     const token = await getToken(messaging, {
       vapidKey: 'BKvcB5lKthPWTy2_BxkUF98Nt43QjOVuBz92tP4v6NV-_ysgpstOcM2Yy_upi8ldB3-V_NQkronUUV95dKceETA'
     })

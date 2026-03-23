@@ -129,6 +129,7 @@ Route::middleware('auth:sanctum')->group(function () {
     
     // Push Notifications
     Route::get('/push-subscriptions', [\App\Http\Controllers\PushSubscriptionController::class, 'index']);
+    Route::get('/push-subscriptions/stats', [\App\Http\Controllers\PushSubscriptionController::class, 'stats']);
     Route::post('/push-subscriptions', [\App\Http\Controllers\PushSubscriptionController::class, 'store']);
     Route::delete('/push-subscriptions', [\App\Http\Controllers\PushSubscriptionController::class, 'destroy']);
     Route::post('/push-subscriptions/test', [\App\Http\Controllers\PushSubscriptionController::class, 'test']);

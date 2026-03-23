@@ -89,7 +89,13 @@ export default function Chat() {
   const audioRefs = useRef({})
   const confirmActionRef = useRef(null)
 
-  const commonEmojis = ['👍', '❤️', '😂', '😮', '😢', '😠', '🔥', '🎉', '👏', '🙏', '😍', '🤔', '😊', '😎', '🤣', '💯']
+  const commonEmojis = [
+    '👍', '❤️', '😂', '😮', '😢', '😠', '🔥', '🎉', '👏', '🙏', 
+    '😍', '🤔', '😊', '😎', '🤣', '💯', '✨', '💪', '🙌', '👀',
+    '😭', '🥰', '😘', '💕', '💖', '🤗', '😇', '🥳', '🤩', '😱',
+    '🤯', '😴', '🤤', '😋', '🤪', '😜', '🤨', '🧐', '🤓', '😈',
+    '👻', '💀', '☠️', '👽', '🤖', '💩', '🙈', '🙉', '🙊', '🐵'
+  ]
 
   const getPostMediaUrls = (post) => {
     const list = Array.isArray(post?.media_urls) && post.media_urls.length > 0
@@ -1277,40 +1283,14 @@ export default function Chat() {
     if (!attachment) return
 
     const fallbackName = attachment.name || `${attachment.type || 'file'}-${msg.id}`
+    
     const triggerDownload = async (blobOrUrl, filename) => {
       const link = document.createElement('a')
       link.style.display = 'none'
+      
       if (blobOrUrl instanceof Blob) {
         const mimeType = blobOrUrl.type || attachment.mimeType || 'application/octet-stream'
-        const isMobileBrowser = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
-
-        if (typeof File !== 'undefined' && navigator.share && navigator.canShare) {
-          try {
-            const file = new File([blobOrUrl], filename, { type: mimeType })
-            if (navigator.canShare({ files: [file] })) {
-              await navigator.share({
-                files: [file],
-                title: filename,
-              })
-              return
-            }
-          } catch (shareErr) {
-            if (shareErr?.name === 'AbortError') {
-              return
-            }
-          }
-        }
-
         const blobUrl = URL.createObjectURL(blobOrUrl)
-
-        if (isMobileBrowser) {
-          const opened = window.open(blobUrl, '_blank', 'noopener,noreferrer')
-          if (!opened) {
-            window.location.href = blobUrl
-          }
-          setTimeout(() => URL.revokeObjectURL(blobUrl), 60000)
-          return
-        }
 
         link.href = blobUrl
         link.download = filename
@@ -1321,13 +1301,28 @@ export default function Chat() {
         return
       }
 
-      link.href = blobOrUrl
-      link.download = filename
-      link.target = '_blank'
-      link.rel = 'noopener noreferrer'
-      document.body.appendChild(link)
-      link.click()
-      link.remove()
+      // For URL downloads, fetch as blob first to force download
+      try {
+        const response = await fetch(blobOrUrl)
+        const blob = await response.blob()
+        const blobUrl = URL.createObjectURL(blob)
+        
+        link.href = blobUrl
+        link.download = filename
+        document.body.appendChild(link)
+        link.click()
+        link.remove()
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 1000)
+      } catch (fetchErr) {
+        // Fallback to direct link if fetch fails
+        link.href = blobOrUrl
+        link.download = filename
+        link.target = '_blank'
+        link.rel = 'noopener noreferrer'
+        document.body.appendChild(link)
+        link.click()
+        link.remove()
+      }
     }
 
     try {
@@ -1653,10 +1648,14 @@ export default function Chat() {
       const [, storyOwner, replyText] = storyReplyMatch
       return (
         <div>
-          <div className="mb-2 px-2 py-1 bg-gray-800/50 rounded-lg border-l-2 border-purple-500">
-            <span className="text-[10px] text-gray-400 block">Replied to @{storyOwner}'s story</span>
+          <div className="mb-2 px-3 py-2 bg-purple-900/20 rounded-lg border-l-4 border-purple-500/50">
+            <div className="flex items-center gap-1.5 mb-1">
+              <Reply size={12} className="text-purple-400" />
+              <span className="text-xs font-medium text-purple-400">@{storyOwner}'s story</span>
+            </div>
+            <p className="text-xs text-gray-400">Story reply</p>
           </div>
-          <span>{replyText}</span>
+          <span className="whitespace-pre-wrap">{replyText}</span>
         </div>
       )
     }
@@ -1667,11 +1666,14 @@ export default function Chat() {
       const [, replyToName, originalMsg, actualMsg] = replyMatch
       return (
         <div>
-          <div className="mb-2 px-2 py-1 bg-gray-800/50 rounded-lg border-l-2 border-gray-500">
-            <span className="text-xs text-gray-400 block">{replyToName}</span>
-            <span className="text-xs text-gray-500 truncate block">{originalMsg}</span>
+          <div className="mb-2 px-3 py-2 bg-gray-800/40 rounded-lg border-l-4 border-blue-500/50">
+            <div className="flex items-center gap-1.5 mb-1">
+              <Reply size={12} className="text-blue-400" />
+              <span className="text-xs font-medium text-blue-400">{replyToName}</span>
+            </div>
+            <p className="text-xs text-gray-400 line-clamp-2">{originalMsg}</p>
           </div>
-          <span>{actualMsg}</span>
+          <span className="whitespace-pre-wrap">{actualMsg}</span>
         </div>
       )
     }
@@ -1699,15 +1701,19 @@ export default function Chat() {
               </button>
             ))}
           </div>
-          {activeConv?.type === 'private' && images.length === 1 && (
-            <div className="mt-2 flex justify-end">
-              <button
-                type="button"
-                onClick={() => downloadAttachment(msg, images[0])}
-                className="inline-flex items-center gap-1 rounded-lg border border-white/10 px-2 py-1 text-[11px] text-white/80 hover:bg-white/10"
-              >
-                <Download size={12} /> Download
-              </button>
+          {/* Show download button for all images in private chat */}
+          {activeConv?.type === 'private' && (
+            <div className="mt-2 flex justify-end gap-2 flex-wrap">
+              {images.map((image, index) => (
+                <button
+                  key={`download-${image.id || index}`}
+                  type="button"
+                  onClick={() => downloadAttachment(msg, image)}
+                  className="inline-flex items-center gap-1 rounded-lg border border-white/10 px-2 py-1 text-[11px] text-white/80 hover:bg-white/10"
+                >
+                  <Download size={12} /> {images.length > 1 ? `Image ${index + 1}` : 'Download'}
+                </button>
+              ))}
             </div>
           )}
         </div>

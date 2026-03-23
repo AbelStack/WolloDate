@@ -115,13 +115,27 @@ export const subscribeToPushNotifications = async () => {
       throw new Error('Failed to get FCM token')
     }
 
+    console.log('Got FCM token:', token.substring(0, 20) + '...')
+
     // Check if this is the same token we already have
     if (existingToken === token && isEnabled) {
       console.log('Token unchanged, already subscribed')
       return token
     }
 
-    console.log('Step 4: Saving token to backend...', token.substring(0, 20) + '...')
+    // If token changed, we need to delete the old one from backend
+    if (existingToken && existingToken !== token) {
+      console.log('Token changed, deleting old token from backend...')
+      try {
+        await api.delete('/push-subscriptions', { data: { token: existingToken } })
+        console.log('Old token deleted successfully')
+      } catch (err) {
+        console.log('Failed to delete old token (may not exist):', err.message)
+        // Continue anyway - backend will handle duplicates
+      }
+    }
+
+    console.log('Step 4: Saving new token to backend...')
     
     // Retry logic for backend save
     let retries = 3
