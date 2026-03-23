@@ -1752,7 +1752,7 @@ export default function Chat() {
         {conversationId && activeConv ? (
           <div className="flex flex-col h-full overflow-hidden">
             {/* Chat header - FIXED at top */}
-            <div className="h-12 sm:h-14 px-2 sm:px-3 md:px-4 flex items-center justify-between border-b border-gray-800 bg-black shrink-0 z-20">
+            <div className="sticky top-0 h-12 sm:h-14 px-2 sm:px-3 md:px-4 flex items-center justify-between border-b border-gray-800 bg-black shrink-0 z-20">
               {/* Back button - mobile only */}
               <button 
                 onClick={() => navigate('/chat')}
