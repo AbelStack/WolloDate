@@ -13,9 +13,15 @@ import { getAvatarUrl } from '../utils/avatar'
 import { readImageFileAsDataUrl } from '../utils/image'
 import { isCreatorUser } from '../utils/creator'
 import { 
+  subscribeToPushNotifications, 
+  unsubscribeFromPushNotifications,
+  getNotificationPermission,
+  isNotificationSupported 
+} from '../utils/notifications'
+import { 
   ArrowLeft, LogOut, Camera, Settings, Grid3X3, 
   Heart, MessageCircle, X, AlertCircle, CheckCircle, 
-  UserPlus, Lock, Loader2, Sun, Moon
+  UserPlus, Lock, Loader2, Sun, Moon, Bell
 } from 'lucide-react'
 
 export default function Profile() {
@@ -65,6 +71,8 @@ export default function Profile() {
   const [unblockingUserId, setUnblockingUserId] = useState(null)
   const [pendingUnblockUser, setPendingUnblockUser] = useState(null)
   const [settingsSection, setSettingsSection] = useState(null) // null = menu, 'profile', 'password', 'blocked'
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false)
+  const [loadingNotifications, setLoadingNotifications] = useState(false)
   
   // Image cropper state
   const [cropperImage, setCropperImage] = useState(null)
@@ -84,7 +92,43 @@ export default function Profile() {
     setFollowers([])
     setFollowing([])
     loadProfile()
+    checkNotificationStatus()
   }, [profileId])
+
+  const checkNotificationStatus = () => {
+    const status = getNotificationPermission()
+    setNotificationsEnabled(status === 'granted')
+  }
+
+  const handleToggleNotifications = async () => {
+    if (loadingNotifications) return
+
+    setLoadingNotifications(true)
+    try {
+      if (notificationsEnabled) {
+        await unsubscribeFromPushNotifications()
+        setNotificationsEnabled(false)
+        showNotification('success', 'Notifications disabled')
+      } else {
+        await subscribeToPushNotifications()
+        setNotificationsEnabled(true)
+        checkNotificationStatus()
+        showNotification('success', 'Notifications enabled!')
+      }
+    } catch (error) {
+      console.error('Error toggling notifications:', error)
+      
+      if (error.message?.includes('denied')) {
+        showNotification('error', 'Notification permission denied. Enable in browser settings.')
+      } else if (error.message?.includes('not supported')) {
+        showNotification('error', 'Push notifications not supported in this browser.')
+      } else {
+        showNotification('error', 'Failed to toggle notifications.')
+      }
+    } finally {
+      setLoadingNotifications(false)
+    }
+  }
 
 
 
@@ -686,6 +730,38 @@ export default function Profile() {
                   <span className="text-white font-medium">Blocked Users</span>
                   <ArrowLeft size={18} className="text-gray-400 rotate-180" />
                 </button>
+                
+                {isNotificationSupported() && (
+                  <div className="p-4 border-b border-gray-800">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <Bell size={18} className="text-gray-400" />
+                        <div>
+                          <p className="font-medium text-white text-sm">Push Notifications</p>
+                          <p className="text-xs text-gray-400">Get notified about activity</p>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleToggleNotifications}
+                        disabled={loadingNotifications}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                          notificationsEnabled ? 'bg-blue-500' : 'bg-gray-700'
+                        } ${loadingNotifications ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                      >
+                        {loadingNotifications ? (
+                          <Loader2 size={14} className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 animate-spin" />
+                        ) : (
+                          <span
+                            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                              notificationsEnabled ? 'translate-x-6' : 'translate-x-1'
+                            }`}
+                          />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                )}
                 
                 <div className="p-4">
                   <div className="flex items-center justify-between">

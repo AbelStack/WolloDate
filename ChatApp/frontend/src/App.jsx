@@ -10,6 +10,7 @@ import Profile from './pages/Profile'
 import Search from './pages/Search'
 import Feed from './pages/Feed'
 import Notifications from './pages/Notifications'
+import Settings from './pages/Settings'
 import PostDetail from './pages/PostDetail'
 import StoryDetail from './pages/StoryDetail'
 import PendingVerification from './pages/PendingVerification'
@@ -90,6 +91,7 @@ export default function App() {
               <Route path="/profile/:userId" element={<VerifiedRoute><Profile /></VerifiedRoute>} />
               <Route path="/search" element={<VerifiedRoute><Search /></VerifiedRoute>} />
               <Route path="/notifications" element={<VerifiedRoute><Notifications /></VerifiedRoute>} />
+              <Route path="/settings" element={<VerifiedRoute><Settings /></VerifiedRoute>} />
               <Route path="/post/:postId" element={<VerifiedRoute><PostDetail /></VerifiedRoute>} />
               <Route path="/story/:storyId" element={<VerifiedRoute><StoryDetail /></VerifiedRoute>} />
               
