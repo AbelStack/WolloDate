@@ -511,8 +511,9 @@ export default function Chat() {
       // Build message content with reply reference if replying
       let content = newMsg
       if (replyingTo) {
-        // Simplified reply format - only show who you're replying to, not the full message
-        content = `[Reply to: ${replyingTo.user?.name || 'message'}]\n---\n${newMsg}`
+        // Store reply metadata: message ID and preview
+        const replyPreview = replyingTo.content.substring(0, 100)
+        content = `[Reply to: ${replyingTo.user?.name || 'message'}|${replyingTo.id}|${replyPreview}]\n---\n${newMsg}`
       }
       
       const res = await messages.send(conversationId, { content })
@@ -1661,10 +1662,45 @@ export default function Chat() {
       )
     }
     
-    // Check for reply format: [Reply to: name]\n---\nactual message
-    const replyMatch = msg.content.match(/^\[Reply to: (.*?)\]\n---\n(.*)$/s)
+    // Check for reply format: [Reply to: name|messageId|preview]\n---\nactual message
+    const replyMatch = msg.content.match(/^\[Reply to: (.*?)\|(\d+)\|(.*?)\]\n---\n(.*)$/s)
     if (replyMatch) {
-      const [, replyToName, actualMsg] = replyMatch
+      const [, replyToName, replyToMessageId, replyPreview, actualMsg] = replyMatch
+      
+      const scrollToMessage = () => {
+        const targetElement = document.getElementById(`msg-${replyToMessageId}`)
+        if (targetElement) {
+          targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' })
+          // Highlight the message briefly
+          targetElement.classList.add('bg-blue-500/20')
+          setTimeout(() => {
+            targetElement.classList.remove('bg-blue-500/20')
+          }, 2000)
+        }
+      }
+      
+      return (
+        <div>
+          <button
+            type="button"
+            onClick={scrollToMessage}
+            className="mb-2 w-full text-left px-3 py-2 bg-gray-800/40 rounded-lg border-l-4 border-blue-500/50 hover:bg-gray-800/60 transition-colors"
+          >
+            <div className="flex items-center gap-1.5 mb-1">
+              <Reply size={12} className="text-blue-400" />
+              <span className="text-xs font-medium text-blue-400">{replyToName}</span>
+            </div>
+            <p className="text-xs text-gray-400 line-clamp-2">{replyPreview}</p>
+          </button>
+          <span className="whitespace-pre-wrap">{actualMsg}</span>
+        </div>
+      )
+    }
+    
+    // Legacy format without message ID (old messages)
+    const legacyReplyMatch = msg.content.match(/^\[Reply to: (.*?)\]\n---\n(.*)$/s)
+    if (legacyReplyMatch) {
+      const [, replyToName, actualMsg] = legacyReplyMatch
       return (
         <div>
           <div className="mb-2 px-3 py-2 bg-gray-800/40 rounded-lg border-l-4 border-blue-500/50">
@@ -1678,10 +1714,10 @@ export default function Chat() {
       )
     }
     
-    // Legacy format with message preview (old messages)
-    const legacyReplyMatch = msg.content.match(/^\[Reply to: (.*?)\] (.*?)\n---\n(.*)$/s)
-    if (legacyReplyMatch) {
-      const [, replyToName, , actualMsg] = legacyReplyMatch
+    // Very old legacy format with message preview in different format
+    const veryOldReplyMatch = msg.content.match(/^\[Reply to: (.*?)\] (.*?)\n---\n(.*)$/s)
+    if (veryOldReplyMatch) {
+      const [, replyToName, , actualMsg] = veryOldReplyMatch
       return (
         <div>
           <div className="mb-2 px-3 py-2 bg-gray-800/40 rounded-lg border-l-4 border-blue-500/50">
@@ -2086,14 +2122,14 @@ export default function Chat() {
                 const showDate = idx === 0 || formatDate(msg.created_at) !== formatDate(filteredMessages[idx - 1]?.created_at)
 
                 return (
-                  <div key={msg.id || idx}>
+                  <div key={msg.id || idx} id={`msg-${msg.id}`}>
                     {showDate && (
                       <div className="text-center text-xs text-gray-500 py-4">
                         {formatDate(msg.created_at)}
                       </div>
                     )}
                     <div
-                      className={`flex gap-2 mb-4 ${isMine ? 'justify-end' : 'justify-start'} group`}
+                      className={`flex gap-2 mb-4 ${isMine ? 'justify-end' : 'justify-start'} group transition-colors duration-500`}
                       onMouseEnter={() => setHoveredMessageId(msg.id)}
                       onMouseLeave={() => setHoveredMessageId(null)}
                       onTouchStart={() => startMessageLongPress(msg.id)}
