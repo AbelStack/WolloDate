@@ -21,8 +21,8 @@ messaging.onBackgroundMessage((payload) => {
   const notificationTitle = payload.notification?.title || 'WolloGram'
   const notificationOptions = {
     body: payload.notification?.body || 'You have a new notification',
-    icon: payload.notification?.icon || '/logo.jpg',
-    badge: '/logo.jpg',
+    icon: payload.notification?.icon || '/logo.png',
+    badge: '/logo.png',
     tag: payload.data?.type || 'default',
     data: payload.data,
     requireInteraction: false,

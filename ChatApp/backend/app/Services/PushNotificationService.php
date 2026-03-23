@@ -53,9 +53,21 @@ class PushNotificationService
 
         foreach ($subscriptions as $subscription) {
             try {
-                $message = CloudMessage::withTarget('token', $subscription->token)
-                    ->withNotification(Notification::create($title, $body))
-                    ->withData($data);
+                $message = CloudMessage::fromArray([
+                    'token' => $subscription->token,
+                    'notification' => [
+                        'title' => $title,
+                        'body' => $body,
+                        'image' => config('app.frontend_url') . '/logo.png',
+                    ],
+                    'data' => $data,
+                    'webpush' => [
+                        'notification' => [
+                            'icon' => config('app.frontend_url') . '/logo.png',
+                            'badge' => config('app.frontend_url') . '/logo.png',
+                        ],
+                    ],
+                ]);
 
                 $this->messaging->send($message);
                 $successCount++;

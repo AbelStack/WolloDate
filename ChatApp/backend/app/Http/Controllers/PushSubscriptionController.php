@@ -22,14 +22,13 @@ class PushSubscriptionController extends Controller
 
             $user = auth()->user();
 
-            // Check if token already exists for this user
-            $subscription = PushSubscription::where('user_id', $user->id)
-                ->where('token', $validated['token'])
-                ->first();
+            // Check if token already exists for this user (or any user to prevent cross-user duplicates)
+            $subscription = PushSubscription::where('token', $validated['token'])->first();
 
             if ($subscription) {
-                // Update existing subscription
+                // Update existing subscription (reassign to current user if needed)
                 $subscription->update([
+                    'user_id' => $user->id,
                     'device_type' => $validated['device_type'] ?? $subscription->device_type,
                 ]);
 
