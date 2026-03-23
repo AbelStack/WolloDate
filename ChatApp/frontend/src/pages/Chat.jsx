@@ -123,7 +123,31 @@ export default function Chat() {
     const content = String(lastMessage?.content || '').trim()
     if (content === SHARED_STORY_MESSAGE) return 'Shared a story'
     if (content === SHARED_POST_MESSAGE) return 'Shared a post'
-    return content
+    
+    // Handle reply messages - show the actual reply text, not the "Reply to:" part
+    // New format: [Reply to: Name|ID|Preview]\n---\nActual message
+    const replyMatch = content.match(/^\[Reply to: .*?\|.*?\|.*?\]\n---\n(.*)$/s)
+    if (replyMatch) {
+      const actualMessage = replyMatch[1]
+      return actualMessage.length > 35 ? actualMessage.substring(0, 35) + '...' : actualMessage
+    }
+    
+    // Legacy format: [Reply to: Name]\n---\nActual message
+    const legacyReplyMatch = content.match(/^\[Reply to: .*?\]\n---\n(.*)$/s)
+    if (legacyReplyMatch) {
+      const actualMessage = legacyReplyMatch[1]
+      return actualMessage.length > 35 ? actualMessage.substring(0, 35) + '...' : actualMessage
+    }
+    
+    // Very old format: [Reply to: Name] Preview\n---\nActual message
+    const veryOldReplyMatch = content.match(/^\[Reply to: .*?\] .*?\n---\n(.*)$/s)
+    if (veryOldReplyMatch) {
+      const actualMessage = veryOldReplyMatch[1]
+      return actualMessage.length > 35 ? actualMessage.substring(0, 35) + '...' : actualMessage
+    }
+    
+    // Regular message - add ellipsis if too long
+    return content.length > 35 ? content.substring(0, 35) + '...' : content
   }
 
   const appendMessageIfMissing = useCallback((incomingMessage, extraFields = {}) => {
@@ -150,9 +174,19 @@ export default function Chat() {
   useEffect(() => { loadConversations(); loadStories() }, [])
 
   useEffect(() => {
-    const handleFocus = () => loadStories()
+    const abortController = new AbortController()
+    
+    const handleFocus = () => {
+      if (!abortController.signal.aborted) {
+        loadStories()
+      }
+    }
+    
     window.addEventListener('focus', handleFocus)
-    return () => window.removeEventListener('focus', handleFocus)
+    return () => {
+      abortController.abort()
+      window.removeEventListener('focus', handleFocus)
+    }
   }, [])
 
   useEffect(() => {
@@ -1951,7 +1985,7 @@ export default function Chat() {
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-sm truncate text-white">{other.name}</p>
                     <p className={`text-xs truncate ${isTypingInConv ? 'text-green-400' : 'text-gray-500'}`}>
-                      {isTypingInConv ? 'Typing...' : (getConversationPreviewText(conv.last_message)?.substring(0, 30) || 'Start chatting')}
+                      {isTypingInConv ? 'Typing...' : (getConversationPreviewText(conv.last_message) || 'Start chatting')}
                     </p>
                   </div>
                   {conv.unread_count > 0 && (
