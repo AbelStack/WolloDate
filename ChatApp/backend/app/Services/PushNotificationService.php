@@ -58,13 +58,16 @@ class PushNotificationService
                     'notification' => [
                         'title' => $title,
                         'body' => $body,
-                        'image' => config('app.frontend_url') . '/logo.png',
+                        'icon' => config('app.frontend_url') . '/logo.png',
                     ],
-                    'data' => $data,
+                    'data' => array_merge($data, [
+                        'messageId' => $data['messageId'] ?? uniqid('msg_', true),
+                    ]),
                     'webpush' => [
                         'notification' => [
                             'icon' => config('app.frontend_url') . '/logo.png',
                             'badge' => config('app.frontend_url') . '/logo.png',
+                            'tag' => $data['messageId'] ?? $data['type'] ?? 'notification',
                         ],
                     ],
                 ]);
@@ -126,7 +129,7 @@ class PushNotificationService
     /**
      * Send new message notification
      */
-    public function sendMessageNotification(User $recipient, User $sender, string $messagePreview, int $conversationId)
+    public function sendMessageNotification(User $recipient, User $sender, string $messagePreview, int $conversationId, int $messageId = null)
     {
         $title = $sender->name;
         $body = $messagePreview;
@@ -136,6 +139,7 @@ class PushNotificationService
             'senderId' => (string) $sender->id,
             'senderName' => $sender->name,
             'senderAvatar' => $sender->avatar_url ?? '',
+            'messageId' => $messageId ? (string) $messageId : uniqid('msg_', true),
         ];
 
         return $this->sendToUser($recipient, $title, $body, $data);

@@ -221,8 +221,18 @@ class MessageController extends Controller
                 ->where('id', '!=', $user->id)
                 ->get();
 
-            // Create message preview
+            // Create message preview - extract actual message from reply format
             $preview = $message->content;
+            
+            // Extract actual message content, stripping reply metadata
+            if (preg_match('/^\[Reply to: .*?\|.*?\|.*?\]\n---\n(.*)$/s', $preview, $matches)) {
+                $preview = $matches[1];
+            } elseif (preg_match('/^\[Reply to: .*?\]\n---\n(.*)$/s', $preview, $matches)) {
+                $preview = $matches[1];
+            } elseif (preg_match('/^\[Reply to: .*?\] .*?\n---\n(.*)$/s', $preview, $matches)) {
+                $preview = $matches[1];
+            }
+            
             if (strlen($preview) > 100) {
                 $preview = substr($preview, 0, 100) . '...';
             }
@@ -233,7 +243,8 @@ class MessageController extends Controller
                     $participant,
                     $user,
                     $preview,
-                    $conversationId
+                    $conversationId,
+                    $message->id
                 );
             }
 

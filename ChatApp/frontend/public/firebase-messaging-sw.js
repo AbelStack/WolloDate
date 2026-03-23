@@ -1,4 +1,4 @@
-// Firebase Cloud Messaging Service Worker
+// Firebase Cloud Messaging Service Worker v2.0
 importScripts('https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js')
 importScripts('https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging-compat.js')
 
@@ -19,14 +19,19 @@ messaging.onBackgroundMessage((payload) => {
   console.log('Received background message:', payload)
 
   const notificationTitle = payload.notification?.title || 'WolloGram'
+  
+  // Force logo URL - use absolute URL
+  const logoUrl = 'https://wollogram.vercel.app/logo.png'
+  
   const notificationOptions = {
     body: payload.notification?.body || 'You have a new notification',
-    icon: payload.notification?.icon || '/logo.png',
-    badge: '/logo.png',
-    tag: payload.data?.type || 'default',
+    icon: logoUrl,
+    badge: logoUrl,
+    tag: payload.data?.messageId || payload.data?.type || 'default',
     data: payload.data,
     requireInteraction: false,
-    vibrate: [200, 100, 200]
+    vibrate: [200, 100, 200],
+    image: logoUrl
   }
 
   // Add action buttons based on notification type
