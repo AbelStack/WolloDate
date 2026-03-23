@@ -1660,7 +1660,7 @@ export default function Chat() {
   }
 
   return (
-    <div className="fixed inset-0 md:static md:h-[calc(100dvh-4rem)] flex bg-black overflow-hidden">
+    <div className="fixed inset-0 md:static md:h-[calc(100dvh-4rem)] flex bg-black overflow-hidden pb-14 sm:pb-16 md:pb-0" style={{ paddingBottom: 'calc(3.5rem + env(safe-area-inset-bottom))' }}>
       {/* Sidebar - hidden on mobile when conversation is selected */}
       <div className={`${conversationId ? 'hidden md:flex' : 'flex'} w-full md:w-80 lg:w-96 border-r border-gray-800 flex-col bg-black`}>
         {/* Header */}
