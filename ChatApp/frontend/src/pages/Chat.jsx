@@ -1751,8 +1751,8 @@ export default function Chat() {
       <div className={`${!conversationId ? 'hidden md:flex' : 'flex'} flex-1 flex-col bg-black min-w-0 h-full max-h-full overflow-hidden relative`}>
         {conversationId && activeConv ? (
           <div className="flex flex-col h-full overflow-hidden">
-            {/* Chat header - FIXED at top */}
-            <div className="fixed top-0 left-0 right-0 md:relative h-12 sm:h-14 px-2 sm:px-3 md:px-4 flex items-center justify-between border-b border-gray-800 bg-black shrink-0 z-20">
+            {/* Chat header - STICKY at top */}
+            <div className="sticky top-0 h-12 sm:h-14 px-2 sm:px-3 md:px-4 flex items-center justify-between border-b border-gray-800 bg-black shrink-0 z-20">
               {/* Back button - mobile only */}
               <button 
                 onClick={() => navigate('/chat')}
@@ -1867,7 +1867,7 @@ export default function Chat() {
             </div>
 
             {activeConv.type === 'private' && showSearch && (
-              <div className="fixed top-12 sm:top-14 left-0 right-0 md:relative md:top-0 px-4 py-2 border-b border-gray-800 bg-black shrink-0 z-10">
+              <div className="sticky top-12 sm:top-14 px-4 py-2 border-b border-gray-800 bg-black shrink-0 z-10">
                 <input
                   type="text"
                   placeholder="Search in this chat..."
@@ -1879,7 +1879,7 @@ export default function Chat() {
             )}
 
             {/* Messages - scrollable area */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-1 bg-black min-h-0" style={{ paddingTop: showSearch ? 'calc(3rem + 48px)' : '48px', paddingBottom: 'calc(5rem + env(safe-area-inset-bottom))' }}>
+            <div className="flex-1 overflow-y-auto p-4 space-y-1 bg-black min-h-0">
               {showConvActionsMenu && (
                 <div className="fixed inset-0 z-40" onClick={() => setShowConvActionsMenu(false)} />
               )}
@@ -2109,8 +2109,8 @@ export default function Chat() {
               <div ref={messagesEndRef} />
             </div>
 
-            {/* Message input - fixed at bottom */}
-            <div className="fixed bottom-0 left-0 right-0 md:relative p-2 sm:p-3 border-t border-gray-800 bg-black shrink-0 z-20" style={{ paddingBottom: 'calc(3.5rem + env(safe-area-inset-bottom))' }}>
+            {/* Message input - sticky at bottom */}
+            <div className="sticky bottom-0 p-2 sm:p-3 border-t border-gray-800 bg-black shrink-0 z-20">
               {showRealtimeWarning && !connected && (
                 <div className="mb-2 rounded-lg border border-yellow-700/40 bg-yellow-900/30 px-3 py-1.5 text-xs text-yellow-200">
                   Realtime reconnecting. Online status and typing may lag.
