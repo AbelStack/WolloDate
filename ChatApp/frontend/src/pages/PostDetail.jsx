@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, Heart, Loader2, MessageCircle, Send, Share2, X, Link as LinkIcon, Pencil, Trash2 } from 'lucide-react'
+import { ArrowLeft, Heart, Loader2, MessageCircle, Send, Share2, X, Link as LinkIcon, Pencil, Trash2, MoreVertical } from 'lucide-react'
 // ...existing code...
 import VerifiedBadge from '../components/VerifiedBadge'
 import { PostSkeleton, CommentSkeleton } from '../components/Skeleton'
@@ -28,10 +28,13 @@ export default function PostDetail() {
     const [editingCommentId, setEditingCommentId] = useState(null);
     const [editingCommentContent, setEditingCommentContent] = useState('');
     const [savingComment, setSavingComment] = useState(false);
+    const [commentMenuOpen, setCommentMenuOpen] = useState(null);
+    
     // --- Edit comment handlers ---
     const handleEditComment = (comment) => {
       setEditingCommentId(comment.id);
       setEditingCommentContent(comment.content);
+      setCommentMenuOpen(null);
     };
 
     const handleCancelEditComment = () => {
@@ -62,10 +65,23 @@ export default function PostDetail() {
 
     // --- Delete comment handler ---
     const handleDeleteComment = async (comment) => {
-      if (!window.confirm('Delete this comment?')) return;
+      setCommentMenuOpen(null);
+      
+      // Check if user is post owner deleting someone else's comment
+      const isPostOwner = post?.user?.id === user?.id;
+      const isCommentOwner = comment.user?.id === user?.id;
+      
+      let confirmMessage = 'Delete this comment?';
+      if (isPostOwner && !isCommentOwner) {
+        confirmMessage = 'Delete this comment from your post? This will also remove all replies.';
+      }
+      
+      if (!window.confirm(confirmMessage)) return;
+      
       try {
         // Always use user endpoint for comment delete
         await comments.delete(comment.id);
+        // Remove comment and its replies from UI completely
         setPost((prev) => ({
           ...prev,
           comments: prev.comments.filter((c) => c.id !== comment.id),
@@ -505,21 +521,47 @@ export default function PostDetail() {
                       <span className="font-semibold text-xs text-white">{comment.user?.name}</span>
                       {comment.user?.is_approved && <VerifiedBadge size="xs" />}
                       <span className="text-xs text-gray-500">{formatTime(comment.created_at)}</span>
-                      {comment.user?.id === user?.id && (
-                        <>
+                      
+                      {/* 3-dot menu for comment owner or post owner */}
+                      {(comment.user?.id === user?.id || post.user?.id === user?.id) && (
+                        <div className="ml-auto relative">
                           <button
-                            onClick={() => handleEditComment(comment)}
-                            className="ml-2 text-gray-400 hover:text-white"
+                            onClick={() => setCommentMenuOpen(commentMenuOpen === comment.id ? null : comment.id)}
+                            className="text-gray-400 hover:text-white p-1"
                           >
-                            <Pencil className="w-4 h-4" />
+                            <MoreVertical className="w-4 h-4" />
                           </button>
-                          <button
-                            onClick={() => handleDeleteComment(comment)}
-                            className="ml-1 text-gray-400 hover:text-red-400"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </>
+                          
+                          {commentMenuOpen === comment.id && (
+                            <>
+                              {/* Backdrop to close menu */}
+                              <div 
+                                className="fixed inset-0 z-10" 
+                                onClick={() => setCommentMenuOpen(null)}
+                              />
+                              
+                              {/* Menu */}
+                              <div className="absolute right-0 top-6 bg-gray-800 rounded-lg shadow-lg border border-gray-700 py-1 z-20 min-w-[120px]">
+                                {comment.user?.id === user?.id && (
+                                  <button
+                                    onClick={() => handleEditComment(comment)}
+                                    className="w-full text-left px-4 py-2 text-sm text-white hover:bg-gray-700 flex items-center gap-2"
+                                  >
+                                    <Pencil className="w-4 h-4" />
+                                    Edit
+                                  </button>
+                                )}
+                                <button
+                                  onClick={() => handleDeleteComment(comment)}
+                                  className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-gray-700 flex items-center gap-2"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                  Delete
+                                </button>
+                              </div>
+                            </>
+                          )}
+                        </div>
                       )}
                     </div>
                     {editingCommentId === comment.id ? (
