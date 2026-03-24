@@ -1,6 +1,9 @@
-// Firebase Cloud Messaging Service Worker v3.0
+// Firebase Cloud Messaging Service Worker v4.0
 importScripts('https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js')
 importScripts('https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging-compat.js')
+
+const SW_VERSION = 'v4.0'
+const ICON_VERSION = 'v3'
 
 // Initialize Firebase in the service worker
 firebase.initializeApp({
@@ -14,25 +17,43 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging()
 
+// Preload and cache notification icon
+const ICON_URL = `https://wollogram.vercel.app/logo-${ICON_VERSION}.png`
+const BADGE_URL = `https://wollogram.vercel.app/logo-${ICON_VERSION}.png`
+
+// Cache the icon on service worker install
+self.addEventListener('install', (event) => {
+  console.log(`[SW ${SW_VERSION}] Installing...`)
+  event.waitUntil(
+    caches.open('notification-icons-v1').then((cache) => {
+      return cache.addAll([ICON_URL, BADGE_URL])
+    }).then(() => {
+      console.log(`[SW ${SW_VERSION}] Icons cached successfully`)
+      return self.skipWaiting()
+    })
+  )
+})
+
+// Take control immediately
+self.addEventListener('activate', (event) => {
+  console.log(`[SW ${SW_VERSION}] Activating...`)
+  event.waitUntil(
+    clients.claim().then(() => {
+      console.log(`[SW ${SW_VERSION}] Now controlling all clients`)
+    })
+  )
+})
+
 // Handle background messages
 messaging.onBackgroundMessage((payload) => {
-  console.log('[SW v3.0] Received background message:', payload)
+  console.log(`[SW ${SW_VERSION}] Received background message:`, payload)
 
   const notificationTitle = payload.notification?.title || 'WolloGram'
   
-  // Use absolute URLs with cache busting - try PNG first, JPG as fallback
-  const baseUrl = 'https://wollogram.vercel.app'
-  const timestamp = Date.now()
-  const iconUrl = `${baseUrl}/logo.png?v=${timestamp}`
-  const badgeUrl = `${baseUrl}/logo.png?v=${timestamp}`
-  
-  console.log('[SW v3.0] Using icon URL:', iconUrl)
-  console.log('[SW v3.0] Using badge URL:', badgeUrl)
-  
   const notificationOptions = {
     body: payload.notification?.body || 'You have a new notification',
-    icon: iconUrl,
-    badge: badgeUrl,
+    icon: ICON_URL,
+    badge: BADGE_URL,
     tag: payload.data?.messageId || payload.data?.type || 'default',
     data: payload.data,
     requireInteraction: false,

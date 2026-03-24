@@ -92,12 +92,23 @@ export const subscribeToPushNotifications = async () => {
       throw new Error('Push notifications are not supported in this browser')
     }
 
-    console.log('Step 1: Registering service worker...')
+    console.log('Step 1: Force updating service worker...')
+    // Force service worker update
+    const registrations = await navigator.serviceWorker.getRegistrations()
+    for (const registration of registrations) {
+      await registration.update()
+      console.log('Updated service worker:', registration.scope)
+    }
+    
     // Check if service worker is already registered
     let registration = await navigator.serviceWorker.getRegistration('/firebase-messaging-sw.js')
     if (registration) {
-      console.log('Service Worker already registered, updating...')
+      console.log('Service Worker already registered, forcing update...')
       await registration.update()
+      // Wait for the new service worker to activate
+      if (registration.waiting) {
+        registration.waiting.postMessage({ type: 'SKIP_WAITING' })
+      }
     } else {
       console.log('Registering new Service Worker...')
       registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js')
@@ -246,11 +257,10 @@ export const setupForegroundMessageListener = (onNotification) => {
       // Show browser notification
       if (Notification.permission === 'granted') {
         const notificationTitle = payload.notification?.title || 'WolloGram'
-        const timestamp = Date.now()
         const notificationOptions = {
           body: payload.notification?.body || 'You have a new notification',
-          icon: payload.notification?.icon || `/logo.png?v=${timestamp}`,
-          badge: `/logo.png?v=${timestamp}`,
+          icon: '/logo-v3.png',
+          badge: '/logo-v3.png',
           tag: payload.data?.type || 'default',
           data: payload.data,
           renotify: false
@@ -270,11 +280,10 @@ export const setupForegroundMessageListener = (onNotification) => {
 // Show a test notification
 export const showTestNotification = () => {
   if (Notification.permission === 'granted') {
-    const timestamp = Date.now()
     new Notification('WolloGram', {
       body: 'Push notifications are working! 🎉',
-      icon: `/logo.png?v=${timestamp}`,
-      badge: `/logo.png?v=${timestamp}`
+      icon: '/logo-v3.png',
+      badge: '/logo-v3.png'
     })
   }
 }

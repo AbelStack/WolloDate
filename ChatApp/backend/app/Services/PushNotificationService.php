@@ -53,11 +53,10 @@ class PushNotificationService
 
         foreach ($subscriptions as $subscription) {
             try {
-                // Use absolute URL with cache busting for logo
+                // Use versioned filename instead of cache busting
                 $frontendUrl = config('app.frontend_url');
-                $timestamp = time();
-                $iconUrl = "{$frontendUrl}/logo.png?v={$timestamp}";
-                $badgeUrl = "{$frontendUrl}/logo.png?v={$timestamp}";
+                $iconUrl = "{$frontendUrl}/logo-v3.png";
+                $badgeUrl = "{$frontendUrl}/logo-v3.png";
                 
                 $message = CloudMessage::fromArray([
                     'token' => $subscription->token,
