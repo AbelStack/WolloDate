@@ -3,6 +3,9 @@ import api from '../api'
 
 // Check if running as PWA (installed app)
 export const isPWA = () => {
+  // Check if window is available (not SSR)
+  if (typeof window === 'undefined') return false
+  
   // Check if running in standalone mode (installed PWA)
   const isStandalone = window.matchMedia('(display-mode: standalone)').matches ||
                       window.navigator.standalone || // iOS
@@ -13,17 +16,22 @@ export const isPWA = () => {
 
 // Check if notifications are supported
 export const isNotificationSupported = () => {
+  if (typeof window === 'undefined') return false
   return 'Notification' in window && 'serviceWorker' in navigator && 'PushManager' in window
 }
 
 // Get current notification permission status
 export const getNotificationPermission = () => {
+  if (typeof window === 'undefined') return 'unsupported'
   if (!isNotificationSupported()) return 'unsupported'
   return Notification.permission
 }
 
 // Check if notification prompt should be shown (based on dismissal time)
 export const shouldShowNotificationPrompt = () => {
+  // Check if window is available (not SSR)
+  if (typeof window === 'undefined') return false
+  
   const permission = getNotificationPermission()
   
   // CRITICAL: Only show for PWA users (mobile app), not browser users
@@ -59,11 +67,13 @@ export const shouldShowNotificationPrompt = () => {
 
 // Mark notification prompt as dismissed
 export const dismissNotificationPrompt = () => {
+  if (typeof window === 'undefined') return
   localStorage.setItem('notificationPromptDismissedAt', new Date().toISOString())
 }
 
 // Check if notifications are currently enabled
 export const isNotificationEnabled = () => {
+  if (typeof window === 'undefined') return false
   const hasToken = Boolean(localStorage.getItem('fcmToken'))
   const isGranted = Notification.permission === 'granted'
   const isMarkedEnabled = localStorage.getItem('notificationEnabled') === 'true'
