@@ -464,7 +464,7 @@ export default function PostDetail() {
                       <span className="font-semibold text-xs text-white">{comment.user?.name}</span>
                       {comment.user?.is_approved && <VerifiedBadge size="xs" />}
                       <span className="text-xs text-gray-500">{formatTime(comment.created_at)}</span>
-                      {(comment.user?.id === user?.id || post.user?.id === user?.id) && (
+                      {(String(comment.user?.id) === String(user?.id) || String(post.user?.id) === String(user?.id)) && (
                         <div className="relative ml-auto">
                           <button
                             onClick={() => setCommentMenuOpen(commentMenuOpen === comment.id ? null : comment.id)}
@@ -474,7 +474,7 @@ export default function PostDetail() {
                           </button>
                           {commentMenuOpen === comment.id && (
                             <div className="absolute right-0 top-6 bg-gray-800 rounded-lg shadow-lg py-1 z-10 min-w-32">
-                              {comment.user?.id === user?.id && (
+                              {String(comment.user?.id) === String(user?.id) && (
                                 <button
                                   onClick={() => handleEditComment(comment)}
                                   className="w-full px-4 py-2 text-left text-sm hover:bg-gray-700 flex items-center gap-2"
