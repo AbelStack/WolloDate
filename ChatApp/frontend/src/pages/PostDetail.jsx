@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, Heart, Loader2, MessageCircle, Send, Share2, X, Link as LinkIcon, Pencil, Trash2 } from 'lucide-react'
-// ...existing code...
 import VerifiedBadge from '../components/VerifiedBadge'
 import { PostSkeleton, CommentSkeleton } from '../components/Skeleton'
 import { comments, conversations, messages, posts } from '../api'
@@ -24,57 +23,54 @@ const formatTime = (dateStr) => {
 }
 
 export default function PostDetail() {
-    // --- Comment edit/delete state ---
-    const [editingCommentId, setEditingCommentId] = useState(null);
-    const [editingCommentContent, setEditingCommentContent] = useState('');
-    const [savingComment, setSavingComment] = useState(false);
-    // --- Edit comment handlers ---
-    const handleEditComment = (comment) => {
-      setEditingCommentId(comment.id);
-      setEditingCommentContent(comment.content);
-    };
+  const [editingCommentId, setEditingCommentId] = useState(null)
+  const [editingCommentContent, setEditingCommentContent] = useState('')
+  const [savingComment, setSavingComment] = useState(false)
 
-    const handleCancelEditComment = () => {
-      setEditingCommentId(null);
-      setEditingCommentContent('');
-    };
+  const handleEditComment = (comment) => {
+    setEditingCommentId(comment.id)
+    setEditingCommentContent(comment.content)
+  }
 
-    const handleSaveComment = async (comment) => {
-      if (!editingCommentContent.trim()) return;
-      setSavingComment(true);
-      try {
-        // Always use user endpoint for comment update
-        await comments.update(comment.id, { content: editingCommentContent.trim() });
-        setPost((prev) => ({
-          ...prev,
-          comments: prev.comments.map((c) =>
-            c.id === comment.id ? { ...c, content: editingCommentContent.trim() } : c
-          ),
-        }));
-        setEditingCommentId(null);
-        setEditingCommentContent('');
-      } catch (err) {
-        alert(err?.response?.data?.message || 'Failed to update comment');
-      } finally {
-        setSavingComment(false);
-      }
-    };
+  const handleCancelEditComment = () => {
+    setEditingCommentId(null)
+    setEditingCommentContent('')
+  }
 
-    // --- Delete comment handler ---
-    const handleDeleteComment = async (comment) => {
-      if (!window.confirm('Delete this comment?')) return;
-      try {
-        // Always use user endpoint for comment delete
-        await comments.delete(comment.id);
-        setPost((prev) => ({
-          ...prev,
-          comments: prev.comments.filter((c) => c.id !== comment.id),
-          comments_count: Math.max(0, (prev.comments_count || 1) - 1),
-        }));
-      } catch (err) {
-        alert(err?.response?.data?.message || 'Failed to delete comment');
-      }
-    };
+  const handleSaveComment = async (comment) => {
+    if (!editingCommentContent.trim()) return
+    setSavingComment(true)
+    try {
+      await comments.update(comment.id, { content: editingCommentContent.trim() })
+      setPost((prev) => ({
+        ...prev,
+        comments: prev.comments.map((c) =>
+          c.id === comment.id ? { ...c, content: editingCommentContent.trim() } : c
+        ),
+      }))
+      setEditingCommentId(null)
+      setEditingCommentContent('')
+    } catch (err) {
+      alert(err?.response?.data?.message || 'Failed to update comment')
+    } finally {
+      setSavingComment(false)
+    }
+  }
+
+  const handleDeleteComment = async (comment) => {
+    if (!window.confirm('Delete this comment?')) return
+    try {
+      await comments.delete(comment.id)
+      setPost((prev) => ({
+        ...prev,
+        comments: prev.comments.filter((c) => c.id !== comment.id),
+        comments_count: Math.max(0, (prev.comments_count || 1) - 1),
+      }))
+    } catch (err) {
+      alert(err?.response?.data?.message || 'Failed to delete comment')
+    }
+  }
+
   const navigate = useNavigate()
   const { postId } = useParams()
   const { user } = useAuth()
@@ -157,9 +153,7 @@ export default function PostDetail() {
         comments_count: Number(prev.comments_count || 0) + 1,
       }))
       setCommentInput('')
-      // No comment-notification: do not emit notifications for comments
     } catch {
-      // Keep UI simple: silent failure is avoided by retaining current input.
     } finally {
       setSubmittingComment(false)
     }
@@ -210,39 +204,7 @@ export default function PostDetail() {
       })
       emitNewMessage(convId, res.data?.data, res.data?.member_ids || [])
       setShareModalOpen(false)
-      return
     } catch {
-      // Fail silently to avoid breaking navigation flow.
-      return
-    } finally {
-      setSendingTo(null)
-    }
-
-    try {
-      setSendingTo(convId)
-      const shareText = `📌 Shared post from ${post.user?.name || 'someone'}:\n${post.caption || ''}\n${window.location.origin}/post/${post.id}`
-      await messages.send(convId, { content: shareText })
-      setShareModalOpen(false)
-    } catch {
-      // Fail silently to avoid breaking navigation flow.
-    } finally {
-      setSendingTo(null)
-    }
-  }
-
-  const sendSharedPostToChat = async (convId) => {
-    if (!post || sendingTo) return
-
-    try {
-      setSendingTo(convId)
-      const res = await messages.send(convId, {
-        content: SHARED_POST_MESSAGE,
-        post_id: post.id,
-      })
-      emitNewMessage(convId, res.data?.data, res.data?.member_ids || [])
-      setShareModalOpen(false)
-    } catch {
-      // Fail silently to avoid breaking navigation flow.
     } finally {
       setSendingTo(null)
     }
@@ -284,7 +246,6 @@ export default function PostDetail() {
 
       await navigator.clipboard.writeText(shareUrl)
     } catch {
-      // Ignore user-cancelled share actions.
     }
   }
 
@@ -301,22 +262,10 @@ export default function PostDetail() {
     return list.map((path) => resolveMediaUrl(path))
   }
 
-  // posts: allow both images and videos
-
   const handleMediaScroll = (e) => {
     const { scrollLeft, clientWidth } = e.currentTarget
     if (!clientWidth) return
     setMediaIndex(Math.round(scrollLeft / clientWidth))
-  }
-
-  const navigateMedia = (direction, total) => {
-    if (!mediaContainerRef.current || total <= 1) return
-    const next = Math.max(0, Math.min(total - 1, mediaIndex + direction))
-    mediaContainerRef.current.scrollTo({
-      left: mediaContainerRef.current.clientWidth * next,
-      behavior: 'smooth',
-    })
-    setMediaIndex(next)
   }
 
   const saveCaption = async () => {
@@ -330,7 +279,6 @@ export default function PostDetail() {
       setPost((prev) => ({ ...prev, caption: nextCaption }))
       setEditingCaption(false)
     } catch {
-      // Keep current input so user can retry.
     } finally {
       setSavingCaption(false)
     }
@@ -376,7 +324,6 @@ export default function PostDetail() {
                 <p className="text-xs text-gray-500">{formatTime(post.created_at)}</p>
               </div>
             </div>
-            {/* Media Section */}
             {getPostMediaUrls(post).length > 0 && (
               <div className="relative bg-black">
                 <div
@@ -421,7 +368,6 @@ export default function PostDetail() {
               </div>
             )}
 
-            {/* Caption Section */}
             <div className="px-4 py-3">
               {editingCaption ? (
                 <div className="flex flex-col gap-2">
@@ -469,7 +415,6 @@ export default function PostDetail() {
               )}
             </div>
 
-            {/* Action Buttons */}
             <div className="flex items-center gap-4 px-4 py-2 border-t border-gray-800">
               <button
                 onClick={handleLike}
@@ -490,7 +435,6 @@ export default function PostDetail() {
               </button>
             </div>
 
-            {/* Comments Section */}
             <div className="border-t border-gray-800 px-4 py-3">
               <h3 className="text-sm text-gray-400 mb-2">{post.comments.length} Comments</h3>
               {post.comments.map((comment) => (
@@ -554,7 +498,6 @@ export default function PostDetail() {
               ))}
             </div>
 
-            {/* Add Comment Input */}
             <div className="border-t border-gray-800 px-4 py-3 flex items-center gap-2">
               <textarea
                 value={commentInput}
@@ -596,7 +539,6 @@ export default function PostDetail() {
         ) : null}
       </div>
 
-      {/* Share Modal */}
       {shareModalOpen && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
           <div className="bg-gray-900 rounded-2xl w-full max-w-md max-h-[80vh] flex flex-col">
