@@ -28,6 +28,13 @@ export default function PostDetail() {
   const [savingComment, setSavingComment] = useState(false)
   const [commentMenuOpen, setCommentMenuOpen] = useState(null)
 
+  const navigate = useNavigate()
+  const { postId } = useParams()
+  const { user } = useAuth()
+  const { emitFollowNotify, emitNewMessage } = useSocket()
+
+  console.log('PostDetail - Current user:', user?.id, user?.name)
+
   const handleEditComment = (comment) => {
     setEditingCommentId(comment.id)
     setEditingCommentContent(comment.content)
@@ -116,6 +123,12 @@ export default function PostDetail() {
         const res = await posts.get(postId)
         const payload = res.data
         payload.comments = payload.comments || []
+        console.log('Post loaded:', {
+          postId: payload.id,
+          postUserId: payload.user?.id,
+          currentUserId: user?.id,
+          commentsCount: payload.comments.length
+        })
         setPost(payload)
         setCaptionInput(payload.caption || '')
         setEditingCaption(false)
@@ -464,7 +477,21 @@ export default function PostDetail() {
                       <span className="font-semibold text-xs text-white">{comment.user?.name}</span>
                       {comment.user?.is_approved && <VerifiedBadge size="xs" />}
                       <span className="text-xs text-gray-500">{formatTime(comment.created_at)}</span>
-                      {(String(comment.user?.id) === String(user?.id) || String(post.user?.id) === String(user?.id)) && (
+                      {(() => {
+                        const isCommentOwner = String(comment.user?.id) === String(user?.id)
+                        const isPostOwner = String(post?.user?.id) === String(user?.id)
+                        const canModerate = isCommentOwner || isPostOwner
+                        console.log('Comment moderation check:', {
+                          commentId: comment.id,
+                          commentUserId: comment.user?.id,
+                          postUserId: post?.user?.id,
+                          currentUserId: user?.id,
+                          isCommentOwner,
+                          isPostOwner,
+                          canModerate
+                        })
+                        return canModerate
+                      })() && (
                         <div className="relative ml-auto">
                           <button
                             onClick={() => setCommentMenuOpen(commentMenuOpen === comment.id ? null : comment.id)}

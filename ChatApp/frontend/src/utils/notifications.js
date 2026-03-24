@@ -1,6 +1,16 @@
 import { requestNotificationPermission, onMessageListener } from '../firebase'
 import api from '../api'
 
+// Check if running as PWA (installed app)
+export const isPWA = () => {
+  // Check if running in standalone mode (installed PWA)
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches ||
+                      window.navigator.standalone || // iOS
+                      document.referrer.includes('android-app://') // Android TWA
+  
+  return isStandalone
+}
+
 // Check if notifications are supported
 export const isNotificationSupported = () => {
   return 'Notification' in window && 'serviceWorker' in navigator && 'PushManager' in window
@@ -15,6 +25,12 @@ export const getNotificationPermission = () => {
 // Check if notification prompt should be shown (based on dismissal time)
 export const shouldShowNotificationPrompt = () => {
   const permission = getNotificationPermission()
+  
+  // CRITICAL: Only show for PWA users (mobile app), not browser users
+  if (!isPWA()) {
+    console.log('Not showing notification prompt - not running as PWA')
+    return false
+  }
   
   // Don't show if already granted or unsupported
   if (permission === 'granted' || permission === 'unsupported') {
@@ -92,28 +108,22 @@ export const subscribeToPushNotifications = async () => {
       throw new Error('Push notifications are not supported in this browser')
     }
 
-    console.log('Step 1: Force updating service worker...')
-    // Force service worker update
-    const registrations = await navigator.serviceWorker.getRegistrations()
-    for (const registration of registrations) {
-      await registration.update()
-      console.log('Updated service worker:', registration.scope)
-    }
-    
-    // Check if service worker is already registered
+    console.log('Step 1: Checking service worker registration...')
+    // Check if service worker is already registered and active
     let registration = await navigator.serviceWorker.getRegistration('/firebase-messaging-sw.js')
-    if (registration) {
-      console.log('Service Worker already registered, forcing update...')
-      await registration.update()
-      // Wait for the new service worker to activate
-      if (registration.waiting) {
-        registration.waiting.postMessage({ type: 'SKIP_WAITING' })
-      }
-    } else {
+    
+    if (!registration) {
       console.log('Registering new Service Worker...')
-      registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js')
+      registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js', {
+        scope: '/',
+        updateViaCache: 'none' // Always check for updates
+      })
+      console.log('Service Worker registered')
+    } else {
+      console.log('Service Worker already registered')
+      // Trigger update check in background (non-blocking)
+      registration.update().catch(err => console.log('SW update check failed:', err))
     }
-    console.log('Service Worker registered:', registration)
 
     console.log('Step 2: Waiting for service worker to be ready...')
     await navigator.serviceWorker.ready

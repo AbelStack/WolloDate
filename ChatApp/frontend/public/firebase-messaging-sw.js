@@ -1,9 +1,8 @@
-// Firebase Cloud Messaging Service Worker v4.0
+// Firebase Cloud Messaging Service Worker v5.0 - Logo Fix
 importScripts('https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js')
 importScripts('https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging-compat.js')
 
-const SW_VERSION = 'v4.0'
-const ICON_VERSION = 'v3'
+const SW_VERSION = 'v5.0'
 
 // Initialize Firebase in the service worker
 firebase.initializeApp({
@@ -17,20 +16,25 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging()
 
-// Preload and cache notification icon
-const ICON_URL = `https://wollogram.vercel.app/logo-${ICON_VERSION}.png`
-const BADGE_URL = `https://wollogram.vercel.app/logo-${ICON_VERSION}.png`
+// Use absolute URLs for icons - critical for Android notifications
+const ICON_URL = 'https://wollogram.vercel.app/logo-v3.png'
+const BADGE_URL = 'https://wollogram.vercel.app/logo-v3.png'
 
-// Cache the icon on service worker install
+// Preload icons on install
 self.addEventListener('install', (event) => {
   console.log(`[SW ${SW_VERSION}] Installing...`)
   event.waitUntil(
-    caches.open('notification-icons-v1').then((cache) => {
-      return cache.addAll([ICON_URL, BADGE_URL])
-    }).then(() => {
-      console.log(`[SW ${SW_VERSION}] Icons cached successfully`)
-      return self.skipWaiting()
-    })
+    Promise.all([
+      // Cache icons
+      caches.open('notification-icons-v2').then((cache) => {
+        return cache.addAll([ICON_URL, BADGE_URL]).catch(err => {
+          console.error('[SW] Failed to cache icons:', err)
+          // Don't fail install if caching fails
+        })
+      }),
+      // Skip waiting to activate immediately
+      self.skipWaiting()
+    ])
   )
 })
 
@@ -38,7 +42,18 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
   console.log(`[SW ${SW_VERSION}] Activating...`)
   event.waitUntil(
-    clients.claim().then(() => {
+    Promise.all([
+      // Clean up old caches
+      caches.keys().then(cacheNames => {
+        return Promise.all(
+          cacheNames
+            .filter(name => name.startsWith('notification-icons-') && name !== 'notification-icons-v2')
+            .map(name => caches.delete(name))
+        )
+      }),
+      // Take control of all clients
+      clients.claim()
+    ]).then(() => {
       console.log(`[SW ${SW_VERSION}] Now controlling all clients`)
     })
   )
@@ -55,32 +70,34 @@ messaging.onBackgroundMessage((payload) => {
     icon: ICON_URL,
     badge: BADGE_URL,
     tag: payload.data?.messageId || payload.data?.type || 'default',
-    data: payload.data,
+    data: payload.data || {},
     requireInteraction: false,
     vibrate: [200, 100, 200],
     renotify: false,
-    silent: false
+    silent: false,
+    // Critical for Android - ensure image is loaded
+    image: payload.notification?.image || undefined
   }
 
   // Add action buttons based on notification type
   if (payload.data?.type === 'message' || payload.data?.type === 'story_reply') {
     notificationOptions.actions = [
-      { action: 'open', title: 'Open Chat' },
+      { action: 'open', title: 'Open Chat', icon: ICON_URL },
       { action: 'close', title: 'Dismiss' }
     ]
   } else if (payload.data?.type === 'like' || payload.data?.type === 'comment') {
     notificationOptions.actions = [
-      { action: 'open', title: 'View Post' },
+      { action: 'open', title: 'View Post', icon: ICON_URL },
       { action: 'close', title: 'Dismiss' }
     ]
   } else if (payload.data?.type === 'story_like') {
     notificationOptions.actions = [
-      { action: 'open', title: 'View Story' },
+      { action: 'open', title: 'View Story', icon: ICON_URL },
       { action: 'close', title: 'Dismiss' }
     ]
   } else if (payload.data?.type === 'follow') {
     notificationOptions.actions = [
-      { action: 'open', title: 'View Profile' },
+      { action: 'open', title: 'View Profile', icon: ICON_URL },
       { action: 'close', title: 'Dismiss' }
     ]
   }
