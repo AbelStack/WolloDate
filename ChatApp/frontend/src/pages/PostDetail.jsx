@@ -23,76 +23,6 @@ const formatTime = (dateStr) => {
 }
 
 export default function PostDetail() {
-  const [editingCommentId, setEditingCommentId] = useState(null)
-  const [editingCommentContent, setEditingCommentContent] = useState('')
-  const [savingComment, setSavingComment] = useState(false)
-  const [commentMenuOpen, setCommentMenuOpen] = useState(null)
-
-  const navigate = useNavigate()
-  const { postId } = useParams()
-  const { user } = useAuth()
-  const { emitFollowNotify, emitNewMessage } = useSocket()
-
-  console.log('PostDetail - Current user:', user?.id, user?.name)
-
-  const handleEditComment = (comment) => {
-    setEditingCommentId(comment.id)
-    setEditingCommentContent(comment.content)
-    setCommentMenuOpen(null)
-    setEditingCommentId(comment.id)
-    setEditingCommentContent(comment.content)
-  }
-
-  const handleCancelEditComment = () => {
-    setEditingCommentId(null)
-    setEditingCommentContent('')
-  }
-
-  const handleSaveComment = async (comment) => {
-    if (!editingCommentContent.trim()) return
-    setSavingComment(true)
-    try {
-      await comments.update(comment.id, { content: editingCommentContent.trim() })
-      setPost((prev) => ({
-        ...prev,
-        comments: prev.comments.map((c) =>
-          c.id === comment.id ? { ...c, content: editingCommentContent.trim() } : c
-        ),
-      }))
-      setEditingCommentId(null)
-      setEditingCommentContent('')
-    } catch (err) {
-      alert(err?.response?.data?.message || 'Failed to update comment')
-    } finally {
-      setSavingComment(false)
-    }
-  }
-
-  const handleDeleteComment = async (comment) => {
-    const isPostOwner = post.user?.id === user?.id
-    const isCommentOwner = comment.user?.id === user?.id
-    
-    let confirmMessage = 'Delete this comment?'
-    if (isPostOwner && !isCommentOwner) {
-      confirmMessage = 'Delete this comment from your post? This will also remove all replies.'
-    }
-    
-    if (!window.confirm(confirmMessage)) return
-    
-    setCommentMenuOpen(null)
-    
-    try {
-      await comments.delete(comment.id)
-      setPost((prev) => ({
-        ...prev,
-        comments: prev.comments.filter((c) => c.id !== comment.id),
-        comments_count: Math.max(0, (prev.comments_count || 1) - 1),
-      }))
-    } catch (err) {
-      alert(err?.response?.data?.message || 'Failed to delete comment')
-    }
-  }
-
   const navigate = useNavigate()
   const { postId } = useParams()
   const { user } = useAuth()
@@ -112,6 +42,10 @@ export default function PostDetail() {
   const [editingCaption, setEditingCaption] = useState(false)
   const [captionInput, setCaptionInput] = useState('')
   const [savingCaption, setSavingCaption] = useState(false)
+  const [editingCommentId, setEditingCommentId] = useState(null)
+  const [editingCommentContent, setEditingCommentContent] = useState('')
+  const [savingComment, setSavingComment] = useState(false)
+  const [commentMenuOpen, setCommentMenuOpen] = useState(null)
 
   const mediaContainerRef = useRef(null)
 
@@ -123,12 +57,6 @@ export default function PostDetail() {
         const res = await posts.get(postId)
         const payload = res.data
         payload.comments = payload.comments || []
-        console.log('Post loaded:', {
-          postId: payload.id,
-          postUserId: payload.user?.id,
-          currentUserId: user?.id,
-          commentsCount: payload.comments.length
-        })
         setPost(payload)
         setCaptionInput(payload.caption || '')
         setEditingCaption(false)
@@ -182,8 +110,65 @@ export default function PostDetail() {
       }))
       setCommentInput('')
     } catch {
+      // Silent failure
     } finally {
       setSubmittingComment(false)
+    }
+  }
+
+  const handleEditComment = (comment) => {
+    setEditingCommentId(comment.id)
+    setEditingCommentContent(comment.content)
+    setCommentMenuOpen(null)
+  }
+
+  const handleCancelEditComment = () => {
+    setEditingCommentId(null)
+    setEditingCommentContent('')
+  }
+
+  const handleSaveComment = async (comment) => {
+    if (!editingCommentContent.trim()) return
+    setSavingComment(true)
+    try {
+      await comments.update(comment.id, { content: editingCommentContent.trim() })
+      setPost((prev) => ({
+        ...prev,
+        comments: prev.comments.map((c) =>
+          c.id === comment.id ? { ...c, content: editingCommentContent.trim() } : c
+        ),
+      }))
+      setEditingCommentId(null)
+      setEditingCommentContent('')
+    } catch (err) {
+      alert(err?.response?.data?.message || 'Failed to update comment')
+    } finally {
+      setSavingComment(false)
+    }
+  }
+
+  const handleDeleteComment = async (comment) => {
+    setCommentMenuOpen(null)
+    
+    const isPostOwner = post?.user?.id === user?.id
+    const isCommentOwner = comment.user?.id === user?.id
+    
+    let confirmMessage = 'Delete this comment?'
+    if (isPostOwner && !isCommentOwner) {
+      confirmMessage = 'Delete this comment from your post? This will also remove all replies.'
+    }
+    
+    if (!window.confirm(confirmMessage)) return
+    
+    try {
+      await comments.delete(comment.id)
+      setPost((prev) => ({
+        ...prev,
+        comments: prev.comments.filter((c) => c.id !== comment.id),
+        comments_count: Math.max(0, (prev.comments_count || 1) - 1),
+      }))
+    } catch (err) {
+      alert(err?.response?.data?.message || 'Failed to delete comment')
     }
   }
 
@@ -233,6 +218,7 @@ export default function PostDetail() {
       emitNewMessage(convId, res.data?.data, res.data?.member_ids || [])
       setShareModalOpen(false)
     } catch {
+      // Silent failure
     } finally {
       setSendingTo(null)
     }
@@ -274,6 +260,7 @@ export default function PostDetail() {
 
       await navigator.clipboard.writeText(shareUrl)
     } catch {
+      // Ignore cancelled actions
     }
   }
 
@@ -307,6 +294,7 @@ export default function PostDetail() {
       setPost((prev) => ({ ...prev, caption: nextCaption }))
       setEditingCaption(false)
     } catch {
+      // Keep current input
     } finally {
       setSavingCaption(false)
     }
@@ -352,6 +340,8 @@ export default function PostDetail() {
                 <p className="text-xs text-gray-500">{formatTime(post.created_at)}</p>
               </div>
             </div>
+
+            {/* Media Section */}
             {getPostMediaUrls(post).length > 0 && (
               <div className="relative bg-black">
                 <div
@@ -396,6 +386,7 @@ export default function PostDetail() {
               </div>
             )}
 
+            {/* Caption Section */}
             <div className="px-4 py-3">
               {editingCaption ? (
                 <div className="flex flex-col gap-2">
@@ -443,6 +434,7 @@ export default function PostDetail() {
               )}
             </div>
 
+            {/* Action Buttons */}
             <div className="flex items-center gap-4 px-4 py-2 border-t border-gray-800">
               <button
                 onClick={handleLike}
@@ -463,6 +455,7 @@ export default function PostDetail() {
               </button>
             </div>
 
+            {/* Comments Section */}
             <div className="border-t border-gray-800 px-4 py-3">
               <h3 className="text-sm text-gray-400 mb-2">{post.comments.length} Comments</h3>
               {post.comments.map((comment) => (
@@ -477,47 +470,43 @@ export default function PostDetail() {
                       <span className="font-semibold text-xs text-white">{comment.user?.name}</span>
                       {comment.user?.is_approved && <VerifiedBadge size="xs" />}
                       <span className="text-xs text-gray-500">{formatTime(comment.created_at)}</span>
-                      {(() => {
-                        const isCommentOwner = String(comment.user?.id) === String(user?.id)
-                        const isPostOwner = String(post?.user?.id) === String(user?.id)
-                        const canModerate = isCommentOwner || isPostOwner
-                        console.log('Comment moderation check:', {
-                          commentId: comment.id,
-                          commentUserId: comment.user?.id,
-                          postUserId: post?.user?.id,
-                          currentUserId: user?.id,
-                          isCommentOwner,
-                          isPostOwner,
-                          canModerate
-                        })
-                        return canModerate
-                      })() && (
-                        <div className="relative ml-auto">
+                      
+                      {/* 3-dot menu for comment owner or post owner */}
+                      {(comment.user?.id === user?.id || post.user?.id === user?.id) && (
+                        <div className="ml-auto relative">
                           <button
                             onClick={() => setCommentMenuOpen(commentMenuOpen === comment.id ? null : comment.id)}
-                            className="text-gray-400 hover:text-white"
+                            className="text-gray-400 hover:text-white p-1"
                           >
                             <MoreVertical className="w-4 h-4" />
                           </button>
+                          
                           {commentMenuOpen === comment.id && (
-                            <div className="absolute right-0 top-6 bg-gray-800 rounded-lg shadow-lg py-1 z-10 min-w-32">
-                              {String(comment.user?.id) === String(user?.id) && (
+                            <>
+                              <div 
+                                className="fixed inset-0 z-10" 
+                                onClick={() => setCommentMenuOpen(null)}
+                              />
+                              
+                              <div className="absolute right-0 top-6 bg-gray-800 rounded-lg shadow-lg border border-gray-700 py-1 z-20 min-w-[120px]">
+                                {comment.user?.id === user?.id && (
+                                  <button
+                                    onClick={() => handleEditComment(comment)}
+                                    className="w-full text-left px-4 py-2 text-sm text-white hover:bg-gray-700 flex items-center gap-2"
+                                  >
+                                    <Pencil className="w-4 h-4" />
+                                    Edit
+                                  </button>
+                                )}
                                 <button
-                                  onClick={() => handleEditComment(comment)}
-                                  className="w-full px-4 py-2 text-left text-sm hover:bg-gray-700 flex items-center gap-2"
+                                  onClick={() => handleDeleteComment(comment)}
+                                  className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-gray-700 flex items-center gap-2"
                                 >
-                                  <Pencil className="w-4 h-4" />
-                                  Edit
+                                  <Trash2 className="w-4 h-4" />
+                                  Delete
                                 </button>
-                              )}
-                              <button
-                                onClick={() => handleDeleteComment(comment)}
-                                className="w-full px-4 py-2 text-left text-sm hover:bg-gray-700 text-red-400 flex items-center gap-2"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                                Delete
-                              </button>
-                            </div>
+                              </div>
+                            </>
                           )}
                         </div>
                       )}
@@ -554,6 +543,7 @@ export default function PostDetail() {
               ))}
             </div>
 
+            {/* Add Comment Input */}
             <div className="border-t border-gray-800 px-4 py-3 flex items-center gap-2">
               <textarea
                 value={commentInput}
@@ -595,6 +585,7 @@ export default function PostDetail() {
         ) : null}
       </div>
 
+      {/* Share Modal */}
       {shareModalOpen && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
           <div className="bg-gray-900 rounded-2xl w-full max-w-md max-h-[80vh] flex flex-col">
