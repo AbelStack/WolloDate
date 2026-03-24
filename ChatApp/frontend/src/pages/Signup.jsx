@@ -218,13 +218,16 @@ export default function Signup() {
               type="text"
               placeholder="Username"
               value={username}
-              onChange={e => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
+              onChange={e => setUsername(e.target.value.toLowerCase())}
               className="input-ig"
               minLength={3}
               maxLength={30}
               required
             />
             {fieldErrors.username && <p className="text-rose-400 text-xs -mt-1">{fieldErrors.username}</p>}
+            {!fieldErrors.username && username && username.length >= 3 && !/^\p{L}[\p{L}\p{N}\p{M}\p{Pd}\p{Pc}\p{S}\d_\-.@]*$/u.test(username) && (
+              <p className="text-rose-400 text-xs -mt-1">Username must start with a letter and can contain letters, numbers, symbols, and Amharic characters.</p>
+            )}
             <input
               type="email"
               placeholder="Email"
