@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, Heart, Loader2, MessageCircle, Send, Share2, X, Link as LinkIcon, Pencil, Trash2, MoreVertical } from 'lucide-react'
-// ...existing code...
 import VerifiedBadge from '../components/VerifiedBadge'
 import { PostSkeleton, CommentSkeleton } from '../components/Skeleton'
 import { comments, conversations, messages, posts } from '../api'
@@ -24,73 +23,6 @@ const formatTime = (dateStr) => {
 }
 
 export default function PostDetail() {
-    // --- Comment edit/delete state ---
-    const [editingCommentId, setEditingCommentId] = useState(null);
-    const [editingCommentContent, setEditingCommentContent] = useState('');
-    const [savingComment, setSavingComment] = useState(false);
-    const [commentMenuOpen, setCommentMenuOpen] = useState(null);
-    
-    // --- Edit comment handlers ---
-    const handleEditComment = (comment) => {
-      setEditingCommentId(comment.id);
-      setEditingCommentContent(comment.content);
-      setCommentMenuOpen(null);
-    };
-
-    const handleCancelEditComment = () => {
-      setEditingCommentId(null);
-      setEditingCommentContent('');
-    };
-
-    const handleSaveComment = async (comment) => {
-      if (!editingCommentContent.trim()) return;
-      setSavingComment(true);
-      try {
-        // Always use user endpoint for comment update
-        await comments.update(comment.id, { content: editingCommentContent.trim() });
-        setPost((prev) => ({
-          ...prev,
-          comments: prev.comments.map((c) =>
-            c.id === comment.id ? { ...c, content: editingCommentContent.trim() } : c
-          ),
-        }));
-        setEditingCommentId(null);
-        setEditingCommentContent('');
-      } catch (err) {
-        alert(err?.response?.data?.message || 'Failed to update comment');
-      } finally {
-        setSavingComment(false);
-      }
-    };
-
-    // --- Delete comment handler ---
-    const handleDeleteComment = async (comment) => {
-      setCommentMenuOpen(null);
-      
-      // Check if user is post owner deleting someone else's comment
-      const isPostOwner = post?.user?.id === user?.id;
-      const isCommentOwner = comment.user?.id === user?.id;
-      
-      let confirmMessage = 'Delete this comment?';
-      if (isPostOwner && !isCommentOwner) {
-        confirmMessage = 'Delete this comment from your post? This will also remove all replies.';
-      }
-      
-      if (!window.confirm(confirmMessage)) return;
-      
-      try {
-        // Always use user endpoint for comment delete
-        await comments.delete(comment.id);
-        // Remove comment and its replies from UI completely
-        setPost((prev) => ({
-          ...prev,
-          comments: prev.comments.filter((c) => c.id !== comment.id),
-          comments_count: Math.max(0, (prev.comments_count || 1) - 1),
-        }));
-      } catch (err) {
-        alert(err?.response?.data?.message || 'Failed to delete comment');
-      }
-    };
   const navigate = useNavigate()
   const { postId } = useParams()
   const { user } = useAuth()
@@ -110,6 +42,10 @@ export default function PostDetail() {
   const [editingCaption, setEditingCaption] = useState(false)
   const [captionInput, setCaptionInput] = useState('')
   const [savingCaption, setSavingCaption] = useState(false)
+  const [editingCommentId, setEditingCommentId] = useState(null)
+  const [editingCommentContent, setEditingCommentContent] = useState('')
+  const [savingComment, setSavingComment] = useState(false)
+  const [commentMenuOpen, setCommentMenuOpen] = useState(null)
 
   const mediaContainerRef = useRef(null)
 
@@ -173,11 +109,66 @@ export default function PostDetail() {
         comments_count: Number(prev.comments_count || 0) + 1,
       }))
       setCommentInput('')
-      // No comment-notification: do not emit notifications for comments
     } catch {
-      // Keep UI simple: silent failure is avoided by retaining current input.
+      // Silent failure
     } finally {
       setSubmittingComment(false)
+    }
+  }
+
+  const handleEditComment = (comment) => {
+    setEditingCommentId(comment.id)
+    setEditingCommentContent(comment.content)
+    setCommentMenuOpen(null)
+  }
+
+  const handleCancelEditComment = () => {
+    setEditingCommentId(null)
+    setEditingCommentContent('')
+  }
+
+  const handleSaveComment = async (comment) => {
+    if (!editingCommentContent.trim()) return
+    setSavingComment(true)
+    try {
+      await comments.update(comment.id, { content: editingCommentContent.trim() })
+      setPost((prev) => ({
+        ...prev,
+        comments: prev.comments.map((c) =>
+          c.id === comment.id ? { ...c, content: editingCommentContent.trim() } : c
+        ),
+      }))
+      setEditingCommentId(null)
+      setEditingCommentContent('')
+    } catch (err) {
+      alert(err?.response?.data?.message || 'Failed to update comment')
+    } finally {
+      setSavingComment(false)
+    }
+  }
+
+  const handleDeleteComment = async (comment) => {
+    setCommentMenuOpen(null)
+    
+    const isPostOwner = post?.user?.id === user?.id
+    const isCommentOwner = comment.user?.id === user?.id
+    
+    let confirmMessage = 'Delete this comment?'
+    if (isPostOwner && !isCommentOwner) {
+      confirmMessage = 'Delete this comment from your post? This will also remove all replies.'
+    }
+    
+    if (!window.confirm(confirmMessage)) return
+    
+    try {
+      await comments.delete(comment.id)
+      setPost((prev) => ({
+        ...prev,
+        comments: prev.comments.filter((c) => c.id !== comment.id),
+        comments_count: Math.max(0, (prev.comments_count || 1) - 1),
+      }))
+    } catch (err) {
+      alert(err?.response?.data?.message || 'Failed to delete comment')
     }
   }
 
@@ -226,39 +217,8 @@ export default function PostDetail() {
       })
       emitNewMessage(convId, res.data?.data, res.data?.member_ids || [])
       setShareModalOpen(false)
-      return
     } catch {
-      // Fail silently to avoid breaking navigation flow.
-      return
-    } finally {
-      setSendingTo(null)
-    }
-
-    try {
-      setSendingTo(convId)
-      const shareText = `📌 Shared post from ${post.user?.name || 'someone'}:\n${post.caption || ''}\n${window.location.origin}/post/${post.id}`
-      await messages.send(convId, { content: shareText })
-      setShareModalOpen(false)
-    } catch {
-      // Fail silently to avoid breaking navigation flow.
-    } finally {
-      setSendingTo(null)
-    }
-  }
-
-  const sendSharedPostToChat = async (convId) => {
-    if (!post || sendingTo) return
-
-    try {
-      setSendingTo(convId)
-      const res = await messages.send(convId, {
-        content: SHARED_POST_MESSAGE,
-        post_id: post.id,
-      })
-      emitNewMessage(convId, res.data?.data, res.data?.member_ids || [])
-      setShareModalOpen(false)
-    } catch {
-      // Fail silently to avoid breaking navigation flow.
+      // Silent failure
     } finally {
       setSendingTo(null)
     }
@@ -300,7 +260,7 @@ export default function PostDetail() {
 
       await navigator.clipboard.writeText(shareUrl)
     } catch {
-      // Ignore user-cancelled share actions.
+      // Ignore cancelled actions
     }
   }
 
@@ -317,22 +277,10 @@ export default function PostDetail() {
     return list.map((path) => resolveMediaUrl(path))
   }
 
-  // posts: allow both images and videos
-
   const handleMediaScroll = (e) => {
     const { scrollLeft, clientWidth } = e.currentTarget
     if (!clientWidth) return
     setMediaIndex(Math.round(scrollLeft / clientWidth))
-  }
-
-  const navigateMedia = (direction, total) => {
-    if (!mediaContainerRef.current || total <= 1) return
-    const next = Math.max(0, Math.min(total - 1, mediaIndex + direction))
-    mediaContainerRef.current.scrollTo({
-      left: mediaContainerRef.current.clientWidth * next,
-      behavior: 'smooth',
-    })
-    setMediaIndex(next)
   }
 
   const saveCaption = async () => {
@@ -346,7 +294,7 @@ export default function PostDetail() {
       setPost((prev) => ({ ...prev, caption: nextCaption }))
       setEditingCaption(false)
     } catch {
-      // Keep current input so user can retry.
+      // Keep current input
     } finally {
       setSavingCaption(false)
     }
@@ -392,6 +340,7 @@ export default function PostDetail() {
                 <p className="text-xs text-gray-500">{formatTime(post.created_at)}</p>
               </div>
             </div>
+
             {/* Media Section */}
             {getPostMediaUrls(post).length > 0 && (
               <div className="relative bg-black">
@@ -534,13 +483,11 @@ export default function PostDetail() {
                           
                           {commentMenuOpen === comment.id && (
                             <>
-                              {/* Backdrop to close menu */}
                               <div 
                                 className="fixed inset-0 z-10" 
                                 onClick={() => setCommentMenuOpen(null)}
                               />
                               
-                              {/* Menu */}
                               <div className="absolute right-0 top-6 bg-gray-800 rounded-lg shadow-lg border border-gray-700 py-1 z-20 min-w-[120px]">
                                 {comment.user?.id === user?.id && (
                                   <button
